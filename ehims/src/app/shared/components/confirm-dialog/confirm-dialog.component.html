@@ -1,0 +1,46 @@
+@if (isOpen()) {
+  <div class="modal-overlay">
+    <div class="modal-card">
+      
+      <div class="icon-container" [class]="config().type">
+        @switch (config().type) {
+          @case ('danger') {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          }
+          @case ('warning') {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+          }
+          @default {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+          }
+        }
+      </div>
+
+      <div class="modal-content">
+        <h2>{{ config().title }}</h2>
+        <p>{{ config().message }}</p>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary" (click)="cancel()">
+          {{ config().cancelText || 'Cancel' }}
+        </button>
+        <button class="btn" [class]="'btn-' + config().type" (click)="confirm()">
+          {{ config().confirmText || 'Confirm' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

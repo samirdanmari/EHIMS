@@ -1,0 +1,88 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: $space-5;
+  margin-bottom: $space-6;
+}
+
+.skeleton-card {
+  height: 120px;
+  @include skeleton();
+  border-radius: $radius-lg;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: $space-6;
+  align-items: start;
+}
+
+.recent-orders-card {
+  overflow: hidden;
+
+  .table-wrapper {
+    overflow-x: auto;
+    @include custom-scrollbar();
+    max-height: 400px;
+  }
+}
+
+// Quick Actions
+.quick-actions-list {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.quick-action-item {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  padding: $space-3 $space-4;
+  border-radius: $radius-md;
+  text-decoration: none;
+  transition: all $transition-fast;
+  border: 1px solid transparent;
+
+  &:hover {
+    background: $bg-hover;
+    border-color: $glass-border;
+
+    .qa-arrow { transform: translateX(4px); opacity: 1; }
+  }
+}
+
+.qa-icon {
+  @include flex-center();
+  width: 40px;
+  height: 40px;
+  border-radius: $radius-md;
+  flex-shrink: 0;
+}
+
+.qa-text {
+  flex: 1;
+  @include flex-column();
+  gap: 2px;
+}
+
+.qa-label {
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  color: $text-primary;
+}
+
+.qa-desc {
+  font-size: $font-size-xs;
+  color: $text-tertiary;
+}
+
+.qa-arrow {
+  color: $text-muted;
+  transition: transform $transition-fast, opacity $transition-fast;
+  opacity: 0;
+}

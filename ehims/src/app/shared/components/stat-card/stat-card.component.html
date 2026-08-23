@@ -1,0 +1,36 @@
+<div class="stat-card" [style.--accent]="accentColor()">
+  <div class="card-header">
+    <span class="title">{{ title() }}</span>
+    <div class="icon-circle" [style.color]="accentColor()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path [attr.d]="icon()"></path>
+      </svg>
+    </div>
+  </div>
+  
+  <div class="card-body">
+    <div class="value">{{ value() }}</div>
+    
+    <div class="card-footer">
+      @if (trend() && trendValue()) {
+        <span class="trend" [class]="trend()">
+          @switch (trend()) {
+            @case ('up') {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+            }
+            @case ('down') {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline><polyline points="17 18 23 18 23 12"></polyline></svg>
+            }
+            @case ('neutral') {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            }
+          }
+          {{ trendValue() }}
+        </span>
+      }
+      @if (subtitle()) {
+        <span class="subtitle">{{ subtitle() }}</span>
+      }
+    </div>
+  </div>
+</div>

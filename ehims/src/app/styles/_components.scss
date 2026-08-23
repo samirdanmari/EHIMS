@@ -1,0 +1,585 @@
+// ============================================================
+// EHIMS Design System — Global Component Styles
+// Shared styles for common UI patterns
+// ============================================================
+
+// ------------------------------------------------------------
+// BUTTONS
+// ------------------------------------------------------------
+.btn {
+  @include button-base();
+}
+
+.btn-primary {
+  @include button-primary();
+}
+
+.btn-secondary {
+  @include button-secondary();
+}
+
+.btn-ghost {
+  @include button-ghost();
+}
+
+.btn-danger {
+  @include button-danger();
+}
+
+.btn-success {
+  @include button-base();
+  background: $success;
+  color: white;
+
+  &:hover:not(:disabled) {
+    background: $success-hover;
+    box-shadow: 0 0 20px $success-glow;
+    transform: translateY(-1px);
+  }
+}
+
+.btn-warning {
+  @include button-base();
+  background: $warning;
+  color: $text-inverse;
+
+  &:hover:not(:disabled) {
+    background: $warning-hover;
+    transform: translateY(-1px);
+  }
+}
+
+.btn-sm { @include button-sm(); }
+.btn-lg { @include button-lg(); }
+
+.btn-icon {
+  @include button-ghost();
+  padding: $space-2;
+  border-radius: $radius-md;
+  color: $text-tertiary;
+
+  &:hover {
+    color: $text-primary;
+    background: $bg-hover;
+  }
+
+  svg, .icon {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+// ------------------------------------------------------------
+// FORM ELEMENTS
+// ------------------------------------------------------------
+.form-group {
+  margin-bottom: $space-5;
+}
+
+.form-label {
+  @include input-label();
+}
+
+.form-input {
+  @include input-base();
+}
+
+.form-select {
+  @include input-base();
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236b7089' viewBox='0 0 16 16'%3E%3Cpath d='M4.646 5.646a.5.5 0 0 1 .708 0L8 8.293l2.646-2.647a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right $space-3 center;
+  padding-right: $space-10;
+}
+
+.form-textarea {
+  @include input-base();
+  min-height: 100px;
+  resize: vertical;
+}
+
+.form-error {
+  font-size: $font-size-xs;
+  color: $danger;
+  margin-top: $space-1;
+  display: flex;
+  align-items: center;
+  gap: $space-1;
+}
+
+.form-hint {
+  font-size: $font-size-xs;
+  color: $text-muted;
+  margin-top: $space-1;
+}
+
+// Checkbox & Radio
+.form-check {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  cursor: pointer;
+
+  input[type="checkbox"],
+  input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    accent-color: $primary;
+    cursor: pointer;
+  }
+
+  label {
+    font-size: $font-size-base;
+    color: $text-primary;
+    cursor: pointer;
+  }
+}
+
+// Toggle switch
+.toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background: $bg-active;
+  border-radius: $radius-full;
+  cursor: pointer;
+  transition: background $transition-fast;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background: $text-primary;
+    border-radius: 50%;
+    transition: transform $transition-fast;
+  }
+
+  &.active {
+    background: $primary;
+
+    &::after {
+      transform: translateX(20px);
+    }
+  }
+}
+
+// ------------------------------------------------------------
+// CARDS
+// ------------------------------------------------------------
+.card {
+  @include card();
+}
+
+.card-interactive {
+  @include card-interactive();
+}
+
+.card-glass {
+  @include glass-card();
+  padding: $space-6;
+}
+
+.card-header {
+  @include flex-between();
+  margin-bottom: $space-4;
+  padding-bottom: $space-4;
+  border-bottom: 1px solid $glass-border;
+}
+
+.card-title {
+  font-family: $font-family-heading;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $text-primary;
+}
+
+.card-body {
+  flex: 1;
+}
+
+.card-footer {
+  @include flex-between();
+  margin-top: $space-4;
+  padding-top: $space-4;
+  border-top: 1px solid $glass-border;
+}
+
+// ------------------------------------------------------------
+// BADGES
+// ------------------------------------------------------------
+.badge {
+  @include badge();
+}
+
+.badge-primary   { @include badge($primary-light, $primary); }
+.badge-success   { @include badge($success-light, $success); }
+.badge-warning   { @include badge($warning-light, $warning); }
+.badge-danger    { @include badge($danger-light, $danger); }
+.badge-info      { @include badge($info-light, $info); }
+.badge-neutral   { @include badge($bg-hover, $text-secondary); }
+
+// Role badges
+.badge-admin       { @include badge($danger-light, $danger); }
+.badge-manager     { @include badge($warning-light, $warning); }
+.badge-storekeeper { @include badge($info-light, $info); }
+.badge-cashier     { @include badge($success-light, $success); }
+.badge-waiter      { @include badge($accent-light, $accent); }
+
+// Status badges
+.badge-active   { @include badge($success-light, $success); }
+.badge-inactive { @include badge($danger-light, $danger); }
+.badge-pending  { @include badge($warning-light, $warning); }
+
+// ------------------------------------------------------------
+// DATA TABLE
+// ------------------------------------------------------------
+.data-table {
+  @include data-table();
+}
+
+.table-container {
+  @include card($space-0);
+  overflow: hidden;
+
+  .table-header {
+    @include flex-between();
+    padding: $space-4 $space-6;
+    border-bottom: 1px solid $glass-border;
+  }
+
+  .table-body {
+    overflow-x: auto;
+    @include custom-scrollbar();
+  }
+
+  .table-footer {
+    @include flex-between();
+    padding: $space-3 $space-6;
+    border-top: 1px solid $glass-border;
+    font-size: $font-size-sm;
+    color: $text-tertiary;
+  }
+}
+
+// ------------------------------------------------------------
+// MODAL / DIALOG
+// ------------------------------------------------------------
+.modal-overlay {
+  @include overlay();
+  animation: fadeIn 0.2s ease;
+}
+
+.modal-content {
+  @include glass-elevated();
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: $space-8;
+  animation: scaleIn 0.25s ease;
+  @include custom-scrollbar();
+}
+
+.modal-header {
+  @include flex-between();
+  margin-bottom: $space-6;
+
+  h3 {
+    font-size: $font-size-xl;
+  }
+}
+
+.modal-body {
+  margin-bottom: $space-6;
+}
+
+.modal-footer {
+  @include flex-between();
+  gap: $space-3;
+  justify-content: flex-end;
+}
+
+// ------------------------------------------------------------
+// TOAST NOTIFICATIONS
+// ------------------------------------------------------------
+.toast-container {
+  position: fixed;
+  top: $space-4;
+  right: $space-4;
+  z-index: $z-toast;
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  max-width: 400px;
+}
+
+.toast {
+  @include glass(rgba(22, 25, 35, 0.9), 16px);
+  padding: $space-4 $space-5;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-xl;
+  animation: notificationSlideIn 0.3s ease;
+  display: flex;
+  align-items: flex-start;
+  gap: $space-3;
+  min-width: 320px;
+
+  &.dismissing {
+    animation: notificationSlideOut 0.3s ease forwards;
+  }
+
+  .toast-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+  }
+
+  .toast-content {
+    flex: 1;
+    min-width: 0;
+
+    .toast-title {
+      font-size: $font-size-base;
+      font-weight: $font-weight-semibold;
+      color: $text-primary;
+      margin-bottom: 2px;
+    }
+
+    .toast-message {
+      font-size: $font-size-sm;
+      color: $text-secondary;
+      line-height: $line-height-normal;
+    }
+  }
+
+  .toast-close {
+    @include button-ghost();
+    padding: $space-1;
+    flex-shrink: 0;
+    opacity: 0.5;
+
+    &:hover { opacity: 1; }
+  }
+
+  // Variants
+  &.toast-success { border-left: 3px solid $success; }
+  &.toast-error   { border-left: 3px solid $danger; }
+  &.toast-warning { border-left: 3px solid $warning; }
+  &.toast-info    { border-left: 3px solid $info; }
+}
+
+// ------------------------------------------------------------
+// EMPTY STATE
+// ------------------------------------------------------------
+.empty-state {
+  @include flex-center();
+  flex-direction: column;
+  padding: $space-16 $space-8;
+  text-align: center;
+  color: $text-tertiary;
+
+  .empty-icon {
+    width: 64px;
+    height: 64px;
+    margin-bottom: $space-4;
+    opacity: 0.4;
+  }
+
+  .empty-title {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-medium;
+    color: $text-secondary;
+    margin-bottom: $space-2;
+  }
+
+  .empty-message {
+    font-size: $font-size-base;
+    color: $text-tertiary;
+    max-width: 400px;
+    margin-bottom: $space-6;
+  }
+}
+
+// ------------------------------------------------------------
+// PAGE LAYOUT UTILITIES
+// ------------------------------------------------------------
+.page {
+  animation: fadeInUp 0.3s ease;
+}
+
+.page-header {
+  @include flex-between();
+  margin-bottom: $space-6;
+  flex-wrap: wrap;
+  gap: $space-4;
+
+  .page-title {
+    font-family: $font-family-heading;
+    font-size: $font-size-2xl;
+    font-weight: $font-weight-bold;
+    color: $text-primary;
+  }
+
+  .page-subtitle {
+    font-size: $font-size-base;
+    color: $text-tertiary;
+    margin-top: $space-1;
+  }
+
+  .page-actions {
+    display: flex;
+    gap: $space-3;
+    align-items: center;
+  }
+}
+
+.page-content {
+  display: flex;
+  flex-direction: column;
+  gap: $space-6;
+}
+
+// Grid layouts
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $space-6;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: $space-6;
+}
+
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: $space-6;
+}
+
+// Responsive grids
+@include respond-to('lg') {
+  .grid-auto {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+}
+
+// ------------------------------------------------------------
+// SEARCH INPUT
+// ------------------------------------------------------------
+.search-wrapper {
+  position: relative;
+
+  .search-icon {
+    position: absolute;
+    left: $space-3;
+    top: 50%;
+    transform: translateY(-50%);
+    color: $text-muted;
+    width: 18px;
+    height: 18px;
+    pointer-events: none;
+  }
+
+  .search-input {
+    @include input-base();
+    padding-left: $space-10;
+  }
+}
+
+// ------------------------------------------------------------
+// DIVIDER
+// ------------------------------------------------------------
+.divider {
+  height: 1px;
+  background: $glass-border;
+  margin: $space-4 0;
+  border: none;
+}
+
+// ------------------------------------------------------------
+// AVATAR
+// ------------------------------------------------------------
+.avatar {
+  @include flex-center();
+  width: 40px;
+  height: 40px;
+  border-radius: $radius-full;
+  background: $gradient-primary;
+  color: white;
+  font-weight: $font-weight-semibold;
+  font-size: $font-size-base;
+  text-transform: uppercase;
+  flex-shrink: 0;
+
+  &.avatar-sm {
+    width: 32px;
+    height: 32px;
+    font-size: $font-size-xs;
+  }
+
+  &.avatar-lg {
+    width: 56px;
+    height: 56px;
+    font-size: $font-size-xl;
+  }
+}
+
+// ------------------------------------------------------------
+// PROGRESS BAR
+// ------------------------------------------------------------
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: $bg-tertiary;
+  border-radius: $radius-full;
+  overflow: hidden;
+
+  .progress-fill {
+    height: 100%;
+    background: $gradient-primary;
+    border-radius: $radius-full;
+    transition: width $transition-slow;
+  }
+}
+
+// ------------------------------------------------------------
+// TOOLTIP
+// (CSS-only tooltips using data-tooltip attribute)
+// ------------------------------------------------------------
+[data-tooltip] {
+  position: relative;
+
+  &::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: $space-1 $space-3;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    color: $text-primary;
+    background: $bg-elevated;
+    border: 1px solid $glass-border;
+    border-radius: $radius-sm;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all $transition-fast;
+    z-index: $z-tooltip;
+    pointer-events: none;
+    box-shadow: $shadow-lg;
+  }
+
+  &:hover::before {
+    opacity: 1;
+    visibility: visible;
+  }
+}

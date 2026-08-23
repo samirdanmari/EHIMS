@@ -1,0 +1,75 @@
+// ============================================================
+// EHIMS — Global Styles Entry Point
+// Enterprise Hospitality & Inventory Management System
+// ============================================================
+
+// Design system partials (order matters)
+@use 'app/styles/variables' as *;
+@use 'app/styles/mixins' as *;
+@use 'app/styles/typography';
+@use 'app/styles/animations';
+@use 'app/styles/components';
+
+// ============================================================
+// CSS RESET & BASE STYLES
+// ============================================================
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  height: 100%;
+  overflow: hidden;
+  background: $bg-primary;
+  color: $text-primary;
+  @include custom-scrollbar();
+}
+
+// Disable user selection on interactive elements (desktop app feel)
+button, a, label {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+// Default focus styles
+:focus-visible {
+  outline: 2px solid $primary;
+  outline-offset: 2px;
+}
+
+// Remove default focus outline for mouse users
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+// Selection highlight
+::selection {
+  background: $primary-light;
+  color: $text-primary;
+}
+
+// Image defaults
+img {
+  max-width: 100%;
+  display: block;
+}
+
+// List resets
+ul, ol {
+  list-style: none;
+}
+
+// App root
+app-root {
+  display: block;
+  height: 100%;
+  overflow: hidden;
+}

@@ -1,0 +1,118 @@
+@use '../../../../styles/variables' as *;
+@use '../../../../styles/mixins' as *;
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-top: 3px solid var(--accent);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at top right, var(--accent) 0%, transparent 40%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    
+    &::before {
+      opacity: 0.1;
+    }
+  }
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  position: relative;
+  z-index: 1;
+
+  .title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary, #64748b);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .icon-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
+}
+
+.card-body {
+  position: relative;
+  z-index: 1;
+
+  .value {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-primary, #1e293b);
+    margin-bottom: 8px;
+    line-height: 1.2;
+  }
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+
+  .trend {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 600;
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    &.up {
+      color: var(--success-color, #22c55e);
+    }
+    &.down {
+      color: var(--danger-color, #ef4444);
+    }
+    &.neutral {
+      color: var(--warning-color, #f59e0b);
+    }
+  }
+
+  .subtitle {
+    color: var(--text-secondary, #64748b);
+  }
+}

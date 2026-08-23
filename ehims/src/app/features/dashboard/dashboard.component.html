@@ -1,0 +1,184 @@
+<div class="page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Dashboard</h2>
+      <p class="page-subtitle">{{ greeting }}, {{ authService.currentUser()?.display_name }}! Here's your overview for today.</p>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-secondary" (click)="loadDashboardData()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="23 4 23 10 17 10"/>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+        Refresh
+      </button>
+      <a routerLink="/pos" class="btn btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        New Order
+      </a>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <!-- Loading skeletons -->
+    <div class="stats-grid stagger">
+      @for (item of [1,2,3,4]; track item) {
+        <div class="skeleton-card"></div>
+      }
+    </div>
+  } @else {
+    <!-- Stat Cards -->
+    <div class="stats-grid stagger">
+      <app-stat-card
+        title="Today's Revenue"
+        [value]="(todaySales() | appCurrency)"
+        subtitle="Total sales today"
+        accentColor="#10b981"
+        trend="up"
+        trendValue="+0%"
+        icon="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"
+      />
+      <app-stat-card
+        title="Active Orders"
+        [value]="activeOrders()"
+        subtitle="Pending & preparing"
+        accentColor="#3b82f6"
+        icon="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z M3 6h18 M16 10a4 4 0 0 1-8 0"
+      />
+      <app-stat-card
+        title="Low Stock Alerts"
+        [value]="lowStockCount()"
+        subtitle="Items below threshold"
+        [accentColor]="lowStockCount() > 0 ? '#f43f5e' : '#10b981'"
+        [trend]="lowStockCount() > 0 ? 'down' : 'neutral'"
+        icon="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z M12 9v4 M12 17h.01"
+      />
+      <app-stat-card
+        title="Menu Items"
+        [value]="totalMenuItems()"
+        subtitle="Currently available"
+        accentColor="#8b5cf6"
+        icon="M18 8h1a4 4 0 0 1 0 8h-1 M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z M6 1v3 M10 1v3 M14 1v3"
+      />
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="content-grid">
+      <!-- Recent Orders -->
+      <div class="card recent-orders-card">
+        <div class="card-header">
+          <h3 class="card-title">Recent Orders</h3>
+          <a routerLink="/pos" class="btn btn-ghost btn-sm">View All</a>
+        </div>
+        <div class="table-wrapper">
+          @if (recentOrders().length === 0) {
+            <div class="empty-state" style="padding: 2rem">
+              <p style="color: var(--text-tertiary, #6b7089)">No orders yet today</p>
+            </div>
+          } @else {
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Order #</th>
+                  <th>Cashier</th>
+                  <th>Time</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (order of recentOrders(); track order.id) {
+                  <tr>
+                    <td class="mono">{{ order.order_number }}</td>
+                    <td>{{ order.cashier_name }}</td>
+                    <td>{{ formatTime(order.created_at) }}</td>
+                    <td class="mono">{{ order.total_amount | appCurrency }}</td>
+                    <td><span class="badge {{ getStatusClass(order.status) }}">{{ order.status }}</span></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions-col">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Quick Actions</h3>
+          </div>
+          <div class="quick-actions-list">
+            <a routerLink="/pos" class="quick-action-item">
+              <div class="qa-icon" style="background: rgba(59,130,246,0.15); color: #3b82f6">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+              </div>
+              <div class="qa-text">
+                <span class="qa-label">New Order</span>
+                <span class="qa-desc">Open POS terminal</span>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="qa-arrow">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </a>
+
+            <a routerLink="/inventory" class="quick-action-item">
+              <div class="qa-icon" style="background: rgba(16,185,129,0.15); color: #10b981">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                </svg>
+              </div>
+              <div class="qa-text">
+                <span class="qa-label">Add Purchase</span>
+                <span class="qa-desc">Record inventory purchase</span>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="qa-arrow">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </a>
+
+            <a routerLink="/eod" class="quick-action-item">
+              <div class="qa-icon" style="background: rgba(245,158,11,0.15); color: #f59e0b">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="20" x2="18" y2="10"/>
+                  <line x1="12" y1="20" x2="12" y2="4"/>
+                  <line x1="6" y1="20" x2="6" y2="14"/>
+                </svg>
+              </div>
+              <div class="qa-text">
+                <span class="qa-label">EOD Report</span>
+                <span class="qa-desc">Generate end-of-day report</span>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="qa-arrow">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </a>
+
+            <a routerLink="/suppliers" class="quick-action-item">
+              <div class="qa-icon" style="background: rgba(139,92,246,0.15); color: #8b5cf6">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="1" y="3" width="15" height="13"/>
+                  <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+                  <circle cx="5.5" cy="18.5" r="2.5"/>
+                  <circle cx="18.5" cy="18.5" r="2.5"/>
+                </svg>
+              </div>
+              <div class="qa-text">
+                <span class="qa-label">Suppliers</span>
+                <span class="qa-desc">Manage supplier accounts</span>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="qa-arrow">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

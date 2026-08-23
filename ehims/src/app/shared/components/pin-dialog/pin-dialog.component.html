@@ -1,0 +1,39 @@
+@if (isOpen()) {
+  <div class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>{{ title() }}</h2>
+        <p>{{ message() }}</p>
+      </div>
+
+      <div class="pin-display" [class.error]="error()">
+        @for (i of [0, 1, 2, 3, 4, 5]; track i) {
+          <div class="pin-dot" [class.filled]="i < pinValue().length"></div>
+        }
+      </div>
+
+      @if (error()) {
+        <div class="error-text">{{ error() }}</div>
+      }
+
+      <div class="numpad">
+        @for (num of [1, 2, 3, 4, 5, 6, 7, 8, 9]; track num) {
+          <button class="num-btn" (click)="appendNumber(num)" [disabled]="isVerifying()">{{ num }}</button>
+        }
+        <button class="num-btn action clear" (click)="clear()" [disabled]="isVerifying()">Clear</button>
+        <button class="num-btn" (click)="appendNumber(0)" [disabled]="isVerifying()">0</button>
+        <button class="num-btn action submit" (click)="submit()" [disabled]="isVerifying() || pinValue().length < 4">
+          @if (isVerifying()) {
+            <span class="spinner"></span>
+          } @else {
+            OK
+          }
+        </button>
+      </div>
+
+      <div class="modal-footer">
+        <button class="cancel-btn" (click)="close()" [disabled]="isVerifying()">Cancel</button>
+      </div>
+    </div>
+  </div>
+}
