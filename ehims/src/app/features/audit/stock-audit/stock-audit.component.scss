@@ -1,0 +1,71 @@
+@use "../../../styles/variables" as *;
+
+.filter-bar {
+  display: flex;
+  gap: $space-4;
+  align-items: flex-end;
+  margin-bottom: $space-4;
+
+  .form-group {
+    margin-bottom: 0;
+  }
+}
+
+.audit-hint {
+  font-size: $font-size-xs;
+  color: $text-muted;
+  margin-bottom: $space-6;
+  line-height: $line-height-relaxed;
+}
+
+.summary-row {
+  margin-bottom: $space-6;
+}
+
+.summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+
+  .summary-label {
+    font-size: $font-size-sm;
+    color: $text-tertiary;
+  }
+
+  .summary-value {
+    font-family: $font-family-heading;
+    font-size: $font-size-2xl;
+    font-weight: $font-weight-bold;
+    color: $text-primary;
+  }
+
+  &.summary-warning .summary-value {
+    color: $warning;
+  }
+}
+
+.item-name {
+  font-weight: $font-weight-medium;
+  color: $text-primary;
+}
+
+.positive {
+  color: $success;
+}
+
+.negative {
+  color: $danger;
+}
+
+.closing-value {
+  font-weight: $font-weight-semibold;
+  color: $text-primary;
+}
+
+tr.row-low .closing-value {
+  color: $warning;
+}
+
+tr.row-critical .closing-value {
+  color: $danger;
+}

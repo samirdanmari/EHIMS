@@ -1,0 +1,107 @@
+@use "../../../styles/variables" as *;
+@use "../../../styles/mixins" as *;
+
+.purchase-layout {
+  align-items: start;
+
+  @include respond-to("lg") {
+    grid-template-columns: 1.2fr 1fr;
+  }
+}
+
+.card-title {
+  font-family: $font-family-heading;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $text-primary;
+  margin-bottom: $space-5;
+}
+
+.section-label {
+  font-weight: $font-weight-medium;
+  color: $text-primary;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $space-4;
+}
+
+.credit-notice {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  padding: $space-3 $space-4;
+  background: $warning-light;
+  color: $warning;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  margin-bottom: $space-5;
+}
+
+.lines-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 32px;
+  gap: $space-2;
+  padding: 0 $space-1;
+  margin-bottom: $space-2;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: $text-tertiary;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.lines-list {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  margin-bottom: $space-3;
+}
+
+.line-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 32px;
+  gap: $space-2;
+  align-items: center;
+
+  .line-total {
+    font-size: $font-size-sm;
+    color: $text-secondary;
+    text-align: right;
+    padding-right: $space-2;
+  }
+}
+
+.add-line-btn {
+  margin-bottom: $space-5;
+}
+
+.notes-group {
+  margin-top: $space-2;
+}
+
+.grand-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $space-4;
+  background: $bg-tertiary;
+  border-radius: $radius-md;
+  margin: $space-5 0;
+  font-weight: $font-weight-medium;
+  color: $text-secondary;
+
+  .grand-total-value {
+    font-family: $font-family-heading;
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+    color: $primary;
+  }
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+}

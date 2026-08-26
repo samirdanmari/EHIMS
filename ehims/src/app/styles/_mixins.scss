@@ -3,20 +3,32 @@
 // Reusable SCSS mixins for the design system
 // ============================================================
 
+@use "variables" as *;
+
 // ------------------------------------------------------------
 // RESPONSIVE BREAKPOINTS
 // ------------------------------------------------------------
 @mixin respond-to($breakpoint) {
-  @if $breakpoint == 'sm' {
-    @media (min-width: $breakpoint-sm) { @content; }
-  } @else if $breakpoint == 'md' {
-    @media (min-width: $breakpoint-md) { @content; }
-  } @else if $breakpoint == 'lg' {
-    @media (min-width: $breakpoint-lg) { @content; }
-  } @else if $breakpoint == 'xl' {
-    @media (min-width: $breakpoint-xl) { @content; }
-  } @else if $breakpoint == '2xl' {
-    @media (min-width: $breakpoint-2xl) { @content; }
+  @if $breakpoint == "sm" {
+    @media (min-width: $breakpoint-sm) {
+      @content;
+    }
+  } @else if $breakpoint == "md" {
+    @media (min-width: $breakpoint-md) {
+      @content;
+    }
+  } @else if $breakpoint == "lg" {
+    @media (min-width: $breakpoint-lg) {
+      @content;
+    }
+  } @else if $breakpoint == "xl" {
+    @media (min-width: $breakpoint-xl) {
+      @content;
+    }
+  } @else if $breakpoint == "2xl" {
+    @media (min-width: $breakpoint-2xl) {
+      @content;
+    }
   }
 }
 
@@ -34,7 +46,9 @@
   @include glass();
   border-radius: $radius-lg;
   box-shadow: $shadow-md;
-  transition: border-color $transition-normal, box-shadow $transition-normal;
+  transition:
+    border-color $transition-normal,
+    box-shadow $transition-normal;
 
   &:hover {
     border-color: $glass-border-hover;
@@ -363,3 +377,369 @@
     background: $bg-hover;
   }
 }
+
+// // ============================================================
+// // EHIMS Design System — Mixins
+// // Reusable SCSS mixins for the design system
+// // ============================================================
+
+// // ------------------------------------------------------------
+// // RESPONSIVE BREAKPOINTS
+// // ------------------------------------------------------------
+// @mixin respond-to($breakpoint) {
+//   @if $breakpoint == 'sm' {
+//     @media (min-width: $breakpoint-sm) { @content; }
+//   } @else if $breakpoint == 'md' {
+//     @media (min-width: $breakpoint-md) { @content; }
+//   } @else if $breakpoint == 'lg' {
+//     @media (min-width: $breakpoint-lg) { @content; }
+//   } @else if $breakpoint == 'xl' {
+//     @media (min-width: $breakpoint-xl) { @content; }
+//   } @else if $breakpoint == '2xl' {
+//     @media (min-width: $breakpoint-2xl) { @content; }
+//   }
+// }
+
+// // ------------------------------------------------------------
+// // GLASSMORPHISM
+// // ------------------------------------------------------------
+// @mixin glass($bg: $glass-bg, $blur: 12px) {
+//   background: $bg;
+//   backdrop-filter: blur($blur);
+//   -webkit-backdrop-filter: blur($blur);
+//   border: 1px solid $glass-border;
+// }
+
+// @mixin glass-card() {
+//   @include glass();
+//   border-radius: $radius-lg;
+//   box-shadow: $shadow-md;
+//   transition: border-color $transition-normal, box-shadow $transition-normal;
+
+//   &:hover {
+//     border-color: $glass-border-hover;
+//     box-shadow: $shadow-lg;
+//   }
+// }
+
+// @mixin glass-elevated() {
+//   @include glass(rgba(34, 38, 57, 0.8), 16px);
+//   border-radius: $radius-lg;
+//   box-shadow: $shadow-xl;
+// }
+
+// // ------------------------------------------------------------
+// // CARD STYLES
+// // ------------------------------------------------------------
+// @mixin card($padding: $space-6) {
+//   background: $bg-secondary;
+//   border: 1px solid $glass-border;
+//   border-radius: $radius-lg;
+//   padding: $padding;
+//   transition: all $transition-normal;
+// }
+
+// @mixin card-interactive() {
+//   @include card();
+//   cursor: pointer;
+
+//   &:hover {
+//     background: $bg-tertiary;
+//     border-color: $glass-border-hover;
+//     box-shadow: $shadow-md;
+//     transform: translateY(-1px);
+//   }
+
+//   &:active {
+//     transform: translateY(0);
+//   }
+// }
+
+// // ------------------------------------------------------------
+// // BUTTONS
+// // ------------------------------------------------------------
+// @mixin button-base() {
+//   display: inline-flex;
+//   align-items: center;
+//   justify-content: center;
+//   gap: $space-2;
+//   padding: $space-2 $space-4;
+//   font-family: $font-family-body;
+//   font-size: $font-size-base;
+//   font-weight: $font-weight-medium;
+//   line-height: 1;
+//   border: 1px solid transparent;
+//   border-radius: $radius-md;
+//   cursor: pointer;
+//   transition: all $transition-fast;
+//   white-space: nowrap;
+//   user-select: none;
+
+//   &:disabled {
+//     opacity: 0.5;
+//     cursor: not-allowed;
+//     pointer-events: none;
+//   }
+// }
+
+// @mixin button-primary() {
+//   @include button-base();
+//   background: $primary;
+//   color: white;
+//   box-shadow: 0 1px 2px rgba(59, 130, 246, 0.3);
+
+//   &:hover:not(:disabled) {
+//     background: $primary-hover;
+//     box-shadow: $shadow-glow;
+//     transform: translateY(-1px);
+//   }
+
+//   &:active:not(:disabled) {
+//     background: $primary-active;
+//     transform: translateY(0);
+//   }
+// }
+
+// @mixin button-secondary() {
+//   @include button-base();
+//   background: $bg-tertiary;
+//   color: $text-primary;
+//   border-color: $glass-border;
+
+//   &:hover:not(:disabled) {
+//     background: $bg-hover;
+//     border-color: $glass-border-hover;
+//   }
+
+//   &:active:not(:disabled) {
+//     background: $bg-active;
+//   }
+// }
+
+// @mixin button-ghost() {
+//   @include button-base();
+//   background: transparent;
+//   color: $text-secondary;
+
+//   &:hover:not(:disabled) {
+//     background: $bg-hover;
+//     color: $text-primary;
+//   }
+// }
+
+// @mixin button-danger() {
+//   @include button-base();
+//   background: $danger;
+//   color: white;
+
+//   &:hover:not(:disabled) {
+//     background: $danger-hover;
+//     box-shadow: 0 0 20px $danger-glow;
+//     transform: translateY(-1px);
+//   }
+// }
+
+// // Button sizes
+// @mixin button-sm() {
+//   padding: $space-1 $space-3;
+//   font-size: $font-size-sm;
+//   border-radius: $radius-sm;
+// }
+
+// @mixin button-lg() {
+//   padding: $space-3 $space-6;
+//   font-size: $font-size-md;
+//   border-radius: $radius-lg;
+// }
+
+// // ------------------------------------------------------------
+// // FORM INPUTS
+// // ------------------------------------------------------------
+// @mixin input-base() {
+//   width: 100%;
+//   padding: $space-3 $space-4;
+//   font-family: $font-family-body;
+//   font-size: $font-size-base;
+//   color: $text-primary;
+//   background: $bg-tertiary;
+//   border: 1px solid $glass-border;
+//   border-radius: $radius-md;
+//   outline: none;
+//   transition: all $transition-fast;
+
+//   &::placeholder {
+//     color: $text-muted;
+//   }
+
+//   &:hover {
+//     border-color: $glass-border-hover;
+//   }
+
+//   &:focus {
+//     border-color: $primary;
+//     box-shadow: 0 0 0 3px $primary-light;
+//     background: $bg-elevated;
+//   }
+
+//   &:disabled {
+//     opacity: 0.5;
+//     cursor: not-allowed;
+//   }
+
+//   &.error {
+//     border-color: $danger;
+//     box-shadow: 0 0 0 3px $danger-light;
+//   }
+// }
+
+// @mixin input-label() {
+//   display: block;
+//   font-size: $font-size-sm;
+//   font-weight: $font-weight-medium;
+//   color: $text-secondary;
+//   margin-bottom: $space-2;
+// }
+
+// // ------------------------------------------------------------
+// // SCROLLBAR
+// // ------------------------------------------------------------
+// @mixin custom-scrollbar($width: 6px) {
+//   &::-webkit-scrollbar {
+//     width: $width;
+//     height: $width;
+//   }
+
+//   &::-webkit-scrollbar-track {
+//     background: transparent;
+//   }
+
+//   &::-webkit-scrollbar-thumb {
+//     background: $bg-active;
+//     border-radius: $radius-full;
+
+//     &:hover {
+//       background: $text-muted;
+//     }
+//   }
+// }
+
+// // ------------------------------------------------------------
+// // FLEX UTILITIES
+// // ------------------------------------------------------------
+// @mixin flex-center() {
+//   display: flex;
+//   align-items: center;
+//   justify-content: center;
+// }
+
+// @mixin flex-between() {
+//   display: flex;
+//   align-items: center;
+//   justify-content: space-between;
+// }
+
+// @mixin flex-column() {
+//   display: flex;
+//   flex-direction: column;
+// }
+
+// // ------------------------------------------------------------
+// // BADGE
+// // ------------------------------------------------------------
+// @mixin badge($bg: $primary-light, $color: $primary) {
+//   display: inline-flex;
+//   align-items: center;
+//   padding: 2px $space-2;
+//   font-size: $font-size-xs;
+//   font-weight: $font-weight-medium;
+//   color: $color;
+//   background: $bg;
+//   border-radius: $radius-full;
+//   white-space: nowrap;
+// }
+
+// // ------------------------------------------------------------
+// // SKELETON LOADING
+// // ------------------------------------------------------------
+// @mixin skeleton() {
+//   background: linear-gradient(
+//     90deg,
+//     $bg-tertiary 25%,
+//     $bg-hover 50%,
+//     $bg-tertiary 75%
+//   );
+//   background-size: 200% 100%;
+//   animation: skeleton-pulse 1.5s ease-in-out infinite;
+//   border-radius: $radius-md;
+// }
+
+// // ------------------------------------------------------------
+// // OVERLAY
+// // ------------------------------------------------------------
+// @mixin overlay($bg: rgba(0, 0, 0, 0.6)) {
+//   position: fixed;
+//   inset: 0;
+//   background: $bg;
+//   backdrop-filter: blur(4px);
+//   z-index: $z-modal;
+//   @include flex-center();
+// }
+
+// // ------------------------------------------------------------
+// // TABLE STYLES
+// // ------------------------------------------------------------
+// @mixin data-table() {
+//   width: 100%;
+//   border-collapse: separate;
+//   border-spacing: 0;
+
+//   th {
+//     font-size: $font-size-xs;
+//     font-weight: $font-weight-semibold;
+//     text-transform: uppercase;
+//     letter-spacing: 0.05em;
+//     color: $text-tertiary;
+//     padding: $space-3 $space-4;
+//     text-align: left;
+//     border-bottom: 1px solid $glass-border;
+//     background: $bg-tertiary;
+//     position: sticky;
+//     top: 0;
+//     z-index: 1;
+
+//     &:first-child {
+//       border-radius: $radius-md 0 0 0;
+//     }
+
+//     &:last-child {
+//       border-radius: 0 $radius-md 0 0;
+//     }
+//   }
+
+//   td {
+//     padding: $space-3 $space-4;
+//     font-size: $font-size-base;
+//     color: $text-primary;
+//     border-bottom: 1px solid rgba($glass-border, 0.5);
+//     transition: background $transition-fast;
+//   }
+
+//   tr {
+//     &:hover td {
+//       background: $bg-hover;
+//     }
+
+//     &:last-child td {
+//       border-bottom: none;
+//     }
+//   }
+
+//   // Zebra striping
+//   tbody tr:nth-child(even) td {
+//     background: rgba($bg-tertiary, 0.3);
+//   }
+
+//   tbody tr:nth-child(even):hover td {
+//     background: $bg-hover;
+//   }
+// }

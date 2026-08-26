@@ -1,0 +1,155 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Stock Issuance</h2>
+      <p class="page-subtitle">Issue stock to a shift and track what's been handed out.</p>
+    </div>
+  </div>
+
+  <app-inventory-tab></app-inventory-tab>
+
+  <div class="page-content">
+    <div class="grid-2 issuance-layout">
+      <!-- Issuance Form -->
+      <div class="card">
+        <h3 class="card-title">New Stock Issuance</h3>
+
+        @if (activeShifts().length === 0) {
+        <div class="no-shift-notice">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          No active shifts found. Stock can only be issued against an open shift.
+        </div>
+        }
+
+        <form [formGroup]="form" (ngSubmit)="onSubmit()">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Shift</label>
+              <select class="form-select" formControlName="shift_id">
+                <option [ngValue]="null" disabled>Select active shift</option>
+                @for (s of activeShifts(); track s.id) {
+                <option [ngValue]="s.id">{{ s.shift_name }} — {{ s.user_name }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Received By</label>
+              <select class="form-select" formControlName="received_by">
+                <option [ngValue]="null" disabled>Select staff member</option>
+                @for (u of staffOptions(); track u.id) {
+                <option [ngValue]="u.id">{{ u.display_name }} ({{ u.role }})</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="lines-header">
+            <span>Item</span>
+            <span>Quantity</span>
+            <span>Available</span>
+            <span></span>
+          </div>
+
+          <div formArrayName="lines" class="lines-list">
+            @for (line of lines.controls; track line; let i = $index) {
+            <div [formGroupName]="i" class="line-row">
+              <select class="form-select" formControlName="item_id">
+                <option [ngValue]="null" disabled>Select item</option>
+                @for (item of items(); track item.id) {
+                <option [ngValue]="item.id">{{ item.name }} ({{ item.unit }})</option>
+                }
+              </select>
+
+              <input class="form-input" type="number" step="0.01" min="0.01" formControlName="quantity" />
+              <span class="available-qty">{{ availableStock(line.controls.item_id.value) }}</span>
+
+              <button type="button" class="btn-icon" (click)="removeLine(i)" [disabled]="lines.length === 1">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" /></svg>
+              </button>
+            </div>
+            }
+          </div>
+
+          <button type="button" class="btn btn-secondary btn-sm add-line-btn" (click)="addLine()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Add Line
+          </button>
+
+          <div class="form-group notes-group">
+            <label class="form-label">Notes</label>
+            <textarea class="form-textarea" formControlName="notes" placeholder="Optional notes..."></textarea>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" [disabled]="form.invalid || isSaving()">
+              {{ isSaving() ? 'Issuing...' : 'Issue Stock' }}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Recent Issuances -->
+      <div class="table-container">
+        <div class="table-header">
+          <span class="section-label">Recent Issuances</span>
+        </div>
+        <div class="table-body">
+          @if (recentIssuances().length === 0) {
+          <div class="empty-state">
+            <div class="empty-title">No issuances yet</div>
+            <div class="empty-message">Stock issued to shifts will appear here.</div>
+          </div>
+          } @else {
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Shift</th>
+                <th>Received By</th>
+                <th>Items</th>
+                <th>Total Cost</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (issuance of recentIssuances(); track issuance.id) {
+              <tr class="clickable-row" (click)="toggleExpand(issuance)">
+                <td>{{ issuance.shift_name }}</td>
+                <td>{{ issuance.received_by_name }}</td>
+                <td>{{ issuance.item_count }}</td>
+                <td>{{ issuance.total_cost | appCurrency }}</td>
+                <td>{{ formatDate(issuance.issued_at) }}</td>
+              </tr>
+              @if (expandedIssuanceId() === issuance.id) {
+              <tr class="expanded-row">
+                <td colspan="5">
+                  <div class="expanded-items">
+                    @for (item of expandedIssuanceItems(); track item.id) {
+                    <div class="expanded-item-row">
+                      <span>{{ item.item_name }}</span>
+                      <span>{{ item.quantity }} {{ item.item_unit }}</span>
+                      <span>{{ item.total_cost | appCurrency }}</span>
+                    </div>
+                    }
+                  </div>
+                </td>
+              </tr>
+              }
+              }
+            </tbody>
+          </table>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

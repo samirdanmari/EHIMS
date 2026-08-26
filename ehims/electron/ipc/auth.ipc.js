@@ -3,35 +3,41 @@ const bcrypt = require('bcryptjs');
 
 function registerAuthIPC(db) {
     ipcMain.handle('auth:login', async (event, { username, password }) => {
-        const user = db.prepare('SELECT * FROM users WHERE username = ? AND is_active = 1').get(username);
-        
-        if (!user) {
-            throw new Error('Invalid username or password');
-        }
+        try {
+            const user = db.prepare('SELECT * FROM users WHERE username = ? AND is_active = 1').get(username);
 
-        const validPassword = bcrypt.compareSync(password, user.password_hash);
-        
-        if (!validPassword) {
-            throw new Error('Invalid username or password');
-        }
+            if (!user) {
+                return { success: false, error: 'Invalid username or password' };
+            }
 
-        const info = db.prepare('INSERT INTO sessions (user_id) VALUES (?)').run(user.id);
-        
-        const { password_hash, ...userWithoutPassword } = user;
-        
-        return {
-            user: userWithoutPassword,
-            sessionId: info.lastInsertRowid
-        };
+            const validPassword = bcrypt.compareSync(password, user.password_hash);
+
+            if (!validPassword) {
+                return { success: false, error: 'Invalid username or password' };
+            }
+
+            const info = db.prepare('INSERT INTO sessions (user_id) VALUES (?)').run(user.id);
+
+            const { password_hash, ...userWithoutPassword } = user;
+
+            return {
+                success: true,
+                user: userWithoutPassword,
+                session_id: info.lastInsertRowid
+            };
+        } catch (err) {
+            console.error('[auth:login] Error:', err.message);
+            return { success: false, error: 'Login failed due to a server error' };
+        }
     });
 
-    ipcMain.handle('auth:logout', async (event, { sessionId }) => {
-        db.prepare('UPDATE sessions SET logout_at = datetime("now", "localtime") WHERE id = ?').run(sessionId);
+    ipcMain.handle('auth:logout', async (event, { session_id }) => {
+        db.prepare('UPDATE sessions SET logout_at = datetime("now", "localtime") WHERE id = ?').run(session_id);
         return true;
     });
 
-    ipcMain.handle('auth:get-current-user', async (event, { sessionId }) => {
-        const session = db.prepare('SELECT * FROM sessions WHERE id = ? AND logout_at IS NULL').get(sessionId);
+    ipcMain.handle('auth:get-current-user', async (event, { session_id }) => {
+        const session = db.prepare('SELECT * FROM sessions WHERE id = ? AND logout_at IS NULL').get(session_id);
         
         if (!session) {
             return null;

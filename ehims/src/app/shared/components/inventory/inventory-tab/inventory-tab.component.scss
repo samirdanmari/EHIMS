@@ -1,0 +1,33 @@
+@use "../../../styles/variables" as *;
+
+.inventory-tabs {
+  display: flex;
+  gap: $space-1;
+  padding: $space-1;
+  background: $bg-secondary;
+  border: 1px solid $glass-border;
+  border-radius: $radius-lg;
+  width: fit-content;
+  margin-bottom: $space-6;
+}
+
+a {
+  padding: $space-2 $space-4;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $text-secondary;
+  text-decoration: none;
+  transition: all $transition-fast;
+  white-space: nowrap;
+
+  &:hover {
+    color: $text-primary;
+    background: $bg-hover;
+  }
+
+  &.active {
+    color: $text-primary;
+    background: $primary;
+  }
+}

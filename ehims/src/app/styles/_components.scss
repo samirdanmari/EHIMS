@@ -3,6 +3,9 @@
 // Shared styles for common UI patterns
 // ============================================================
 
+@use "variables" as *;
+@use "mixins" as *;
+
 // ------------------------------------------------------------
 // BUTTONS
 // ------------------------------------------------------------
@@ -49,8 +52,12 @@
   }
 }
 
-.btn-sm { @include button-sm(); }
-.btn-lg { @include button-lg(); }
+.btn-sm {
+  @include button-sm();
+}
+.btn-lg {
+  @include button-lg();
+}
 
 .btn-icon {
   @include button-ghost();
@@ -63,7 +70,8 @@
     background: $bg-hover;
   }
 
-  svg, .icon {
+  svg,
+  .icon {
     width: 20px;
     height: 20px;
   }
@@ -147,7 +155,7 @@
   transition: background $transition-fast;
 
   &::after {
-    content: '';
+    content: "";
     position: absolute;
     top: 2px;
     left: 2px;
@@ -215,24 +223,52 @@
   @include badge();
 }
 
-.badge-primary   { @include badge($primary-light, $primary); }
-.badge-success   { @include badge($success-light, $success); }
-.badge-warning   { @include badge($warning-light, $warning); }
-.badge-danger    { @include badge($danger-light, $danger); }
-.badge-info      { @include badge($info-light, $info); }
-.badge-neutral   { @include badge($bg-hover, $text-secondary); }
+.badge-primary {
+  @include badge($primary-light, $primary);
+}
+.badge-success {
+  @include badge($success-light, $success);
+}
+.badge-warning {
+  @include badge($warning-light, $warning);
+}
+.badge-danger {
+  @include badge($danger-light, $danger);
+}
+.badge-info {
+  @include badge($info-light, $info);
+}
+.badge-neutral {
+  @include badge($bg-hover, $text-secondary);
+}
 
 // Role badges
-.badge-admin       { @include badge($danger-light, $danger); }
-.badge-manager     { @include badge($warning-light, $warning); }
-.badge-storekeeper { @include badge($info-light, $info); }
-.badge-cashier     { @include badge($success-light, $success); }
-.badge-waiter      { @include badge($accent-light, $accent); }
+.badge-admin {
+  @include badge($danger-light, $danger);
+}
+.badge-manager {
+  @include badge($warning-light, $warning);
+}
+.badge-storekeeper {
+  @include badge($info-light, $info);
+}
+.badge-cashier {
+  @include badge($success-light, $success);
+}
+.badge-waiter {
+  @include badge($accent-light, $accent);
+}
 
 // Status badges
-.badge-active   { @include badge($success-light, $success); }
-.badge-inactive { @include badge($danger-light, $danger); }
-.badge-pending  { @include badge($warning-light, $warning); }
+.badge-active {
+  @include badge($success-light, $success);
+}
+.badge-inactive {
+  @include badge($danger-light, $danger);
+}
+.badge-pending {
+  @include badge($warning-light, $warning);
+}
 
 // ------------------------------------------------------------
 // DATA TABLE
@@ -363,14 +399,24 @@
     flex-shrink: 0;
     opacity: 0.5;
 
-    &:hover { opacity: 1; }
+    &:hover {
+      opacity: 1;
+    }
   }
 
   // Variants
-  &.toast-success { border-left: 3px solid $success; }
-  &.toast-error   { border-left: 3px solid $danger; }
-  &.toast-warning { border-left: 3px solid $warning; }
-  &.toast-info    { border-left: 3px solid $info; }
+  &.toast-success {
+    border-left: 3px solid $success;
+  }
+  &.toast-error {
+    border-left: 3px solid $danger;
+  }
+  &.toast-warning {
+    border-left: 3px solid $warning;
+  }
+  &.toast-info {
+    border-left: 3px solid $info;
+  }
 }
 
 // ------------------------------------------------------------
@@ -464,7 +510,7 @@
 }
 
 // Responsive grids
-@include respond-to('lg') {
+@include respond-to("lg") {
   .grid-auto {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   }

@@ -1,0 +1,78 @@
+@use "../../../styles/variables" as *;
+
+.summary-row {
+  margin-bottom: $space-6;
+}
+
+.summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+
+  .summary-label {
+    font-size: $font-size-sm;
+    color: $text-tertiary;
+  }
+
+  .summary-value {
+    font-family: $font-family-heading;
+    font-size: $font-size-2xl;
+    font-weight: $font-weight-bold;
+    color: $text-primary;
+  }
+
+  &.summary-warning .summary-value {
+    color: $warning;
+  }
+}
+
+.filter-group {
+  display: flex;
+  gap: $space-3;
+  align-items: center;
+
+  .form-select {
+    width: auto;
+    min-width: 160px;
+  }
+}
+
+.item-name {
+  font-weight: $font-weight-medium;
+  color: $text-primary;
+}
+
+.stock-pill {
+  display: inline-block;
+  padding: $space-1 $space-3;
+  border-radius: $radius-full;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+
+  &.stock-healthy {
+    background: $success-light;
+    color: $success;
+  }
+
+  &.stock-low {
+    background: $warning-light;
+    color: $warning;
+  }
+
+  &.stock-critical {
+    background: $danger-light;
+    color: $danger;
+  }
+}
+
+.actions-cell {
+  display: flex;
+  gap: $space-1;
+  justify-content: flex-end;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $space-4;
+}

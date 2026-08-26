@@ -1,4 +1,4 @@
-export type PaymentTerms = 'cash_on_delivery' | 'net_15' | 'net_30' | 'net_60';
+export type PaymentTerms = 'COD' | 'Net7' | 'Net14' | 'Net30' | 'Net60';
 
 export interface Supplier {
   id: number;
@@ -7,7 +7,8 @@ export interface Supplier {
   phone?: string;
   email?: string;
   address?: string;
-  payment_terms?: PaymentTerms;
+  payment_terms: PaymentTerms;
+  credit_balance: number;
   is_active: number;
   created_at: string;
   updated_at: string;
@@ -17,13 +18,11 @@ export interface Supplier {
 export interface SupplierPayment {
   id: number;
   supplier_id: number;
-  purchase_id?: number;
   amount: number;
-  payment_date: string;
-  payment_method: 'cash' | 'transfer' | 'cheque';
+  payment_method: 'cash' | 'bank_transfer' | 'cheque';
   reference_number?: string;
-  created_by: number;
-  created_at: string;
-  updated_at: string;
+  recorded_by: number;
+  payment_date: string;
+  notes?: string;
   synced: number;
 }

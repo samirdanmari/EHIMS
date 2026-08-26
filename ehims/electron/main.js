@@ -4,6 +4,9 @@ const { getDatabase } = require('./database/connection');
 const { runMigrations } = require('./database/migrations');
 const { seedDatabase } = require('./database/seed');
 const { registerAuthIPC } = require('./ipc/auth.ipc');
+const { registerInventoryIPC } = require('./ipc/inventory.ipc');
+const { registerSupplierIPC } = require('./ipc/supplier.ipc');
+const { registerMenuItemIPC } = require('./ipc/menu.ipc');
 
 let mainWindow;
 
@@ -36,6 +39,9 @@ app.whenReady().then(() => {
 
     // Register IPC Handlers
     registerAuthIPC(db);
+    registerInventoryIPC(db);
+    registerSupplierIPC(db);
+    registerMenuItemIPC(db);
 
     // Generic read-only query handler for Angular renderer
     ipcMain.handle('db:query', async (event, { sql, params = [] }) => {

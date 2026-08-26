@@ -1,0 +1,93 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Stock Audit</h2>
+      <p class="page-subtitle">Opening, purchased, issued, and closing quantities for a date range.</p>
+    </div>
+  </div>
+
+  <app-inventory-tab></app-inventory-tab>
+
+  <div class="page-content">
+    <div class="card filter-bar">
+      <div class="form-group">
+        <label class="form-label">From</label>
+        <input class="form-input" type="date" [value]="dateFrom()"
+          (change)="onDateFromChange($any($event.target).value)" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">To</label>
+        <input class="form-input" type="date" [value]="dateTo()" (change)="onDateToChange($any($event.target).value)" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select class="form-select" (change)="onCategoryChange($any($event.target).value)">
+          <option value="">All Categories</option>
+          @for (cat of categories(); track cat.id) {
+          <option [value]="cat.id">{{ cat.name }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <p class="audit-hint">
+      Closing balances reflect current stock. Opening balances are derived by reversing purchases and issuances
+      that occurred within the selected range — exact when "To" includes today, approximate for fully historical ranges.
+    </p>
+
+    <div class="grid-3 summary-row">
+      <div class="card summary-card">
+        <span class="summary-label">Items Tracked</span>
+        <span class="summary-value">{{ report().length }}</span>
+      </div>
+      <div class="card summary-card">
+        <span class="summary-label">Total Purchased</span>
+        <span class="summary-value">{{ totalPurchased() }}</span>
+      </div>
+      <div class="card summary-card" [class.summary-warning]="lowStockRows().length > 0">
+        <span class="summary-label">Low / Out of Stock</span>
+        <span class="summary-value">{{ lowStockRows().length }}</span>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <div class="table-body">
+        @if (isLoading()) {
+        <div class="empty-state">
+          <p class="empty-message">Generating audit report...</p>
+        </div>
+        } @else if (report().length === 0) {
+        <div class="empty-state">
+          <div class="empty-title">No items to audit</div>
+          <div class="empty-message">Add inventory items to see audit data here.</div>
+        </div>
+        } @else {
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Category</th>
+              <th>Opening</th>
+              <th>Purchased</th>
+              <th>Issued</th>
+              <th>Closing</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of report(); track row.item_id) {
+            <tr [class]="rowClass(row)">
+              <td class="item-name">{{ row.name }}</td>
+              <td>{{ row.category_name || '—' }}</td>
+              <td>{{ row.opening }} {{ row.unit }}</td>
+              <td class="positive">+{{ row.purchased }} {{ row.unit }}</td>
+              <td class="negative">−{{ row.issued }} {{ row.unit }}</td>
+              <td class="closing-value">{{ row.closing }} {{ row.unit }}</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+        }
+      </div>
+    </div>
+  </div>
+</div>

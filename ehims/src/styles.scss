@@ -4,17 +4,19 @@
 // ============================================================
 
 // Design system partials (order matters)
-@use 'app/styles/variables' as *;
-@use 'app/styles/mixins' as *;
-@use 'app/styles/typography';
-@use 'app/styles/animations';
-@use 'app/styles/components';
+@use "app/styles/variables" as *;
+@use "app/styles/mixins" as *;
+@use "app/styles/typography";
+@use "app/styles/animations";
+@use "app/styles/components";
 
 // ============================================================
 // CSS RESET & BASE STYLES
 // ============================================================
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -34,7 +36,9 @@ body {
 }
 
 // Disable user selection on interactive elements (desktop app feel)
-button, a, label {
+button,
+a,
+label {
   user-select: none;
   -webkit-user-select: none;
 }
@@ -63,7 +67,8 @@ img {
 }
 
 // List resets
-ul, ol {
+ul,
+ol {
   list-style: none;
 }
 

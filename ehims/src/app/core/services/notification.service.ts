@@ -6,10 +6,11 @@ export interface Notification {
   title: string;
   message: string;
   duration?: number;
+  dismissing?: boolean;
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class NotificationService {
   public notifications = signal<Notification[]>([]);
@@ -17,8 +18,8 @@ export class NotificationService {
   private add(notification: Omit<Notification, 'id'>) {
     const id = Math.random().toString(36).substring(2, 9);
     const newNotification: Notification = { ...notification, id };
-    
-    this.notifications.update(current => [...current, newNotification]);
+
+    this.notifications.update((current) => [...current, newNotification]);
 
     const duration = notification.duration ?? 5000;
     if (duration > 0) {
@@ -45,6 +46,6 @@ export class NotificationService {
   }
 
   dismiss(id: string) {
-    this.notifications.update(current => current.filter(n => n.id !== id));
+    this.notifications.update((current) => current.filter((n) => n.id !== id));
   }
 }
