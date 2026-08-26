@@ -1,5 +1,5 @@
-@use '../../../styles/variables' as *;
-@use '../../../styles/mixins' as *;
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
 
 .auth-layout {
   min-height: 100vh;
@@ -44,7 +44,7 @@
     left: -150px;
     animation-duration: 25s;
   }
-  
+
   &:nth-child(2) {
     width: 400px;
     height: 400px;
@@ -53,7 +53,7 @@
     animation-duration: 30s;
     background: rgba(59, 130, 246, 0.05);
   }
-  
+
   &:nth-child(3) {
     width: 200px;
     height: 200px;
@@ -61,7 +61,7 @@
     left: 20%;
     animation-duration: 20s;
   }
-  
+
   &:nth-child(4) {
     width: 150px;
     height: 150px;
@@ -70,7 +70,7 @@
     animation-duration: 15s;
     background: rgba(139, 92, 246, 0.03);
   }
-  
+
   &:nth-child(5) {
     width: 250px;
     height: 250px;

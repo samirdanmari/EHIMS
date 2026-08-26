@@ -1,0 +1,55 @@
+@use "../../../styles/variables" as *;
+
+.item-name {
+  font-weight: $font-weight-medium;
+  color: $text-primary;
+}
+
+.stock-badge {
+  display: inline-block;
+  padding: $space-1 $space-3;
+  border-radius: $radius-full;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  background: $success-light;
+  color: $success;
+
+  &.low-stock {
+    background: $warning-light;
+    color: $warning;
+  }
+}
+
+.status-badge {
+  display: inline-block;
+  padding: $space-1 $space-3;
+  border-radius: $radius-full;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  background: $danger-light;
+  color: $danger;
+
+  &.active {
+    background: $success-light;
+    color: $success;
+  }
+}
+
+.actions-cell {
+  display: flex;
+  gap: $space-1;
+  justify-content: flex-end;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $space-4;
+}
+
+.form-hint {
+  margin-top: $space-1;
+  font-size: $font-size-xs;
+  color: $text-tertiary;
+  font-style: italic;
+}

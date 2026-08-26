@@ -1,0 +1,162 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Order History</h2>
+      <p class="page-subtitle">View and manage completed orders, receipts, and refunds.</p>
+    </div>
+  </div>
+
+  <app-pos-tabs></app-pos-tabs>
+
+  <div class="page-content">
+    <div class="filters-row">
+      <div class="filter-group">
+        <label class="filter-label">Shift</label>
+        <select class="form-select" (change)="onShiftChange($any($event.target).value)">
+          <option value="">All Shifts</option>
+          @for (s of activeShifts(); track s.id) {
+          <option [value]="s.id">{{ s.shift_name }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label class="filter-label">Status</label>
+        <select class="form-select" (change)="onStatusChange($any($event.target).value)">
+          <option value="completed">Completed</option>
+          <option value="pending">Pending</option>
+          <option value="voided">Voided</option>
+          <option value="all">All Orders</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <div class="table-body">
+        @if (isLoading()) {
+        <div class="empty-state">
+          <p class="empty-message">Loading orders...</p>
+        </div>
+        } @else if (orders().length === 0) {
+        <div class="empty-state">
+          <div class="empty-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+          </div>
+          <div class="empty-title">No orders found</div>
+          <div class="empty-message">Orders will appear here once they are completed.</div>
+        </div>
+        } @else {
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Order #</th>
+              <th>Shift</th>
+              <th>Cashier</th>
+              <th>Total</th>
+              <th>Status</th>
+              <th>Time</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (order of orders(); track order.id) {
+            <tr class="clickable-row" (click)="toggleExpand(order)">
+              <td class="expander-cell">
+                <svg [class.expanded]="expandedOrderId() === order.id" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </td>
+              <td class="order-number">{{ order.order_number }}</td>
+              <td>{{ order.shift_name || '—' }}</td>
+              <td>{{ order.cashier_name || '—' }}</td>
+              <td class="amount">{{ order.total_amount | appCurrency }}</td>
+              <td>
+                <span class="status-badge" [class]="'status-' + order.status">
+                  {{ order.status | titlecase }}
+                </span>
+              </td>
+              <td class="time">{{ formatDate(order.created_at) }}</td>
+              <td class="actions-cell">
+                @if (order.status !== 'voided') {
+                <button class="btn-icon" data-tooltip="Void order"
+                  (click)="$event.stopPropagation(); onVoidOrder(order)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18" />
+                    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                  </svg>
+                </button>
+                }
+              </td>
+            </tr>
+
+            @if (expandedOrderId() === order.id) {
+            <tr class="expanded-row">
+              <td colspan="8">
+                <div class="order-details">
+                  <div class="details-header">
+                    <h4>Order Details</h4>
+                  </div>
+                  <div class="details-content">
+                    <div class="detail-row">
+                      <span>Order Number</span>
+                      <span>{{ order.order_number }}</span>
+                    </div>
+                    <div class="detail-row">
+                      <span>Subtotal</span>
+                      <span>{{ order.subtotal | appCurrency }}</span>
+                    </div>
+                    @if (order.discount_amount > 0) {
+                    <div class="detail-row discount">
+                      <span>Discount</span>
+                      <span>−{{ order.discount_amount | appCurrency }}</span>
+                    </div>
+                    }
+                    @if (order.tax_amount > 0) {
+                    <div class="detail-row">
+                      <span>Tax</span>
+                      <span>{{ order.tax_amount | appCurrency }}</span>
+                    </div>
+                    }
+                    <div class="detail-row total">
+                      <span>Total</span>
+                      <span>{{ order.total_amount | appCurrency }}</span>
+                    </div>
+                    <div class="detail-row">
+                      <span>Payment Method</span>
+                      <span>{{ order.payment_method | titlecase }}</span>
+                    </div>
+                    <div class="detail-row">
+                      <span>Items</span>
+                      <span>{{ order.item_count || 0 }} item(s)</span>
+                    </div>
+                    @if (order.table_number) {
+                    <div class="detail-row">
+                      <span>Table</span>
+                      <span>{{ order.table_number }}</span>
+                    </div>
+                    }
+                  </div>
+                </div>
+              </td>
+            </tr>
+            }
+            }
+          </tbody>
+        </table>
+        }
+      </div>
+
+      <div class="table-footer">
+        <span>{{ orders().length }} order(s)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<app-confirm-dialog></app-confirm-dialog>

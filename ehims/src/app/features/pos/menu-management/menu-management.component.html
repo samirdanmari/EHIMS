@@ -1,0 +1,181 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Menu Management</h2>
+      <p class="page-subtitle">Create and manage menu items with pricing and inventory links.</p>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-primary" (click)="openCreateModal()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        New Item
+      </button>
+    </div>
+  </div>
+
+  <app-pos-tabs></app-pos-tabs>
+
+  <div class="page-content">
+    <div class="table-container">
+      <div class="table-header">
+        <div class="search-wrapper">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input class="search-input" type="text" placeholder="Search menu items..." [value]="searchTerm()"
+            (input)="onSearchChange($any($event.target).value)" />
+        </div>
+      </div>
+
+      <div class="table-body">
+        @if (isLoading()) {
+        <div class="empty-state">
+          <p class="empty-message">Loading menu items...</p>
+        </div>
+        } @else if (filteredItems().length === 0) {
+        <div class="empty-state">
+          <div class="empty-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+          </div>
+          <div class="empty-title">No menu items found</div>
+          <div class="empty-message">Add your first menu item to get started.</div>
+          <button class="btn btn-primary" (click)="openCreateModal()">New Item</button>
+        </div>
+        } @else {
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Item Name</th>
+              <th>Price</th>
+              <th>Linked Inventory</th>
+              <th>Stock</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of filteredItems(); track item.id) {
+            <tr>
+              <td class="item-name">{{ item.name }}</td>
+              <td>{{ item.selling_price | appCurrency }}</td>
+              <td>{{ item.inventory_name || '—' }}</td>
+              <td>
+                @if (item.current_stock !== undefined) {
+                <span class="stock-badge" [class.low-stock]="item.current_stock && item.current_stock <= 3">
+                  {{ item.current_stock }}
+                </span>
+                } @else {
+                <span class="stock-badge">—</span>
+                }
+              </td>
+              <td>
+                <span class="status-badge" [class.active]="item.is_available === 1">
+                  {{ item.is_available === 1 ? 'Available' : 'Inactive' }}
+                </span>
+              </td>
+              <td class="actions-cell">
+                <button class="btn-icon" data-tooltip="Edit" (click)="openEditModal(item)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                </button>
+                <button class="btn-icon" data-tooltip="Deactivate" (click)="onDeactivate(item)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18" />
+                    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                  </svg>
+                </button>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+        }
+      </div>
+
+      <div class="table-footer">
+        <span>{{ filteredItems().length }} item(s)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create / Edit Modal -->
+@if (isModalOpen()) {
+<div class="modal-overlay" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>{{ editingItem() ? 'Edit Menu Item' : 'New Menu Item' }}</h3>
+      <button class="btn-icon" (click)="closeModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" /></svg>
+      </button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Item Name</label>
+          <input class="form-input" type="text" formControlName="name" placeholder="e.g. Grilled Chicken Breast" />
+          @if (form.controls.name.invalid && form.controls.name.touched) {
+          <span class="form-error">Item name is required</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Selling Price (NGN)</label>
+          <input class="form-input" type="number" step="1" min="1" formControlName="selling_price" />
+          @if (form.controls.selling_price.invalid && form.controls.selling_price.touched) {
+          <span class="form-error">Price must be greater than 0</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select class="form-select" formControlName="category_id">
+            <option [ngValue]="null">Uncategorized</option>
+            @for (cat of categories(); track cat.id) {
+            <option [ngValue]="cat.id">{{ cat.name }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Link to Inventory Item</label>
+          <select class="form-select" formControlName="inventory_item_id">
+            <option [ngValue]="null">Not linked to inventory</option>
+            @for (inv of inventoryItems(); track inv.id) {
+            <option [ngValue]="inv.id">{{ inv.name }} ({{ inv.unit }})</option>
+            }
+          </select>
+          <p class="form-hint">Link menu items to inventory for automatic stock deduction when orders are completed.</p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-textarea" formControlName="description"
+            placeholder="e.g. Herb-marinated chicken breast with fresh lemon..."></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="form.invalid || isSaving()">
+          {{ isSaving() ? 'Saving...' : (editingItem() ? 'Save Changes' : 'Create Item') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+}
+
+<app-confirm-dialog></app-confirm-dialog>

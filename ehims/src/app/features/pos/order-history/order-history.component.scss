@@ -1,0 +1,171 @@
+@use "../../../styles/variables" as *;
+
+.filters-row {
+  display: flex;
+  gap: $space-4;
+  margin-bottom: $space-6;
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+
+    .filter-label {
+      font-size: $font-size-xs;
+      font-weight: $font-weight-medium;
+      color: $text-secondary;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .form-select {
+      width: 200px;
+    }
+  }
+}
+
+.expander-cell {
+  width: 40px;
+  text-align: center;
+  cursor: pointer;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    color: $text-tertiary;
+    transition: transform $transition-fast;
+
+    &.expanded {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+.clickable-row {
+  cursor: pointer;
+
+  &:hover {
+    background: $bg-hover;
+  }
+}
+
+.order-number {
+  font-family: $font-family-heading;
+  font-weight: $font-weight-semibold;
+  color: $primary;
+}
+
+.amount {
+  font-weight: $font-weight-semibold;
+  color: $primary;
+}
+
+.time {
+  font-size: $font-size-sm;
+  color: $text-secondary;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: $space-1 $space-3;
+  border-radius: $radius-full;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+
+  &.status-completed {
+    background: $success-light;
+    color: $success;
+  }
+
+  &.status-pending {
+    background: $warning-light;
+    color: $warning;
+  }
+
+  &.status-voided {
+    background: $danger-light;
+    color: $danger;
+  }
+
+  &.status-preparing,
+  &.status-served {
+    background: $info-light;
+    color: $info;
+  }
+}
+
+.actions-cell {
+  display: flex;
+  justify-content: flex-end;
+  gap: $space-1;
+}
+
+.expanded-row {
+  background: $bg-tertiary;
+
+  td {
+    padding: 0 !important;
+  }
+}
+
+.order-details {
+  padding: $space-4;
+
+  .details-header {
+    margin-bottom: $space-3;
+
+    h4 {
+      margin: 0;
+      font-size: $font-size-base;
+      font-weight: $font-weight-semibold;
+      color: $text-primary;
+    }
+  }
+
+  .details-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: $space-3;
+  }
+
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: $font-size-sm;
+    padding: $space-2;
+    background: $bg-primary;
+    border-radius: $radius-sm;
+
+    &:first-child {
+      grid-column: 1;
+    }
+
+    span:first-child {
+      color: $text-secondary;
+      font-weight: $font-weight-medium;
+    }
+
+    span:last-child {
+      color: $text-primary;
+      font-weight: $font-weight-medium;
+    }
+
+    &.discount {
+      span:last-child {
+        color: $warning;
+      }
+    }
+
+    &.total {
+      grid-column: 1 / -1;
+      font-size: $font-size-base;
+      background: $bg-secondary;
+      font-weight: $font-weight-bold;
+
+      span:last-child {
+        color: $primary;
+        font-size: $font-size-lg;
+      }
+    }
+  }
+}

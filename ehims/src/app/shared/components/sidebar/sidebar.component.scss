@@ -1,5 +1,5 @@
-@use '../../../../styles/variables' as *;
-@use '../../../../styles/mixins' as *;
+@use "../../../styles/variables" as *;
+@use "../../../styles/mixins" as *;
 
 .sidebar {
   display: flex;
@@ -94,7 +94,7 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    
+
     svg {
       width: 20px;
       height: 20px;
@@ -118,7 +118,7 @@
     font-weight: 600;
 
     &::before {
-      content: '';
+      content: "";
       position: absolute;
       left: 0;
       top: 0;
