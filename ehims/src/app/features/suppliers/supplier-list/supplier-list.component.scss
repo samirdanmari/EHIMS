@@ -1,0 +1,48 @@
+@use "../../../styles/variables" as *;
+
+.supplier-name {
+  font-weight: $font-weight-medium;
+  color: $text-primary;
+}
+
+.credit-balance {
+  font-weight: $font-weight-semibold;
+  color: $primary;
+}
+
+.badge {
+  display: inline-block;
+  padding: $space-1 $space-3;
+  background: $info-light;
+  color: $info;
+  border-radius: $radius-full;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: $space-1 $space-3;
+  border-radius: $radius-full;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  background: $danger-light;
+  color: $danger;
+
+  &.active {
+    background: $success-light;
+    color: $success;
+  }
+}
+
+.actions-cell {
+  display: flex;
+  gap: $space-1;
+  justify-content: flex-end;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $space-4;
+}

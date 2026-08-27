@@ -1,0 +1,137 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <button class="btn-back" (click)="goBack()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="19" y1="12" x2="5" y2="12" />
+          <polyline points="12 19 5 12 12 5" />
+        </svg>
+        Back to Users
+      </button>
+      @if (user()) {
+      <h2 class="page-title">{{ user()?.display_name }}</h2>
+      <p class="page-subtitle">{{ '@' + (user()?.username || '') }}</p>
+      }
+    </div>
+  </div>
+
+  <div class="page-content">
+    @if (isLoading()) {
+    <p>Loading user details...</p>
+    } @else if (user()) {
+    <div class="detail-grid">
+      <!-- User Information -->
+      <div class="card">
+        <div class="card-header">
+          <h3>User Information</h3>
+        </div>
+        <form [formGroup]="form" (ngSubmit)="onSubmit()">
+          <div class="form-group">
+            <label class="form-label">Display Name</label>
+            <input class="form-input" type="text" formControlName="display_name" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Role</label>
+            <select class="form-select" formControlName="role">
+              @for (role of roles(); track role.name) {
+              <option [value]="role.name">{{ role.label }}</option>
+              }
+            </select>
+            <p class="role-hint">{{ getRoleDescription(form.get('role')?.value) }}</p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <div class="info-box">
+              <span class="status-badge" [class.active]="user()?.is_active === 1">
+                {{ user()?.is_active === 1 ? 'Active' : 'Inactive' }}
+              </span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Created</label>
+            <div class="info-box">
+              {{ user()?.created_at | date: 'medium' }}
+            </div>
+          </div>
+
+          @if (user()?.last_login) {
+          <div class="form-group">
+            <label class="form-label">Last Login</label>
+            <div class="info-box">
+              {{ user()?.last_login | date: 'medium' }}
+            </div>
+          </div>
+          }
+
+          <button type="submit" class="btn btn-primary" [disabled]="form.invalid || isSaving()">
+            {{ isSaving() ? 'Saving...' : 'Save Changes' }}
+          </button>
+        </form>
+      </div>
+
+      <!-- Reset Password -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Reset Password</h3>
+          <p class="card-subtitle">Set a new password for this user</p>
+        </div>
+        <form [formGroup]="resetPasswordForm" (ngSubmit)="onResetPassword()">
+          <div class="form-group">
+            <label class="form-label">New Password *</label>
+            <input class="form-input" type="password" formControlName="new_password" placeholder="••••••••" />
+            @if (resetPasswordForm.controls.new_password.invalid && resetPasswordForm.controls.new_password.touched) {
+            <span class="form-error">Password must be at least 6 characters</span>
+            }
+          </div>
+
+          <div class="warning-box">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+            </svg>
+            <div>
+              <strong>Warning:</strong> Resetting the password will require the user to log in again with the new
+              password.
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-warning" [disabled]="resetPasswordForm.invalid || isResettingPassword()">
+            {{ isResettingPassword() ? 'Resetting...' : 'Reset Password' }}
+          </button>
+        </form>
+      </div>
+
+      <!-- Activity Log -->
+      <div class="card full-width">
+        <div class="card-header">
+          <h3>Login History</h3>
+        </div>
+        @if (activity().length > 0) {
+        <div class="activity-list">
+          @for (item of activity(); track $index) {
+          <div class="activity-item">
+            <div class="activity-time">
+              {{ item.login_at | date: 'medium' }}
+            </div>
+            <div class="activity-detail">
+              Logged in
+              @if (item.logout_at) {
+              — Logged out {{ item.logout_at | date: 'short' }}
+              }
+            </div>
+          </div>
+          }
+        </div>
+        } @else {
+        <p class="empty-message">No login history yet</p>
+        }
+      </div>
+    </div>
+    }
+  </div>
+</div>
+
+<app-confirm-dialog></app-confirm-dialog>

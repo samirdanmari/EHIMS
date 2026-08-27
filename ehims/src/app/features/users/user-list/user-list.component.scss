@@ -1,0 +1,74 @@
+@use "../../../styles/variables" as *;
+
+.user-name {
+  font-weight: $font-weight-medium;
+  color: $text-primary;
+}
+
+.username {
+  font-family: "Courier New", monospace;
+  font-size: $font-size-sm;
+  color: $text-tertiary;
+}
+
+.role-badge {
+  display: inline-block;
+  padding: $space-1 $space-3;
+  border-radius: $radius-full;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  background: $info-light;
+  color: $info;
+
+  &.role-admin {
+    background: $danger-light;
+    color: $danger;
+  }
+
+  &.role-manager {
+    background: $warning-light;
+    color: $warning;
+  }
+
+  &.role-storekeeper {
+    background: $info-light;
+    color: $info;
+  }
+
+  &.role-cashier {
+    background: $success-light;
+    color: $success;
+  }
+
+  &.role-waiter {
+    background: $primary-light;
+    color: $primary;
+  }
+}
+
+.last-login {
+  font-size: $font-size-sm;
+  color: $text-secondary;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: $space-1 $space-3;
+  border-radius: $radius-full;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  background: $danger-light;
+  color: $danger;
+
+  &.active {
+    background: $success-light;
+    color: $success;
+  }
+}
+
+.role-description {
+  margin-top: $space-2;
+  font-size: $font-size-xs;
+  color: $text-secondary;
+  font-style: italic;
+}

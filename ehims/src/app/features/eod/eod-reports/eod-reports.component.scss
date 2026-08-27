@@ -1,0 +1,169 @@
+@use "../../../styles/variables" as *;
+
+.filters-row {
+  margin-bottom: $space-6;
+
+  .date-range {
+    display: flex;
+    gap: $space-4;
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: $space-1;
+
+      .form-label {
+        font-size: $font-size-xs;
+        font-weight: $font-weight-medium;
+        color: $text-secondary;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+      }
+
+      .form-input {
+        width: 200px;
+        padding: $space-2 $space-3;
+        background: $bg-secondary;
+        border: 1px solid $glass-border;
+        border-radius: $radius-md;
+        font-size: $font-size-sm;
+        color: $text-primary;
+
+        &:focus {
+          outline: none;
+          border-color: $primary;
+        }
+      }
+    }
+  }
+}
+
+.expander-cell {
+  width: 40px;
+  text-align: center;
+  cursor: pointer;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    color: $text-tertiary;
+    transition: transform $transition-fast;
+
+    &.expanded {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+.clickable-row {
+  cursor: pointer;
+
+  &:hover {
+    background: $bg-hover;
+  }
+}
+
+.date {
+  font-weight: $font-weight-medium;
+  color: $text-primary;
+}
+
+.amount {
+  font-weight: $font-weight-semibold;
+  color: $primary;
+}
+
+.count {
+  text-align: center;
+  font-weight: $font-weight-medium;
+}
+
+.profit {
+  font-weight: $font-weight-semibold;
+  color: $success;
+
+  &.negative {
+    color: $danger;
+  }
+}
+
+.user {
+  font-size: $font-size-sm;
+  color: $text-secondary;
+}
+
+.expanded-row {
+  background: $bg-tertiary;
+
+  td {
+    padding: 0 !important;
+  }
+}
+
+.report-details {
+  padding: $space-4;
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: $space-3;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $space-2;
+  background: $bg-primary;
+  border-radius: $radius-sm;
+  font-size: $font-size-sm;
+
+  .label {
+    color: $text-secondary;
+    font-weight: $font-weight-medium;
+  }
+
+  .value {
+    font-weight: $font-weight-semibold;
+    color: $primary;
+
+    &.negative {
+      color: $danger;
+    }
+
+    &.profit {
+      color: $success;
+    }
+  }
+}
+
+.low-stock-notice {
+  padding: $space-3;
+  background: $warning-light;
+  color: $warning;
+  border-radius: $radius-sm;
+  font-size: $font-size-sm;
+
+  strong {
+    font-weight: $font-weight-semibold;
+  }
+}
+
+.notes {
+  padding: $space-3;
+  background: $bg-primary;
+  border-left: 3px solid $primary;
+  border-radius: $radius-sm;
+  font-size: $font-size-sm;
+  color: $text-primary;
+
+  strong {
+    color: $primary;
+    display: block;
+    margin-bottom: $space-1;
+  }
+}

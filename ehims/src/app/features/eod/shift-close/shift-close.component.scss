@@ -1,0 +1,141 @@
+@use "../../../styles/variables" as *;
+@use "../../../styles/mixins" as *;
+
+.shift-close-card,
+.eod-report-card {
+  background: $bg-secondary;
+  border: 1px solid $glass-border;
+  border-radius: $radius-lg;
+  padding: $space-6;
+}
+
+.eod-report-card {
+  .report-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: $space-6;
+    padding-bottom: $space-4;
+    border-bottom: 1px solid $glass-border;
+
+    h3 {
+      margin: 0;
+      font-size: $font-size-lg;
+      font-weight: $font-weight-semibold;
+      color: $text-primary;
+    }
+
+    .report-date {
+      font-size: $font-size-sm;
+      color: $text-secondary;
+    }
+  }
+
+  .report-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: $space-6;
+    margin-bottom: $space-6;
+  }
+
+  .report-section {
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+
+    h4 {
+      margin: 0;
+      font-size: $font-size-base;
+      font-weight: $font-weight-semibold;
+      color: $text-primary;
+    }
+
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: $space-2;
+      background: $bg-primary;
+      border-radius: $radius-sm;
+      font-size: $font-size-sm;
+
+      .label {
+        color: $text-secondary;
+        font-weight: $font-weight-medium;
+      }
+
+      .value {
+        font-weight: $font-weight-semibold;
+        color: $primary;
+
+        &.negative {
+          color: $danger;
+        }
+
+        &.profit {
+          color: $success;
+        }
+
+        &.warning {
+          color: $warning;
+        }
+      }
+
+      &.total {
+        background: $bg-hover;
+        border: 1px solid $glass-border;
+        font-weight: $font-weight-bold;
+
+        .value {
+          font-size: $font-size-lg;
+        }
+      }
+    }
+  }
+
+  .report-actions {
+    display: flex;
+    gap: $space-3;
+    justify-content: center;
+    padding-top: $space-4;
+    border-top: 1px solid $glass-border;
+  }
+}
+
+.shift-close-card {
+  max-width: 600px;
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $space-4;
+  }
+
+  .form-actions {
+    margin-top: $space-6;
+    display: flex;
+    gap: $space-3;
+
+    .btn-lg {
+      flex: 1;
+      padding: $space-4;
+      font-size: $font-size-base;
+      font-weight: $font-weight-semibold;
+    }
+
+    .btn-success {
+      background: $success;
+      color: white;
+
+      &:hover:not(:disabled) {
+        background: scale-color($success, $lightness: -10%);
+      }
+
+      &:disabled {
+        background: $text-tertiary;
+        cursor: not-allowed;
+        opacity: 0.5;
+      }
+    }
+  }
+}

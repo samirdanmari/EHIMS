@@ -1,0 +1,152 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Close Shift & Generate EOD Report</h2>
+      <p class="page-subtitle">Finalize the shift, record cash variance, and generate end-of-day financial summary.</p>
+    </div>
+  </div>
+
+  <div class="page-content">
+    @if (isLoading()) {
+    <div class="empty-state">
+      <p class="empty-message">Loading shifts...</p>
+    </div>
+    } @else if (closeResult()) {
+    <!-- EOD Report Display -->
+    <div class="eod-report-card">
+      <div class="report-header">
+        <h3>End-of-Shift Report</h3>
+        <span class="report-date">{{ closeResult()?.date | date: 'mediumDate' }}</span>
+      </div>
+
+      <div class="report-grid">
+        <div class="report-section">
+          <h4>Sales Summary</h4>
+          <div class="metric">
+            <span class="label">Total Sales</span>
+            <span class="value">{{ closeResult()?.totalSales | appCurrency }}</span>
+          </div>
+          <div class="metric">
+            <span class="label">Total Orders</span>
+            <span class="value">{{ closeResult()?.totalOrders }}</span>
+          </div>
+          <div class="metric">
+            <span class="label">Discounts</span>
+            <span class="value negative">−{{ closeResult()?.totalDiscounts | appCurrency }}</span>
+          </div>
+          <div class="metric">
+            <span class="label">Voids</span>
+            <span class="value negative">−{{ closeResult()?.totalVoids | appCurrency }}</span>
+          </div>
+        </div>
+
+        <div class="report-section">
+          <h4>Payment Methods</h4>
+          <div class="metric">
+            <span class="label">Cash Collected</span>
+            <span class="value">{{ closeResult()?.cashCollected | appCurrency }}</span>
+          </div>
+          <div class="metric">
+            <span class="label">Card Collected</span>
+            <span class="value">{{ closeResult()?.cardCollected | appCurrency }}</span>
+          </div>
+          <div class="metric">
+            <span class="label">Transfer Collected</span>
+            <span class="value">{{ closeResult()?.transferCollected | appCurrency }}</span>
+          </div>
+        </div>
+
+        <div class="report-section">
+          <h4>Financial</h4>
+          <div class="metric">
+            <span class="label">Cost of Goods Sold</span>
+            <span class="value">{{ closeResult()?.totalCOGS | appCurrency }}</span>
+          </div>
+          <div class="metric">
+            <span class="label">Gross Profit</span>
+            <span class="value profit">{{ closeResult()?.grossProfit | appCurrency }}</span>
+          </div>
+          <div class="metric total">
+            <span class="label">Net Profit</span>
+            <span class="value">{{ closeResult()?.netProfit | appCurrency }}</span>
+          </div>
+        </div>
+
+        <div class="report-section">
+          <h4>Cash Reconciliation</h4>
+          <div class="metric">
+            <span class="label">Drawer Cash</span>
+            <span class="value">{{ closeResult()?.cashCollected | appCurrency }}</span>
+          </div>
+          <div class="metric">
+            <span class="label">Variance</span>
+            <span class="value" [class.warning]="(closeResult()?.variance ?? 0) !== 0">
+              {{ (closeResult()?.variance ?? 0) > 0 ? '+' : '' }}{{ closeResult()?.variance | appCurrency }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="report-actions">
+        <button class="btn btn-primary" (click)="resetForm()">Close Another Shift</button>
+      </div>
+    </div>
+    } @else {
+    <!-- Close Shift Form -->
+    <div class="shift-close-card">
+      <form [formGroup]="form" (ngSubmit)="onCloseShift()">
+        <div class="form-group">
+          <label class="form-label">Select Shift</label>
+          <select class="form-select" formControlName="shift_id">
+            <option [ngValue]="null" disabled>Select an active shift</option>
+            @for (s of activeShifts(); track s.id) {
+            <option [ngValue]="s.id">{{ s.shift_name }} — {{ s.user_name }}</option>
+            }
+          </select>
+          @if (form.controls.shift_id.invalid && form.controls.shift_id.touched) {
+          <span class="form-error">Shift is required</span>
+          }
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Drawer Cash (NGN)</label>
+            <input class="form-input" type="number" step="1" min="0" formControlName="drawer_cash" placeholder="0" />
+            @if (form.controls.drawer_cash.invalid && form.controls.drawer_cash.touched) {
+            <span class="form-error">Cash amount is required</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Expected Cash (NGN)</label>
+            <input class="form-input" type="number" step="1" min="0" formControlName="expected_cash" placeholder="0" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">
+              <input type="checkbox" formControlName="stock_verified" />
+              Stock verified during handover
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Notes</label>
+          <textarea class="form-textarea" formControlName="notes"
+            placeholder="Any notes about the shift or reconciliation..."></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-success btn-lg" [disabled]="form.invalid || isProcessing()">
+            {{ isProcessing() ? 'Closing Shift...' : 'Close Shift & Generate Report' }}
+          </button>
+        </div>
+      </form>
+    </div>
+    }
+  </div>
+</div>
+
+<app-confirm-dialog></app-confirm-dialog>

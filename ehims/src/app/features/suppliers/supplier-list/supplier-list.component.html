@@ -1,0 +1,174 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Suppliers</h2>
+      <p class="page-subtitle">Manage supplier contacts, payment terms, and credit balances.</p>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-primary" (click)="openCreateModal()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        New Supplier
+      </button>
+    </div>
+  </div>
+
+  <div class="page-content">
+    <div class="table-container">
+      <div class="table-header">
+        <div class="search-wrapper">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input class="search-input" type="text" placeholder="Search suppliers..." [value]="searchTerm()"
+            (input)="onSearchChange($any($event.target).value)" />
+        </div>
+      </div>
+
+      <div class="table-body">
+        @if (isLoading()) {
+        <div class="empty-state">
+          <p class="empty-message">Loading suppliers...</p>
+        </div>
+        } @else if (filteredSuppliers().length === 0) {
+        <div class="empty-state">
+          <div class="empty-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" /></svg>
+          </div>
+          <div class="empty-title">No suppliers found</div>
+          <div class="empty-message">Add your first supplier to get started.</div>
+          <button class="btn btn-primary" (click)="openCreateModal()">New Supplier</button>
+        </div>
+        } @else {
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Supplier Name</th>
+              <th>Contact</th>
+              <th>Phone</th>
+              <th>Payment Terms</th>
+              <th>Credit Balance</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (supplier of filteredSuppliers(); track supplier.id) {
+            <tr>
+              <td class="supplier-name">{{ supplier.name }}</td>
+              <td>{{ supplier.contact_person || '—' }}</td>
+              <td>{{ supplier.phone || '—' }}</td>
+              <td><span class="badge">{{ supplier.payment_terms }}</span></td>
+              <td class="credit-balance">{{ supplier.credit_balance | appCurrency }}</td>
+              <td>
+                <span class="status-badge" [class.active]="supplier.is_active === 1">
+                  {{ supplier.is_active === 1 ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td class="actions-cell">
+                <button class="btn-icon" data-tooltip="Edit" (click)="openEditModal(supplier)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                </button>
+                @if (supplier.is_active === 1) {
+                <button class="btn-icon" data-tooltip="Deactivate" (click)="onDeactivate(supplier)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18" />
+                    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                  </svg>
+                </button>
+                }
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+        }
+      </div>
+
+      <div class="table-footer">
+        <span>{{ filteredSuppliers().length }} supplier(s)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create / Edit Modal -->
+@if (isModalOpen()) {
+<div class="modal-overlay" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>{{ editingSupplier() ? 'Edit Supplier' : 'New Supplier' }}</h3>
+      <button class="btn-icon" (click)="closeModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" /></svg>
+      </button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Supplier Name *</label>
+          <input class="form-input" type="text" formControlName="name" placeholder="e.g. Fresh Foods Ltd" />
+          @if (form.controls.name.invalid && form.controls.name.touched) {
+          <span class="form-error">Name is required</span>
+          }
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Contact Person</label>
+            <input class="form-input" type="text" formControlName="contact_person" placeholder="e.g. John Smith" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Phone</label>
+            <input class="form-input" type="tel" formControlName="phone" placeholder="+234..." />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input class="form-input" type="email" formControlName="email" placeholder="supplier@example.com" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Payment Terms</label>
+            <select class="form-select" formControlName="payment_terms">
+              <option value="COD">Cash on Delivery</option>
+              <option value="Net7">Net 7</option>
+              <option value="Net14">Net 14</option>
+              <option value="Net30">Net 30</option>
+              <option value="Net60">Net 60</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Address</label>
+          <textarea class="form-textarea" formControlName="address" placeholder="123 Business Ave, City..."></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="form.invalid || isSaving()">
+          {{ isSaving() ? 'Saving...' : (editingSupplier() ? 'Save Changes' : 'Create Supplier') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+}
+
+<app-confirm-dialog></app-confirm-dialog>

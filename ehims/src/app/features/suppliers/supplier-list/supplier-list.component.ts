@@ -1,41 +1,168 @@
-import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, OnInit, inject, signal, ViewChild } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import {
+  ReactiveFormsModule,
+  FormGroup,
+  FormControl,
+  Validators,
+} from '@angular/forms';
+import { SupplierService } from '../services/supplier.service';
+import { NotificationService } from '../../../core/services/notification.service';
+import { Supplier } from '../../../core/models/supplier.model';
+import { CurrencyPipe } from '../../../shared/pipes/currency.pipe';
+import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-supplier-list',
   standalone: true,
-  imports: [RouterLink],
-  template: `
-    <div class="coming-soon-page">
-      <div class="coming-soon-content animate-fadeInUp">
-        <div class="module-icon">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
-            <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
-          </svg>
-        </div>
-        <h2>Supplier Accounts Payable</h2>
-        <p>The Suppliers module arrives in Phase 4. Manage supplier profiles, credit ledgers, payment disbursements, and full transaction history.</p>
-        <div class="feature-list">
-          <div class="feature-item">👥 Supplier Directory</div>
-          <div class="feature-item">📋 Credit Ledger Integration</div>
-          <div class="feature-item">💰 Payment Processing</div>
-          <div class="feature-item">📜 Transaction History</div>
-        </div>
-        <a routerLink="/dashboard" class="btn btn-primary">← Back to Dashboard</a>
-      </div>
-    </div>
-  `,
-  styles: [`
-    .coming-soon-page { height: 100%; display: flex; align-items: center; justify-content: center; padding: 2rem; }
-    .coming-soon-content { text-align: center; max-width: 500px; }
-    .module-icon { width: 96px; height: 96px; background: rgba(139,92,246,0.12); border-radius: 24px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: #8b5cf6; animation: pulse 3s ease-in-out infinite; }
-    h2 { font-size: 1.5rem; color: #f0f1f5; margin-bottom: 0.75rem; font-family: 'Outfit', sans-serif; }
-    p { color: #a0a4b8; line-height: 1.6; margin-bottom: 1.5rem; }
-    .feature-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 2rem; }
-    .feature-item { background: rgba(34,38,57,0.8); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 0.625rem 1rem; color: #a0a4b8; font-size: 0.875rem; text-align: left; }
-    .btn-primary { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.625rem 1.25rem; background: #8b5cf6; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.875rem; font-weight: 500; text-decoration: none; transition: all 0.2s; }
-    .btn-primary:hover { background: #7c3aed; transform: translateY(-1px); }
-  `]
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    CurrencyPipe,
+    ConfirmDialogComponent,
+  ],
+  templateUrl: './supplier-list.component.html',
+  styleUrls: ['./supplier-list.component.scss'],
 })
-export class SupplierListComponent {}
+export class SupplierListComponent implements OnInit {
+  private supplierService = inject(SupplierService);
+  private notificationService = inject(NotificationService);
+
+  @ViewChild(ConfirmDialogComponent) confirmDialog!: ConfirmDialogComponent;
+
+  isLoading = signal(true);
+  isSaving = signal(false);
+  suppliers = signal<Supplier[]>([]);
+  filteredSuppliers = signal<Supplier[]>([]);
+
+  searchTerm = signal('');
+  isModalOpen = signal(false);
+  editingSupplier = signal<Supplier | null>(null);
+
+  form = new FormGroup({
+    name: new FormControl('', {
+      validators: [Validators.required],
+      nonNullable: true,
+    }),
+    contact_person: new FormControl(''),
+    phone: new FormControl(''),
+    email: new FormControl(''),
+    address: new FormControl(''),
+    payment_terms: new FormControl('Net30'),
+  });
+
+  async ngOnInit() {
+    await this.loadSuppliers();
+    this.isLoading.set(false);
+  }
+
+  async loadSuppliers() {
+    const res = await this.supplierService.listSuppliers({
+      includeInactive: true,
+    });
+    if (res.success) {
+      this.suppliers.set(res.suppliers);
+      this.applySearch();
+    }
+  }
+
+  applySearch() {
+    const search = this.searchTerm().toLowerCase();
+    this.filteredSuppliers.set(
+      this.suppliers().filter((s) => s.name.toLowerCase().includes(search)),
+    );
+  }
+
+  onSearchChange(value: string) {
+    this.searchTerm.set(value);
+    this.applySearch();
+  }
+
+  openCreateModal() {
+    this.editingSupplier.set(null);
+    this.form.reset({
+      name: '',
+      contact_person: '',
+      phone: '',
+      email: '',
+      address: '',
+      payment_terms: 'Net30',
+    });
+    this.isModalOpen.set(true);
+  }
+
+  openEditModal(supplier: Supplier) {
+    this.editingSupplier.set(supplier);
+    this.form.reset({
+      name: supplier.name,
+      contact_person: supplier.contact_person,
+      phone: supplier.phone,
+      email: supplier.email,
+      address: supplier.address,
+      payment_terms: supplier.payment_terms,
+    });
+    this.isModalOpen.set(true);
+  }
+
+  closeModal() {
+    this.isModalOpen.set(false);
+  }
+
+  async onSubmit() {
+    if (this.form.invalid || this.isSaving()) return;
+    this.isSaving.set(true);
+    try {
+      const value = this.form.getRawValue();
+      const editing = this.editingSupplier();
+
+      if (editing) {
+        const res = await this.supplierService.updateSupplier({
+          id: editing.id,
+          ...value,
+        });
+        if (res.success) {
+          this.notificationService.success(
+            'Supplier updated',
+            `${value.name} has been updated.`,
+          );
+          this.closeModal();
+          await this.loadSuppliers();
+        } else {
+          this.notificationService.error('Update failed', res.error);
+        }
+      } else {
+        const res = await this.supplierService.createSupplier(value);
+        if (res.success) {
+          this.notificationService.success(
+            'Supplier created',
+            `${value.name} has been added.`,
+          );
+          this.closeModal();
+          await this.loadSuppliers();
+        } else {
+          this.notificationService.error('Create failed', res.error);
+        }
+      }
+    } finally {
+      this.isSaving.set(false);
+    }
+  }
+
+  async onDeactivate(supplier: Supplier) {
+    const confirmed = await this.confirmDialog.open({
+      title: 'Deactivate supplier?',
+      message: `"${supplier.name}" will be hidden but their purchase history will be preserved.`,
+      confirmText: 'Deactivate',
+      type: 'danger',
+    });
+    if (!confirmed) return;
+
+    const res = await this.supplierService.deactivateSupplier(supplier.id);
+    if (res.success) {
+      this.notificationService.success('Supplier deactivated', supplier.name);
+      await this.loadSuppliers();
+    } else {
+      this.notificationService.error('Action failed', res.error);
+    }
+  }
+}
