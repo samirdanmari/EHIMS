@@ -118,7 +118,12 @@ export class SupplierListComponent implements OnInit {
       if (editing) {
         const res = await this.supplierService.updateSupplier({
           id: editing.id,
-          ...value,
+          name: value.name,
+          contact_person: value.contact_person || undefined,
+          phone: value.phone || undefined,
+          email: value.email || undefined,
+          address: value.address || undefined,
+          payment_terms: (value.payment_terms as any) || undefined,
         });
         if (res.success) {
           this.notificationService.success(
@@ -128,10 +133,20 @@ export class SupplierListComponent implements OnInit {
           this.closeModal();
           await this.loadSuppliers();
         } else {
-          this.notificationService.error('Update failed', res.error);
+          this.notificationService.error(
+            'Update failed',
+            res.error || 'Could not update',
+          );
         }
       } else {
-        const res = await this.supplierService.createSupplier(value);
+        const res = await this.supplierService.createSupplier({
+          name: value.name,
+          contact_person: value.contact_person || undefined,
+          phone: value.phone || undefined,
+          email: value.email || undefined,
+          address: value.address || undefined,
+          payment_terms: (value.payment_terms as any) || undefined,
+        });
         if (res.success) {
           this.notificationService.success(
             'Supplier created',
@@ -140,7 +155,10 @@ export class SupplierListComponent implements OnInit {
           this.closeModal();
           await this.loadSuppliers();
         } else {
-          this.notificationService.error('Create failed', res.error);
+          this.notificationService.error(
+            'Create failed',
+            res.error || 'Could not create',
+          );
         }
       }
     } finally {
@@ -162,7 +180,10 @@ export class SupplierListComponent implements OnInit {
       this.notificationService.success('Supplier deactivated', supplier.name);
       await this.loadSuppliers();
     } else {
-      this.notificationService.error('Action failed', res.error);
+      this.notificationService.error(
+        'Action failed',
+        res.error || 'Could not deactivate',
+      );
     }
   }
 }
