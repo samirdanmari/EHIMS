@@ -1,0 +1,141 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Sales Report</h2>
+      <p class="page-subtitle">Detailed sales metrics and trends analysis.</p>
+    </div>
+  </div>
+
+  <div class="page-content">
+    <!-- Date Range Filter -->
+    <div class="filters-card">
+      <form [formGroup]="form" class="filters-row">
+        <div class="form-group">
+          <label class="form-label">From</label>
+          <input class="form-input" type="date" formControlName="dateFrom" (change)="onFilterChange()" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">To</label>
+          <input class="form-input" type="date" formControlName="dateTo" (change)="onFilterChange()" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Period</label>
+          <div class="period-selector">
+            <button [class.active]="selectedPeriod() === 'daily'" (click)="changePeriod('daily')"
+              type="button">Daily</button>
+            <button [class.active]="selectedPeriod() === 'weekly'" (click)="changePeriod('weekly')"
+              type="button">Weekly</button>
+            <button [class.active]="selectedPeriod() === 'monthly'" (click)="changePeriod('monthly')"
+              type="button">Monthly</button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    @if (isLoading()) {
+    <div class="empty-state">
+      <p>Loading sales data...</p>
+    </div>
+    } @else {
+    <!-- Key Metrics -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-label">Total Sales</div>
+        <div class="metric-value">{{ getTotalSales() | appCurrency }}</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-label">Total Orders</div>
+        <div class="metric-value">{{ getTotalOrders() }}</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-label">Average Order Value</div>
+        <div class="metric-value">{{ getAverageOrderValue() | appCurrency }}</div>
+      </div>
+    </div>
+
+    <!-- Sales Table -->
+    <div class="table-container">
+      <div class="table-header">
+        <h3>Sales Breakdown by
+          {{ selectedPeriod() === 'daily' ? 'Date' : selectedPeriod() === 'weekly' ? 'Week' : 'Month' }}</h3>
+      </div>
+
+      @if (salesMetrics().length > 0) {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>{{ selectedPeriod() === 'daily' ? 'Date' : selectedPeriod() === 'weekly' ? 'Week' : 'Month' }}</th>
+            <th>Orders</th>
+            <th>Sales</th>
+            <th>Discounts</th>
+            <th>Voids</th>
+            <th>Net Sales</th>
+            <th>Cash</th>
+            <th>Card</th>
+            <th>Transfer</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (metric of salesMetrics(); track metric.date) {
+          <tr>
+            <td class="date">{{ metric.date | date: 'mediumDate' }}</td>
+            <td class="count">{{ metric.total_orders }}</td>
+            <td class="amount">{{ metric.total_sales | appCurrency }}</td>
+            <td class="amount negative">-{{ metric.total_discounts | appCurrency }}</td>
+            <td class="amount negative">-{{ metric.total_voids | appCurrency }}</td>
+            <td class="amount emphasis">{{ metric.net_sales | appCurrency }}</td>
+            <td class="amount">{{ metric.cash_collected | appCurrency }}</td>
+            <td class="amount">{{ metric.card_collected | appCurrency }}</td>
+            <td class="amount">{{ metric.transfer_collected | appCurrency }}</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+      } @else {
+      <div class="empty-message">
+        <p>No sales data available for the selected period.</p>
+      </div>
+      }
+    </div>
+
+    <!-- Trends -->
+    <div class="table-container">
+      <div class="table-header">
+        <h3>Sales Trends</h3>
+      </div>
+
+      @if (salesTrends().length > 0) {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Period</th>
+            <th>Sales</th>
+            <th>Orders</th>
+            <th>Avg Order Value</th>
+            <th>Growth</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (trend of salesTrends(); track trend.period) {
+          <tr>
+            <td class="date">{{ trend.period }}</td>
+            <td class="amount">{{ trend.sales | appCurrency }}</td>
+            <td class="count">{{ trend.orders }}</td>
+            <td class="amount">{{ trend.average_order_value | appCurrency }}</td>
+            <td class="growth" [class.positive]="(trend.growth_percent || 0) > 0"
+              [class.negative]="(trend.growth_percent || 0) < 0">
+              @if ((trend.growth_percent || 0) > 0) {
+              ↑ {{ trend.growth_percent }}%
+              } @else if ((trend.growth_percent || 0) < 0) { ↓ {{ -trend.growth_percent }}% } @else { — } </td> </tr> }
+                </tbody> </table> } @else { <div class="empty-message">
+                <p>No trend data available.</p>
+    </div>
+    }
+  </div>
+  }
+</div>
+</div>

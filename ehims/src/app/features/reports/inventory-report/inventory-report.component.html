@@ -1,0 +1,121 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Inventory Report</h2>
+      <p class="page-subtitle">Stock movement and valuation analysis.</p>
+    </div>
+  </div>
+
+  <div class="page-content">
+    <!-- Alerts Summary -->
+    <div class="alerts-summary">
+      <div class="alert-badge critical">
+        <span class="badge-number">{{ getCriticalItems() }}</span>
+        <span class="badge-label">Critical Stock</span>
+      </div>
+      <div class="alert-badge warning">
+        <span class="badge-number">{{ getWarningItems() }}</span>
+        <span class="badge-label">Low Stock</span>
+      </div>
+      <div class="alert-badge info">
+        <span class="badge-number">{{ totalValuation() | appCurrency }}</span>
+        <span class="badge-label">Total Valuation</span>
+      </div>
+    </div>
+
+    <!-- Date Range Filter -->
+    <div class="filters-card">
+      <form [formGroup]="form" class="filters-row">
+        <div class="form-group">
+          <label class="form-label">From</label>
+          <input class="form-input" type="date" formControlName="dateFrom" (change)="onFilterChange()" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">To</label>
+          <input class="form-input" type="date" formControlName="dateTo" (change)="onFilterChange()" />
+        </div>
+      </form>
+    </div>
+
+    @if (isLoading()) {
+      <div class="empty-state">
+        <p>Loading inventory data...</p>
+      </div>
+    } @else {
+      <!-- Stock Alerts -->
+      @if (showAlerts() && alerts().length > 0) {
+        <div class="table-container">
+          <div class="table-header">
+            <h3>Stock Alerts</h3>
+          </div>
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Item Name</th>
+                <th>Current Stock</th>
+                <th>Threshold</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (alert of alerts(); track alert.item_id) {
+                <tr [class]="'status-' + alert.status">
+                  <td class="item-name">{{ alert.item_name }}</td>
+                  <td class="stock">{{ alert.current_stock }}</td>
+                  <td class="threshold">{{ alert.low_stock_threshold }}</td>
+                  <td class="status-cell">
+                    <span class="status-badge" [class]="alert.status">
+                      {{ alert.status === 'critical' ? '🔴 Critical' : alert.status === 'warning' ? '🟡 Warning' : '🟢 OK' }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      <!-- Inventory Movement -->
+      <div class="table-container">
+        <div class="table-header">
+          <h3>Inventory Movement</h3>
+        </div>
+
+        @if (inventory().length > 0) {
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Item Name</th>
+                <th>Category</th>
+                <th>Opening</th>
+                <th>Purchases</th>
+                <th>Issued</th>
+                <th>Closing</th>
+                <th>Valuation</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of inventory(); track item.item_id) {
+                <tr>
+                  <td class="item-name">{{ item.item_name }}</td>
+                  <td class="category">{{ item.category }}</td>
+                  <td class="number">{{ item.opening_stock }}</td>
+                  <td class="number positive">+{{ item.purchases }}</td>
+                  <td class="number negative">-{{ item.issued }}</td>
+                  <td class="number emphasis">{{ item.closing_stock }}</td>
+                  <td class="amount">{{ item.valuation | appCurrency }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        } @else {
+          <div class="empty-message">
+            <p>No inventory data available for the selected period.</p>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

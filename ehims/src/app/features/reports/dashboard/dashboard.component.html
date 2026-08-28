@@ -1,0 +1,112 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Reports & Analytics Dashboard</h2>
+      <p class="page-subtitle">Real-time insights into your business performance.</p>
+    </div>
+  </div>
+
+  <div class="page-content">
+    @if (isLoading()) {
+    <div class="loading-state">
+      <p>Loading dashboard...</p>
+    </div>
+    } @else if (summary()) {
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Today's Sales</div>
+        <div class="kpi-value">{{ summary()?.today_sales | appCurrency }}</div>
+        <div class="kpi-meta">{{ summary()?.today_orders }} orders</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">This Week</div>
+        <div class="kpi-value">{{ summary()?.this_week_sales | appCurrency }}</div>
+        <div class="kpi-meta">7-day total</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">This Month</div>
+        <div class="kpi-value">{{ summary()?.this_month_sales | appCurrency }}</div>
+        <div class="kpi-meta">30-day total</div>
+      </div>
+
+      <div class="kpi-card alert">
+        <div class="kpi-label">Low Stock Items</div>
+        <div class="kpi-value">{{ summary()?.low_stock_items }}</div>
+        <div class="kpi-meta">Need reordering</div>
+      </div>
+
+      <div class="kpi-card alert">
+        <div class="kpi-label">Pending Payments</div>
+        <div class="kpi-value">{{ summary()?.pending_supplier_payments }}</div>
+        <div class="kpi-meta">Supplier credits</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">Quick Access</div>
+        <div class="quick-links">
+          <a href="#sales">Sales Report</a>
+          <a href="#inventory">Inventory Report</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="reports-grid">
+      <div class="report-card">
+        <div class="report-header">
+          <h3>Top Selling Items</h3>
+        </div>
+        @if (summary()?.top_selling_items && summary()?.top_selling_items.length > 0) {
+        <div class="items-list">
+          @for (item of summary()?.top_selling_items; track $index) {
+          <div class="item-row">
+            <div class="item-info">
+              <span class="item-name">{{ item.name }}</span>
+              <span class="item-qty">{{ item.quantity }} sold</span>
+            </div>
+            <span class="item-sales">{{ item.sales | appCurrency }}</span>
+          </div>
+          }
+        </div>
+        } @else {
+        <p class="empty-message">No sales today</p>
+        }
+      </div>
+
+      <div class="report-card">
+        <div class="report-header">
+          <h3>Top Staff Performance</h3>
+        </div>
+        @if (summary()?.top_staff && summary()?.top_staff.length > 0) {
+        <div class="staff-list">
+          @for (staff of summary()?.top_staff; track $index) {
+          <div class="staff-row">
+            <div class="staff-info">
+              <span class="staff-name">{{ staff.name }}</span>
+              <span class="staff-orders">{{ staff.orders }} orders</span>
+            </div>
+            <span class="staff-sales">{{ staff.sales | appCurrency }}</span>
+          </div>
+          }
+        </div>
+        } @else {
+        <p class="empty-message">No orders today</p>
+        }
+      </div>
+    </div>
+
+    <div class="actions-section">
+      <div class="action-group">
+        <h3>Reports</h3>
+        <div class="action-buttons">
+          <button class="action-btn">Sales Report</button>
+          <button class="action-btn">Inventory Report</button>
+          <button class="action-btn">Staff Analytics</button>
+          <button class="action-btn">P&L Statement</button>
+        </div>
+      </div>
+    </div>
+    }
+  </div>
+</div>

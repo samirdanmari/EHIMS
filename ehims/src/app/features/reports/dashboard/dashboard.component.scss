@@ -1,0 +1,215 @@
+@use "../../../styles/variables" as *;
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: $space-4;
+  margin-bottom: $space-8;
+}
+
+.kpi-card {
+  background: linear-gradient(
+    135deg,
+    $bg-secondary 0%,
+    rgba(59, 130, 246, 0.05) 100%
+  );
+  border: 1px solid $glass-border;
+  border-radius: $radius-lg;
+  padding: $space-5;
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+
+  &.alert {
+    background: linear-gradient(
+      135deg,
+      $warning-light 0%,
+      rgba(249, 115, 22, 0.05) 100%
+    );
+    border-color: $warning;
+
+    .kpi-value {
+      color: $warning;
+    }
+  }
+
+  .kpi-label {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $text-secondary;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .kpi-value {
+    font-size: $font-size-2xl;
+    font-weight: $font-weight-bold;
+    color: $primary;
+  }
+
+  .kpi-meta {
+    font-size: $font-size-xs;
+    color: $text-tertiary;
+  }
+
+  .quick-links {
+    display: flex;
+    flex-direction: column;
+    gap: $space-2;
+
+    a {
+      display: inline-block;
+      padding: $space-2 $space-3;
+      background: $primary;
+      color: white;
+      border-radius: $radius-md;
+      font-size: $font-size-sm;
+      font-weight: $font-weight-medium;
+      text-decoration: none;
+      text-align: center;
+      transition: all $transition-fast;
+
+      &:hover {
+        background: darken($primary, 10%);
+        transform: translateY(-2px);
+      }
+    }
+  }
+}
+
+.reports-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: $space-6;
+  margin-bottom: $space-8;
+}
+
+.report-card {
+  background: $bg-secondary;
+  border: 1px solid $glass-border;
+  border-radius: $radius-lg;
+  padding: $space-6;
+
+  .report-header {
+    margin-bottom: $space-4;
+    padding-bottom: $space-3;
+    border-bottom: 1px solid $glass-border;
+
+    h3 {
+      margin: 0;
+      font-size: $font-size-lg;
+      font-weight: $font-weight-semibold;
+      color: $text-primary;
+    }
+  }
+}
+
+.items-list,
+.staff-list {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+}
+
+.item-row,
+.staff-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $space-3;
+  background: $bg-primary;
+  border-radius: $radius-md;
+
+  .item-info,
+  .staff-info {
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+
+    span:first-child {
+      font-weight: $font-weight-medium;
+      color: $text-primary;
+    }
+
+    span:last-child {
+      font-size: $font-size-xs;
+      color: $text-secondary;
+    }
+  }
+
+  .item-sales,
+  .staff-sales {
+    font-weight: $font-weight-semibold;
+    color: $primary;
+  }
+}
+
+.empty-message {
+  text-align: center;
+  padding: $space-8;
+  color: $text-secondary;
+  font-size: $font-size-sm;
+}
+
+.actions-section {
+  margin-top: $space-8;
+}
+
+.action-group {
+  background: $bg-secondary;
+  border: 1px solid $glass-border;
+  border-radius: $radius-lg;
+  padding: $space-6;
+
+  h3 {
+    margin: 0 0 $space-4 0;
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $text-primary;
+  }
+}
+
+.action-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: $space-4;
+}
+
+.action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-2;
+  padding: $space-4;
+  background: $bg-primary;
+  border: 1px solid $glass-border;
+  border-radius: $radius-md;
+  cursor: pointer;
+  transition: all $transition-fast;
+  font-weight: $font-weight-medium;
+  color: $text-primary;
+
+  svg {
+    width: 24px;
+    height: 24px;
+    color: $primary;
+  }
+
+  &:hover {
+    background: $primary;
+    color: white;
+    border-color: $primary;
+
+    svg {
+      color: white;
+    }
+  }
+}
+
+.loading-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  color: $text-secondary;
+}
