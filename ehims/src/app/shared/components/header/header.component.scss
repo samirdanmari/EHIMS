@@ -1,5 +1,5 @@
-@use '../../../../styles/variables' as *;
-@use '../../../../styles/mixins' as *;
+@use "../../../styles/variables" as *;
+@use "../../../styles/mixins" as *;
 
 .header {
   height: 64px;
@@ -109,13 +109,13 @@
 
   .dropdown-header {
     padding: 8px 16px;
-    
+
     .name {
       font-size: 14px;
       font-weight: 600;
       color: var(--text-primary, #1e293b);
     }
-    
+
     .role {
       font-size: 12px;
       color: var(--text-secondary, #64748b);
@@ -155,7 +155,7 @@
 
     &.danger {
       color: var(--danger-color, #ef4444);
-      
+
       svg {
         color: var(--danger-color, #ef4444);
       }
