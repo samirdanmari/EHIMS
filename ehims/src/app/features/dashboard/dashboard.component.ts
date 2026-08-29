@@ -10,7 +10,7 @@ import { CurrencyPipe } from '../../shared/pipes/currency.pipe';
   standalone: true,
   imports: [RouterLink, StatCardComponent, CurrencyPipe],
   templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.scss']
+  styleUrls: ['./dashboard.component.scss'],
 })
 export class DashboardComponent implements OnInit {
   authService = inject(AuthService);
@@ -37,27 +37,28 @@ export class DashboardComponent implements OnInit {
   async loadDashboardData() {
     this.isLoading.set(true);
     try {
-      const [sales, activeOrds, lowStock, menuItems, recent] = await Promise.all([
-        this.electronService.invoke<any>('db:query', {
-          sql: `SELECT COALESCE(SUM(total_amount), 0) as value FROM orders
-                WHERE date(created_at) = date('now', 'localtime') AND status != 'voided'`
-        }),
-        this.electronService.invoke<any>('db:query', {
-          sql: `SELECT COUNT(*) as value FROM orders WHERE status IN ('pending','confirmed','preparing')`
-        }),
-        this.electronService.invoke<any>('db:query', {
-          sql: `SELECT COUNT(*) as value FROM inventory_items
-                WHERE current_stock <= low_stock_threshold AND is_active = 1`
-        }),
-        this.electronService.invoke<any>('db:query', {
-          sql: `SELECT COUNT(*) as value FROM menu_items WHERE is_available = 1`
-        }),
-        this.electronService.invoke<any>('db:query', {
-          sql: `SELECT o.*, u.display_name as cashier_name FROM orders o
+      const [sales, activeOrds, lowStock, menuItems, recent] =
+        await Promise.all([
+          this.electronService.invoke<any>('db:query', {
+            sql: `SELECT COALESCE(SUM(total_amount), 0) as value FROM orders
+                WHERE date(created_at) = date('now', 'localtime') AND status != 'voided'`,
+          }),
+          this.electronService.invoke<any>('db:query', {
+            sql: `SELECT COUNT(*) as value FROM orders WHERE status IN ('pending','confirmed','preparing')`,
+          }),
+          this.electronService.invoke<any>('db:query', {
+            sql: `SELECT COUNT(*) as value FROM inventory_items
+                WHERE current_stock <= low_stock_threshold AND is_active = 1`,
+          }),
+          this.electronService.invoke<any>('db:query', {
+            sql: `SELECT COUNT(*) as value FROM menu_items WHERE is_available = 1`,
+          }),
+          this.electronService.invoke<any>('db:query', {
+            sql: `SELECT o.*, u.display_name as cashier_name FROM orders o
                 LEFT JOIN users u ON o.cashier_id = u.id
-                ORDER BY o.created_at DESC LIMIT 8`
-        }),
-      ]);
+                ORDER BY o.created_at DESC LIMIT 8`,
+          }),
+        ]);
 
       this.todaySales.set(sales?.rows?.[0]?.value ?? 0);
       this.activeOrders.set(activeOrds?.rows?.[0]?.value ?? 0);
@@ -84,6 +85,9 @@ export class DashboardComponent implements OnInit {
   }
 
   formatTime(dateStr: string): string {
-    return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return new Date(dateStr).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   }
 }

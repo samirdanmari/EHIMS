@@ -126,12 +126,12 @@
             <td class="amount">{{ trend.sales | appCurrency }}</td>
             <td class="count">{{ trend.orders }}</td>
             <td class="amount">{{ trend.average_order_value | appCurrency }}</td>
-            <td class="growth" [class.positive]="(trend.growth_percent || 0) > 0"
-              [class.negative]="(trend.growth_percent || 0) < 0">
-              @if ((trend.growth_percent || 0) > 0) {
-              ↑ {{ trend.growth_percent }}%
-              } @else if ((trend.growth_percent || 0) < 0) { ↓ {{ -trend.growth_percent }}% } @else { — } </td> </tr> }
-                </tbody> </table> } @else { <div class="empty-message">
+            <td class="growth" [class.positive]="(trend?.growth_percent ?? 0) > 0"
+              [class.negative]="(trend?.growth_percent ?? 0) < 0">
+              @if ((trend?.growth_percent ?? 0) > 0) {
+              ↑ {{ trend?.growth_percent }}%
+              } @else if ((trend?.growth_percent ?? 0) < 0) { ↓ {{ -(trend?.growth_percent ?? 0) }}% } @else { — } </td>
+                </tr> } </tbody> </table> } @else { <div class="empty-message">
                 <p>No trend data available.</p>
     </div>
     }
