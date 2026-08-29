@@ -8,4 +8,11 @@ export const SUPPLIER_ROUTES: Routes = [
         (m) => m.SupplierListComponent,
       ),
   },
+  {
+    path: ':id',
+    loadComponent: () =>
+      import('./supplier-detail/supplier-detail.component').then(
+        (m) => m.SupplierDetailComponent,
+      ),
+  },
 ];

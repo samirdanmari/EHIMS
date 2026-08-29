@@ -63,8 +63,9 @@ export class UserListComponent implements OnInit {
     const currentUser = this.authService.currentUser();
     this.currentUserId.set(currentUser?.id || null);
 
-    await this.loadUsers();
+    // Load roles first so they're available when modal opens
     await this.loadRoles();
+    await this.loadUsers();
     this.isLoading.set(false);
   }
 
@@ -78,8 +79,37 @@ export class UserListComponent implements OnInit {
 
   async loadRoles() {
     const res = await this.usersService.listRoles();
-    if (res.success) {
+    if (res.success && res.roles.length > 0) {
       this.roles.set(res.roles);
+    } else {
+      // Fallback roles if service fails
+      this.roles.set([
+        {
+          name: 'admin',
+          label: 'Administrator',
+          description: 'Full system access',
+        },
+        {
+          name: 'manager',
+          label: 'Manager',
+          description: 'Manage inventory, suppliers, users',
+        },
+        {
+          name: 'storekeeper',
+          label: 'Store Keeper',
+          description: 'Manage inventory and stock',
+        },
+        {
+          name: 'cashier',
+          label: 'Cashier',
+          description: 'Process orders and payments',
+        },
+        {
+          name: 'waiter',
+          label: 'Waiter',
+          description: 'View menu and place orders',
+        },
+      ]);
     }
   }
 

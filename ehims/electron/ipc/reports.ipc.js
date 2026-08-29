@@ -387,3 +387,101 @@ function registerReportsIPC(db) {
 }
 
 module.exports = { registerReportsIPC };
+  // ---------------------------------------------------------
+  // PURCHASE REPORT
+  // ---------------------------------------------------------
+  ipcMain.handle('reports:purchase-report', async (event, { status = 'all', dateFrom, dateTo } = {}) => {
+    try {
+      let sql = `
+        SELECT 
+          pe.id,
+          pe.purchase_date,
+          s.name as supplier_name,
+          s.account_number,
+          pe.total_cost,
+          COALESCE(SUM(sp.amount), 0) as total_paid,
+          pe.total_cost - COALESCE(SUM(sp.amount), 0) as outstanding,
+          CASE 
+            WHEN pe.total_cost - COALESCE(SUM(sp.amount), 0) = 0 THEN 'paid'
+            ELSE 'credit'
+          END as credit_status
+        FROM purchase_entries pe
+        JOIN suppliers s ON pe.supplier_id = s.id
+        LEFT JOIN supplier_payments sp ON s.id = sp.supplier_id
+      `;
+      const params = [];
+
+      sql += ` WHERE 1=1`;
+
+      if (dateFrom) {
+        sql += ` AND DATE(pe.purchase_date) >= ?`;
+        params.push(dateFrom);
+      }
+      if (dateTo) {
+        sql += ` AND DATE(pe.purchase_date) <= ?`;
+        params.push(dateTo);
+      }
+
+      if (status === 'credit') {
+        sql += ` AND (pe.total_cost - COALESCE(SUM(sp.amount), 0)) > 0`;
+      } else if (status === 'paid') {
+        sql += ` AND (pe.total_cost - COALESCE(SUM(sp.amount), 0)) = 0`;
+      }
+
+      sql += ` GROUP BY pe.id ORDER BY pe.purchase_date DESC`;
+
+      const rows = db.prepare(sql).all(...params);
+      return { success: true, data: rows };
+    } catch (err) {
+      console.error('[reports:purchase-report] Error:', err.message);
+      return { success: false, error: err.message, data: [] };
+    }
+  });
+
+  // ---------------------------------------------------------
+  // STOCK ISSUANCE REPORT
+  // ---------------------------------------------------------
+  ipcMain.handle('reports:stock-issuance-report', async (event, { shiftId, dateFrom, dateTo } = {}) => {
+    try {
+      let sql = `
+        SELECT 
+          si.id,
+          si.created_at,
+          s.shift_name,
+          u.display_name as issued_by,
+          GROUP_CONCAT(i.name || ' (Qty: ' || sii.quantity || ')', ', ') as items,
+          COUNT(DISTINCT sii.id) as item_count,
+          SUM(sii.total_cost) as total_cost
+        FROM stock_issuances si
+        LEFT JOIN shifts s ON si.shift_id = s.id
+        LEFT JOIN users u ON si.issued_by = u.id
+        LEFT JOIN stock_issuance_items sii ON si.id = sii.issuance_id
+        LEFT JOIN inventory_items i ON sii.item_id = i.id
+        WHERE 1=1
+      `;
+      const params = [];
+
+      if (shiftId) {
+        sql += ` AND si.shift_id = ?`;
+        params.push(shiftId);
+      }
+      if (dateFrom) {
+        sql += ` AND DATE(si.created_at) >= ?`;
+        params.push(dateFrom);
+      }
+      if (dateTo) {
+        sql += ` AND DATE(si.created_at) <= ?`;
+        params.push(dateTo);
+      }
+
+      sql += ` GROUP BY si.id ORDER BY si.created_at DESC`;
+
+      const rows = db.prepare(sql).all(...params);
+      return { success: true, data: rows };
+    } catch (err) {
+      console.error('[reports:stock-issuance-report] Error:', err.message);
+      return { success: false, error: err.message, data: [] };
+    }
+  });
+}
+module.exports = { registerReportsIPC };

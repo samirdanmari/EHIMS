@@ -1,0 +1,385 @@
+@use "../../../styles/variables" as *;
+
+.page-actions {
+  display: flex;
+  gap: $space-3;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: $space-4;
+  margin-bottom: $space-6;
+}
+
+.summary-card {
+  background: $bg-secondary;
+  border: 1px solid $glass-border;
+  border-radius: $radius-lg;
+  padding: $space-4;
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+
+  .label {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    color: $text-secondary;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .value {
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    color: $text-primary;
+    word-break: break-word;
+  }
+}
+
+.financial-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: $space-4;
+  margin-bottom: $space-6;
+}
+
+.financial-card {
+  background: linear-gradient(
+    135deg,
+    $primary-light 0%,
+    rgba(59, 130, 246, 0.05) 100%
+  );
+  border: 1px solid $glass-border;
+  border-radius: $radius-lg;
+  padding: $space-6;
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+
+  .label {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $text-secondary;
+  }
+
+  .amount {
+    font-size: $font-size-2xl;
+    font-weight: $font-weight-bold;
+    color: $primary;
+
+    &.success {
+      color: $success;
+    }
+
+    &.alert {
+      color: $warning;
+    }
+  }
+}
+
+.tabs-container {
+  background: $bg-secondary;
+  border: 1px solid $glass-border;
+  border-radius: $radius-lg;
+  overflow: hidden;
+
+  .tabs-header {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid $glass-border;
+    background: $bg-primary;
+  }
+
+  .tab-button {
+    flex: 1;
+    padding: $space-4;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $text-secondary;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+
+    &:hover {
+      color: $text-primary;
+      background: $bg-hover;
+    }
+
+    &.active {
+      color: $primary;
+      border-bottom-color: $primary;
+    }
+  }
+}
+
+.tabs-content {
+  padding: $space-6;
+}
+
+.tab-pane {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.info-section {
+  margin-bottom: $space-6;
+
+  h3 {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-bold;
+    color: $text-primary;
+    margin: 0 0 $space-4 0;
+  }
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: $space-4;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $space-3;
+  background: $bg-hover;
+  border-radius: $radius-md;
+  border: 1px solid $glass-border;
+
+  .label {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $text-secondary;
+  }
+
+  .value {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $text-primary;
+  }
+}
+
+.financial-details {
+  background: $bg-hover;
+  border: 1px solid $glass-border;
+  border-radius: $radius-lg;
+  padding: $space-6;
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: $space-2 0;
+    border-bottom: 1px solid $glass-border;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    span {
+      font-size: $font-size-sm;
+      color: $text-secondary;
+    }
+
+    strong {
+      font-size: $font-size-base;
+      font-weight: $font-weight-bold;
+      color: $text-primary;
+
+      &.amount {
+        color: $primary;
+      }
+    }
+  }
+}
+
+.table-container {
+  background: $bg-primary;
+  border: 1px solid $glass-border;
+  border-radius: $radius-lg;
+  overflow-x: auto;
+  margin-bottom: $space-6;
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+
+    thead {
+      background: $bg-hover;
+      border-bottom: 1px solid $glass-border;
+    }
+
+    th {
+      padding: $space-3;
+      text-align: left;
+      font-size: $font-size-xs;
+      font-weight: $font-weight-semibold;
+      color: $text-primary;
+    }
+
+    td {
+      padding: $space-3;
+      border-bottom: 1px solid $glass-border;
+      font-size: $font-size-sm;
+      color: $text-primary;
+
+      &.date {
+        font-weight: $font-weight-medium;
+      }
+
+      &.items {
+        color: $text-secondary;
+        font-size: $font-size-xs;
+      }
+
+      &.amount {
+        font-weight: $font-weight-bold;
+        color: $primary;
+      }
+
+      &.method {
+        .method-badge {
+          display: inline-block;
+          padding: $space-1 $space-2;
+          background: $info-light;
+          color: $info;
+          border-radius: $radius-full;
+          font-size: $font-size-xs;
+          font-weight: $font-weight-semibold;
+          text-transform: capitalize;
+        }
+      }
+
+      &.notes {
+        color: $text-secondary;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+
+    tbody tr:hover {
+      background: $bg-hover;
+    }
+  }
+}
+
+.payment-actions {
+  margin-bottom: $space-6;
+}
+
+.payment-form {
+  background: $bg-hover;
+  border: 2px solid $primary;
+  border-radius: $radius-lg;
+  padding: $space-6;
+  margin-bottom: $space-6;
+
+  h4 {
+    font-size: $font-size-base;
+    font-weight: $font-weight-bold;
+    color: $text-primary;
+    margin: 0 0 $space-4 0;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: $space-4;
+    margin-bottom: $space-4;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: $space-2;
+
+    .form-label {
+      font-size: $font-size-sm;
+      font-weight: $font-weight-semibold;
+      color: $text-secondary;
+    }
+
+    .form-input,
+    .form-select {
+      padding: $space-2 $space-3;
+      background: $bg-primary;
+      border: 1px solid $glass-border;
+      border-radius: $radius-md;
+      font-size: $font-size-sm;
+      color: $text-primary;
+
+      &:focus {
+        outline: none;
+        border-color: $primary;
+      }
+    }
+
+    .form-error {
+      font-size: $font-size-xs;
+      color: $danger;
+    }
+  }
+
+  .form-actions {
+    display: flex;
+    gap: $space-3;
+    justify-content: flex-end;
+    margin-top: $space-6;
+    padding-top: $space-6;
+    border-top: 1px solid $glass-border;
+  }
+}
+
+.empty-message {
+  padding: $space-12;
+  text-align: center;
+  color: $text-secondary;
+  background: $bg-hover;
+  border-radius: $radius-lg;
+  border: 1px dashed $glass-border;
+
+  p {
+    margin: 0;
+  }
+}
+
+.loading-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  color: $text-secondary;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: $space-1 $space-3;
+  border-radius: $radius-full;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  background: $danger-light;
+  color: $danger;
+
+  &.active {
+    background: $success-light;
+    color: $success;
+  }
+}

@@ -50,6 +50,20 @@ interface ApplyDiscountResponse {
   order?: Order;
   error?: string;
 }
+interface Category {
+  id: number;
+  name: string;
+}
+interface ListCategoriesResponse {
+  success: boolean;
+  categories: Category[];
+  error?: string;
+}
+interface CreateCategoryResponse {
+  success: boolean;
+  category?: Category;
+  error?: string;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -68,6 +82,20 @@ export class PosService {
     return this.electronService.invoke<ListMenuItemsResponse>(
       'menu:list-items',
       params,
+    );
+  }
+
+  // ============ CATEGORIES ============
+  listCategories(): Promise<ListCategoriesResponse> {
+    return this.electronService.invoke<ListCategoriesResponse>(
+      'menu:list-categories',
+    );
+  }
+
+  createCategory(payload: { name: string }): Promise<CreateCategoryResponse> {
+    return this.electronService.invoke<CreateCategoryResponse>(
+      'menu:create-category',
+      payload,
     );
   }
 

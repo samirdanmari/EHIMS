@@ -95,4 +95,30 @@ export class ReportsService {
       date_to: dateTo,
     });
   }
+
+  // Purchase Report
+  getPurchaseReport(
+    status?: string,
+    dateFrom?: string,
+    dateTo?: string,
+  ): Promise<ReportResponse<any[]>> {
+    return this.electronService.invoke('reports:purchase-report', {
+      status,
+      date_from: dateFrom,
+      date_to: dateTo,
+    });
+  }
+
+  // Stock Issuance Report
+  getStockIssuanceReport(
+    shiftId?: number,
+    dateFrom?: string,
+    dateTo?: string,
+  ): Promise<ReportResponse<any[]>> {
+    return this.electronService.invoke('reports:stock-issuance-report', {
+      shift_id: shiftId,
+      date_from: dateFrom,
+      date_to: dateTo,
+    });
+  }
 }

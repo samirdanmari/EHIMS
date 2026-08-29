@@ -53,3 +53,56 @@
   color: $text-tertiary;
   font-style: italic;
 }
+
+.category-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $space-2;
+
+  .form-label {
+    margin: 0;
+  }
+
+  .btn-link {
+    background: none;
+    border: none;
+    color: $primary;
+    cursor: pointer;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    text-decoration: none;
+    padding: 0;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.new-category-form {
+  display: flex;
+  gap: $space-2;
+  margin-bottom: $space-3;
+
+  .form-input {
+    flex: 1;
+    padding: $space-2 $space-3;
+    background: $bg-primary;
+    border: 1px solid $glass-border;
+    border-radius: $radius-md;
+    font-size: $font-size-sm;
+    color: $text-primary;
+
+    &:focus {
+      outline: none;
+      border-color: $primary;
+    }
+  }
+
+  .btn {
+    padding: $space-2 $space-4;
+    border-radius: $radius-md;
+    font-size: $font-size-xs;
+  }
+}

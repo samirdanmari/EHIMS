@@ -6,6 +6,7 @@ import {
   FormControl,
   Validators,
 } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { SupplierService } from '../services/supplier.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { Supplier } from '../../../core/models/supplier.model';
@@ -17,6 +18,7 @@ import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialo
   standalone: true,
   imports: [
     CommonModule,
+    RouterLink,
     ReactiveFormsModule,
     CurrencyPipe,
     ConfirmDialogComponent,
@@ -44,6 +46,8 @@ export class SupplierListComponent implements OnInit {
       validators: [Validators.required],
       nonNullable: true,
     }),
+    account_number: new FormControl(''),
+    bank_name: new FormControl(''),
     contact_person: new FormControl(''),
     phone: new FormControl(''),
     email: new FormControl(''),
@@ -118,13 +122,13 @@ export class SupplierListComponent implements OnInit {
       if (editing) {
         const res = await this.supplierService.updateSupplier({
           id: editing.id,
-          name: value.name,
+          name: value.name || undefined,
           contact_person: value.contact_person || undefined,
           phone: value.phone || undefined,
           email: value.email || undefined,
           address: value.address || undefined,
           payment_terms: (value.payment_terms as any) || undefined,
-        });
+        } as any);
         if (res.success) {
           this.notificationService.success(
             'Supplier updated',
@@ -146,7 +150,7 @@ export class SupplierListComponent implements OnInit {
           email: value.email || undefined,
           address: value.address || undefined,
           payment_terms: (value.payment_terms as any) || undefined,
-        });
+        } as any);
         if (res.success) {
           this.notificationService.success(
             'Supplier created',

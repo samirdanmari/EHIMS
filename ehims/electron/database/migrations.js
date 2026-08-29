@@ -62,6 +62,8 @@ function runMigrations(db) {
         CREATE TABLE IF NOT EXISTS suppliers (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
+            account_number TEXT,
+            bank_name TEXT,
             contact_person TEXT,
             phone TEXT,
             email TEXT,

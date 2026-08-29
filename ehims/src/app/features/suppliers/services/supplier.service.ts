@@ -57,6 +57,12 @@ export class SupplierService {
     });
   }
 
+  getSupplierWithItems(id: number): Promise<any> {
+    return this.electronService.invoke('supplier:get-with-items', {
+      supplier_id: id,
+    });
+  }
+
   createSupplier(payload: SupplierInput): Promise<SupplierResponse> {
     return this.electronService.invoke<SupplierResponse>(
       'supplier:create',

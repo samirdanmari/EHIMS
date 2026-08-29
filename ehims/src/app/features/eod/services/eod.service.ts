@@ -33,10 +33,44 @@ interface ListHandoversResponse {
   handovers: ShiftHandover[];
   error?: string;
 }
+interface Shift {
+  id: number;
+  shift_name: string;
+  user_id: number;
+  start_time: string;
+  status: string;
+  opening_cash: number;
+}
+interface OpenShiftResponse {
+  success: boolean;
+  shift?: Shift;
+  error?: string;
+}
+interface ListShiftsResponse {
+  success: boolean;
+  shifts: (Shift & { user_name?: string })[];
+  error?: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class EODService {
   private electronService = inject(ElectronService);
+
+  // ============ SHIFT MANAGEMENT ============
+  openShift(payload: {
+    shift_name: string;
+    user_id: number;
+    opening_cash?: number;
+  }): Promise<OpenShiftResponse> {
+    return this.electronService.invoke<OpenShiftResponse>(
+      'shift:open',
+      payload,
+    );
+  }
+
+  listActiveShifts(): Promise<ListShiftsResponse> {
+    return this.electronService.invoke<ListShiftsResponse>('shift:list-active');
+  }
 
   closeShift(payload: ShiftCloseInput): Promise<CloseShiftResponse> {
     return this.electronService.invoke<CloseShiftResponse>(

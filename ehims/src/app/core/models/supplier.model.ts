@@ -4,6 +4,8 @@ export type PaymentMethod = 'cash' | 'bank_transfer' | 'cheque';
 export interface Supplier {
   id: number;
   name: string;
+  account_number?: string;
+  bank_name?: string;
   contact_person?: string;
   phone?: string;
   email?: string;
@@ -18,6 +20,8 @@ export interface Supplier {
 
 export interface SupplierInput {
   name: string;
+  account_number?: string;
+  bank_name?: string;
   contact_person?: string;
   phone?: string;
   email?: string;

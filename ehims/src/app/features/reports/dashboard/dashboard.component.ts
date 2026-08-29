@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { ReportsService } from '../services/reports.service';
 import { DashboardSummary } from '../../../core/models/report.model';
 import { CurrencyPipe } from '../../../shared/pipes/currency.pipe';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-reports-dashboard',
   standalone: true,
-  imports: [CommonModule, CurrencyPipe],
+  imports: [CommonModule, RouterLink, CurrencyPipe],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
 })

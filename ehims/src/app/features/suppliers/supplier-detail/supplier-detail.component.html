@@ -1,0 +1,281 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">{{ supplier()?.name || 'Supplier Details' }}</h2>
+      <p class="page-subtitle">View supplier information, purchases, and payments.</p>
+    </div>
+    <div class="page-actions">
+      <a [routerLink]="['/suppliers']" class="btn btn-secondary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="19" y1="12" x2="5" y2="12" />
+          <polyline points="12 19 5 12 12 5" />
+        </svg>
+        Back to Suppliers
+      </a>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+  <div class="loading-state">
+    <p>Loading supplier details...</p>
+  </div>
+  } @else if (supplier()) {
+  <div class="page-content">
+    <!-- Summary Cards -->
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="label">Account Number</div>
+        <div class="value">{{ supplier()?.account_number || '—' }}</div>
+      </div>
+
+      <div class="summary-card">
+        <div class="label">Bank Name</div>
+        <div class="value">{{ supplier()?.bank_name || '—' }}</div>
+      </div>
+
+      <div class="summary-card">
+        <div class="label">Payment Terms</div>
+        <div class="value">{{ supplier()?.payment_terms }}</div>
+      </div>
+
+      <div class="summary-card">
+        <div class="label">Contact Person</div>
+        <div class="value">{{ supplier()?.contact_person || '—' }}</div>
+      </div>
+
+      <div class="summary-card">
+        <div class="label">Phone</div>
+        <div class="value">{{ supplier()?.phone || '—' }}</div>
+      </div>
+
+      <div class="summary-card">
+        <div class="label">Email</div>
+        <div class="value">{{ supplier()?.email || '—' }}</div>
+      </div>
+    </div>
+
+    <!-- Financial Summary -->
+    <div class="financial-summary">
+      <div class="financial-card">
+        <div class="label">Total Purchases</div>
+        <div class="amount">{{ totalPurchases() | appCurrency }}</div>
+      </div>
+
+      <div class="financial-card">
+        <div class="label">Total Paid</div>
+        <div class="amount success">{{ totalPaid() | appCurrency }}</div>
+      </div>
+
+      <div class="financial-card">
+        <div class="label">Outstanding Credit</div>
+        <div class="amount" [class.alert]="balanceOutstanding() > 0">
+          {{ balanceOutstanding() | appCurrency }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs-container">
+      <div class="tabs-header">
+        <button class="tab-button" [class.active]="activeTab() === 'overview'" (click)="setTab('overview')">
+          Overview
+        </button>
+        <button class="tab-button" [class.active]="activeTab() === 'purchases'" (click)="setTab('purchases')">
+          Purchases ({{ purchases().length }})
+        </button>
+        <button class="tab-button" [class.active]="activeTab() === 'payments'" (click)="setTab('payments')">
+          Payments ({{ payments().length }})
+        </button>
+      </div>
+
+      <div class="tabs-content">
+        <!-- Overview Tab -->
+        @if (activeTab() === 'overview') {
+        <div class="tab-pane">
+          <div class="info-section">
+            <h3>Supplier Information</h3>
+            <div class="info-grid">
+              <div class="info-row">
+                <div class="label">Name</div>
+                <div class="value">{{ supplier()?.name }}</div>
+              </div>
+              <div class="info-row">
+                <div class="label">Address</div>
+                <div class="value">{{ supplier()?.address || '—' }}</div>
+              </div>
+              <div class="info-row">
+                <div class="label">Created</div>
+                <div class="value">{{ supplier()?.created_at | date: 'mediumDate' }}</div>
+              </div>
+              <div class="info-row">
+                <div class="label">Status</div>
+                <div class="value">
+                  <span class="status-badge" [class.active]="supplier()?.is_active === 1">
+                    {{ supplier()?.is_active === 1 ? 'Active' : 'Inactive' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-section">
+            <h3>Financial Summary</h3>
+            <div class="financial-details">
+              <div class="detail-row">
+                <span>Total Purchase Orders:</span>
+                <strong>{{ purchases().length }}</strong>
+              </div>
+              <div class="detail-row">
+                <span>Total Payments Made:</span>
+                <strong>{{ payments().length }}</strong>
+              </div>
+              <div class="detail-row">
+                <span>Outstanding Balance:</span>
+                <strong class="amount">{{ balanceOutstanding() | appCurrency }}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+        }
+
+        <!-- Purchases Tab -->
+        @if (activeTab() === 'purchases') {
+        <div class="tab-pane">
+          @if (purchases().length > 0) {
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Items</th>
+                  <th>Total Cost</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (purchase of purchases(); track purchase.id) {
+                <tr>
+                  <td class="date">{{ purchase.purchase_date | date: 'mediumDate' }}</td>
+                  <td class="items">{{ purchase.items }}</td>
+                  <td class="amount">{{ purchase.total_cost | appCurrency }}</td>
+                </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          } @else {
+          <div class="empty-message">
+            <p>No purchase orders found.</p>
+          </div>
+          }
+        </div>
+        }
+
+        <!-- Payments Tab -->
+        @if (activeTab() === 'payments') {
+        <div class="tab-pane">
+          <div class="payment-actions">
+            @if (!isAddingPayment()) {
+            <button class="btn btn-primary" (click)="isAddingPayment.set(true)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              Record Payment
+            </button>
+            }
+          </div>
+
+          <!-- Add Payment Form -->
+          @if (isAddingPayment()) {
+          <div class="payment-form">
+            <h4>Record Payment</h4>
+            <form [formGroup]="paymentForm" (ngSubmit)="addPayment()">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Amount *</label>
+                  <input class="form-input" type="number" step="1" min="1" formControlName="amount"
+                    placeholder="Amount in NGN" />
+                  @if (paymentForm.controls.amount.invalid && paymentForm.controls.amount.touched) {
+                  <span class="form-error">Amount required and must be > 0</span>
+                  }
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Payment Method *</label>
+                  <select class="form-select" formControlName="payment_method">
+                    <option value="cash">Cash</option>
+                    <option value="bank_transfer">Bank Transfer</option>
+                    <option value="cheque">Cheque</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Reference Number</label>
+                  <input class="form-input" type="text" formControlName="reference_number"
+                    placeholder="e.g. CHQ-12345 or TRF-REF-123" />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Notes</label>
+                  <input class="form-input" type="text" formControlName="notes" placeholder="Optional notes" />
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="button" class="btn btn-secondary" (click)="isAddingPayment.set(false)">
+                  Cancel
+                </button>
+                <button type="submit" class="btn btn-primary" [disabled]="paymentForm.invalid || isSaving()">
+                  {{ isSaving() ? 'Recording...' : 'Record Payment' }}
+                </button>
+              </div>
+            </form>
+          </div>
+          }
+
+          <!-- Payments Table -->
+          @if (payments().length > 0) {
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Amount</th>
+                  <th>Method</th>
+                  <th>Reference</th>
+                  <th>Recorded By</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (payment of payments(); track payment.id) {
+                <tr>
+                  <td class="date">{{ payment.payment_date | date: 'mediumDate' }}</td>
+                  <td class="amount">{{ payment.amount | appCurrency }}</td>
+                  <td class="method">
+                    <span class="method-badge">{{ payment.payment_method }}</span>
+                  </td>
+                  <td>{{ payment.reference_number || '—' }}</td>
+                  <td>{{ payment.recorded_by_name || '—' }}</td>
+                  <td class="notes">{{ payment.notes || '—' }}</td>
+                </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          } @else {
+          <div class="empty-message">
+            <p>No payments recorded yet.</p>
+          </div>
+          }
+        </div>
+        }
+      </div>
+    </div>
+  </div>
+  }
+</div>
+
+<app-confirm-dialog></app-confirm-dialog>

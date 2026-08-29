@@ -1,0 +1,121 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Purchase Report</h2>
+      <p class="page-subtitle">Track all purchases with payment status and outstanding credits.</p>
+    </div>
+  </div>
+
+  <div class="page-content">
+    <!-- Filters -->
+    <div class="filters-card">
+      <form [formGroup]="form" class="filters-row">
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-select" formControlName="status" (change)="onFilterChange()">
+            <option value="all">All</option>
+            <option value="paid">Paid</option>
+            <option value="credit">Outstanding Credit</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">From</label>
+          <input class="form-input" type="date" formControlName="dateFrom" (change)="onFilterChange()" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">To</label>
+          <input class="form-input" type="date" formControlName="dateTo" (change)="onFilterChange()" />
+        </div>
+      </form>
+    </div>
+
+    @if (isLoading()) {
+    <div class="loading-state">
+      <p>Loading purchase data...</p>
+    </div>
+    } @else {
+    <!-- Summary Cards -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-label">Total Cost</div>
+        <div class="metric-value">{{ totalCost() | appCurrency }}</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-label">Total Paid</div>
+        <div class="metric-value">{{ totalPaid() | appCurrency }}</div>
+      </div>
+
+      <div class="metric-card alert">
+        <div class="metric-label">Outstanding Credit</div>
+        <div class="metric-value">{{ totalOutstanding() | appCurrency }}</div>
+      </div>
+    </div>
+
+    <!-- Purchases Table -->
+    <div class="table-container">
+      <div class="table-header">
+        <h3>Purchases</h3>
+      </div>
+
+      @if (purchases().length > 0) {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Supplier</th>
+            <th>Account #</th>
+            <th>Total Cost</th>
+            <th>Paid</th>
+            <th>Outstanding</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (purchase of purchases(); track purchase.id) {
+          <tr>
+            <td class="date">
+              {{ purchase.purchase_date | date: 'mediumDate' }}
+            </td>
+
+            <td class="supplier">
+              {{ purchase.supplier_name }}
+            </td>
+
+            <td>
+              {{ purchase.account_number || '—' }}
+            </td>
+
+            <td class="amount">
+              {{ purchase.total_cost | appCurrency }}
+            </td>
+
+            <td class="amount">
+              {{ purchase.total_paid | appCurrency }}
+            </td>
+
+            <td class="amount" [class.alert]="purchase.outstanding > 0">
+              {{ purchase.outstanding | appCurrency }}
+            </td>
+
+            <td>
+              <span class="status-badge" [ngClass]="getStatusClass(purchase.credit_status)">
+                {{ purchase.credit_status === 'paid' ? '✓ Paid' : '⚠ Credit' }}
+              </span>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+      } @else {
+      <div class="empty-message">
+        <p>No purchase records found.</p>
+      </div>
+      }
+    </div>
+    }
+  </div>
+</div>

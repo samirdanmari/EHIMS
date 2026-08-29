@@ -11,35 +11,36 @@
     <div class="loading-state">
       <p>Loading dashboard...</p>
     </div>
-    } @else if (summary()) {
+    } @else if (summary(); as data) {
+    <!-- KPI Cards -->
     <div class="kpi-grid">
       <div class="kpi-card">
         <div class="kpi-label">Today's Sales</div>
-        <div class="kpi-value">{{ summary()?.today_sales | appCurrency }}</div>
-        <div class="kpi-meta">{{ summary()?.today_orders }} orders</div>
+        <div class="kpi-value">{{ data.today_sales | appCurrency }}</div>
+        <div class="kpi-meta">{{ data.today_orders }} orders</div>
       </div>
 
       <div class="kpi-card">
         <div class="kpi-label">This Week</div>
-        <div class="kpi-value">{{ summary()?.this_week_sales | appCurrency }}</div>
+        <div class="kpi-value">{{ data.this_week_sales | appCurrency }}</div>
         <div class="kpi-meta">7-day total</div>
       </div>
 
       <div class="kpi-card">
         <div class="kpi-label">This Month</div>
-        <div class="kpi-value">{{ summary()?.this_month_sales | appCurrency }}</div>
+        <div class="kpi-value">{{ data.this_month_sales | appCurrency }}</div>
         <div class="kpi-meta">30-day total</div>
       </div>
 
       <div class="kpi-card alert">
         <div class="kpi-label">Low Stock Items</div>
-        <div class="kpi-value">{{ summary()?.low_stock_items }}</div>
+        <div class="kpi-value">{{ data.low_stock_items }}</div>
         <div class="kpi-meta">Need reordering</div>
       </div>
 
       <div class="kpi-card alert">
         <div class="kpi-label">Pending Payments</div>
-        <div class="kpi-value">{{ summary()?.pending_supplier_payments }}</div>
+        <div class="kpi-value">{{ data.pending_supplier_payments }}</div>
         <div class="kpi-meta">Supplier credits</div>
       </div>
 
@@ -52,14 +53,15 @@
       </div>
     </div>
 
+    <!-- Top Performers -->
     <div class="reports-grid">
       <div class="report-card">
         <div class="report-header">
           <h3>Top Selling Items</h3>
         </div>
-        @if (summary()?.top_selling_items && summary()?.top_selling_items.length > 0) {
+        @if (data.top_selling_items && data.top_selling_items.length > 0) {
         <div class="items-list">
-          @for (item of summary()?.top_selling_items; track $index) {
+          @for (item of data.top_selling_items; track $index) {
           <div class="item-row">
             <div class="item-info">
               <span class="item-name">{{ item.name }}</span>
@@ -78,9 +80,9 @@
         <div class="report-header">
           <h3>Top Staff Performance</h3>
         </div>
-        @if (summary()?.top_staff && summary()?.top_staff.length > 0) {
+        @if (data.top_staff && data.top_staff.length > 0) {
         <div class="staff-list">
-          @for (staff of summary()?.top_staff; track $index) {
+          @for (staff of data.top_staff; track $index) {
           <div class="staff-row">
             <div class="staff-info">
               <span class="staff-name">{{ staff.name }}</span>
@@ -96,14 +98,39 @@
       </div>
     </div>
 
+    <!-- Quick Actions -->
     <div class="actions-section">
       <div class="action-group">
         <h3>Reports</h3>
         <div class="action-buttons">
-          <button class="action-btn">Sales Report</button>
-          <button class="action-btn">Inventory Report</button>
-          <button class="action-btn">Staff Analytics</button>
-          <button class="action-btn">P&L Statement</button>
+          <a [routerLink]="['/reports/sales']" class="action-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <polyline points="19 12 12 19 5 12" />
+            </svg>
+            Sales Report
+          </a>
+          <a [routerLink]="['/reports/inventory']" class="action-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+            Inventory Report
+          </a>
+          <a [routerLink]="['/reports/purchases']" class="action-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path
+                d="M9 12l2 2 4-4M7 20H5a2 2 0 01-2-2V9a2 2 0 012-2h2m10 0h2a2 2 0 012 2v11a2 2 0 01-2 2h-2m0-11V9a2 2 0 00-2-2m0 0V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v4m4 6h4" />
+            </svg>
+            Purchase Report
+          </a>
+          <a [routerLink]="['/reports/stock-issuance']" class="action-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+            Stock Issuance
+          </a>
         </div>
       </div>
     </div>

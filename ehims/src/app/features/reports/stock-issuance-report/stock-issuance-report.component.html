@@ -1,0 +1,115 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Stock Issuance Report</h2>
+      <p class="page-subtitle">Track all stock issuances by shift and date range.</p>
+    </div>
+  </div>
+
+  <div class="page-content">
+    <!-- Filters -->
+    <div class="filters-card">
+      <form [formGroup]="form" class="filters-row">
+        <div class="form-group">
+          <label class="form-label">Shift</label>
+          <select class="form-select" formControlName="shiftId" (change)="onFilterChange()">
+            <option [ngValue]="null">All Shifts</option>
+            @for (shift of shifts(); track shift.id) {
+              <option [ngValue]="shift.id">{{ shift.shift_name }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">From</label>
+          <input class="form-input" type="date" formControlName="dateFrom" (change)="onFilterChange()" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">To</label>
+          <input class="form-input" type="date" formControlName="dateTo" (change)="onFilterChange()" />
+        </div>
+      </form>
+    </div>
+
+    @if (isLoading()) {
+      <div class="loading-state">
+        <p>Loading issuance data...</p>
+      </div>
+    } @else {
+      <!-- Summary Cards -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Total Issuances</div>
+          <div class="metric-value">{{ issuances().length }}</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">Total Items Issued</div>
+          <div class="metric-value">{{ totalItems() }}</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">Total Cost</div>
+          <div class="metric-value">{{ totalCost() | appCurrency }}</div>
+        </div>
+      </div>
+
+      <!-- Issuances Table -->
+      <div class="table-container">
+        <div class="table-header">
+          <h3>Stock Issuances</h3>
+        </div>
+
+        @if (issuances().length > 0) {
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date & Time</th>
+                <th>Shift</th>
+                <th>Issued By</th>
+                <th>Items</th>
+                <th>Item Count</th>
+                <th>Total Cost</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              @for (issuance of issuances(); track issuance.id) {
+                <tr>
+                  <td class="date">
+                    {{ issuance.created_at | date: 'short' }}
+                  </td>
+
+                  <td class="shift">
+                    {{ issuance.shift_name || '—' }}
+                  </td>
+
+                  <td>
+                    {{ issuance.issued_by || '—' }}
+                  </td>
+
+                  <td class="items">
+                    {{ issuance.items }}
+                  </td>
+
+                  <td class="count">
+                    {{ issuance.item_count }}
+                  </td>
+
+                  <td class="amount">
+                    {{ issuance.total_cost | appCurrency }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        } @else {
+          <div class="empty-message">
+            <p>No stock issuances found.</p>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

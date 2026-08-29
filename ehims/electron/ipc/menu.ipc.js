@@ -2,6 +2,41 @@ const { ipcMain } = require('electron');
 
 function registerMenuItemIPC(db) {
     // ---------------------------------------------------------
+    // CATEGORIES
+    // ---------------------------------------------------------
+    ipcMain.handle('menu:list-categories', async (event) => {
+        try {
+            const rows = db.prepare(`
+                SELECT id, name FROM categories WHERE type IN ('menu', 'both') ORDER BY name ASC
+            `).all();
+            return { success: true, categories: rows };
+        } catch (err) {
+            console.error('[menu:list-categories] Error:', err.message);
+            return { success: false, error: err.message, categories: [] };
+        }
+    });
+
+    ipcMain.handle('menu:create-category', async (event, { name }) => {
+        try {
+            if (!name || !name.trim()) {
+                return { success: false, error: 'Category name is required' };
+            }
+
+            const info = db.prepare(`
+                INSERT INTO categories (name, type) VALUES (?, 'menu')
+            `).run(name.trim());
+
+            if (info.changes > 0) {
+                return { success: true, category: { id: info.lastID, name: name.trim() } };
+            }
+            return { success: false, error: 'Failed to create category' };
+        } catch (err) {
+            console.error('[menu:create-category] Error:', err.message);
+            return { success: false, error: err.message };
+        }
+    });
+
+    // ---------------------------------------------------------
     // MENU ITEMS
     // ---------------------------------------------------------
     ipcMain.handle('menu:list-items', async (event, { search = '', categoryId = null, onlyAvailable = true } = {}) => {

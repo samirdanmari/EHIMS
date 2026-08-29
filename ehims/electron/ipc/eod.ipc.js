@@ -2,6 +2,59 @@ const { ipcMain } = require('electron');
 
 function registerEODIPC(db) {
     // ---------------------------------------------------------
+    // SHIFT MANAGEMENT
+    // ---------------------------------------------------------
+    ipcMain.handle('shift:open', async (event, { shift_name, user_id, opening_cash }) => {
+        try {
+            if (!shift_name || !shift_name.trim()) {
+                return { success: false, error: 'Shift name is required' };
+            }
+            if (!user_id) {
+                return { success: false, error: 'User ID is required' };
+            }
+
+            // Check if user has active shift
+            const activeShift = db.prepare(`
+                SELECT * FROM shifts WHERE user_id = ? AND status = 'active'
+            `).get(user_id);
+
+            if (activeShift) {
+                return { success: false, error: 'User already has an active shift' };
+            }
+
+            const info = db.prepare(`
+                INSERT INTO shifts (shift_name, user_id, opening_cash, status)
+                VALUES (?, ?, ?, 'active')
+            `).run(shift_name.trim(), user_id, opening_cash || 0);
+
+            if (info.changes > 0) {
+                const shift = db.prepare('SELECT * FROM shifts WHERE id = ?').get(info.lastID);
+                return { success: true, shift };
+            }
+            return { success: false, error: 'Failed to create shift' };
+        } catch (err) {
+            console.error('[shift:open] Error:', err.message);
+            return { success: false, error: err.message };
+        }
+    });
+
+    ipcMain.handle('shift:list-active', async (event) => {
+        try {
+            const shifts = db.prepare(`
+                SELECT s.*, u.display_name as user_name
+                FROM shifts s
+                LEFT JOIN users u ON s.user_id = u.id
+                WHERE s.status = 'active'
+                ORDER BY s.start_time DESC
+            `).all();
+            return { success: true, shifts };
+        } catch (err) {
+            console.error('[shift:list-active] Error:', err.message);
+            return { success: false, error: err.message, shifts: [] };
+        }
+    });
+
+    // ---------------------------------------------------------
     // SHIFT HANDOVER
     // ---------------------------------------------------------
     ipcMain.handle('eod:close-shift', async (event, { shift_id, drawer_cash, expected_cash, stock_verified, notes, outgoing_user, incoming_user }) => {

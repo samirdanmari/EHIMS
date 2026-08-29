@@ -40,10 +40,13 @@ export class MenuManagementComponent implements OnInit {
   items = signal<MenuItem[]>([]);
   inventoryItems = signal<InventoryItem[]>([]);
   categories = signal<{ id: number; name: string }[]>([]);
+  selectedInventoryItems = signal<number[]>([]);
 
   searchTerm = signal('');
   isModalOpen = signal(false);
   editingItem = signal<MenuItem | null>(null);
+  isCreatingCategory = signal(false);
+  newCategoryName = signal('');
 
   form = new FormGroup({
     name: new FormControl('', {
@@ -62,8 +65,11 @@ export class MenuManagementComponent implements OnInit {
   filteredItems = signal<MenuItem[]>([]);
 
   async ngOnInit() {
-    await Promise.all([this.loadMenuItems(), this.loadInventoryItems()]);
-    this.extractCategories();
+    await Promise.all([
+      this.loadCategories(),
+      this.loadMenuItems(),
+      this.loadInventoryItems(),
+    ]);
     this.isLoading.set(false);
   }
 
@@ -82,18 +88,54 @@ export class MenuManagementComponent implements OnInit {
     }
   }
 
-  extractCategories() {
-    const catMap = new Map<number, string>();
-    this.items().forEach((item) => {
-      if (item.category_id && item.category_name) {
-        catMap.set(item.category_id, item.category_name);
-      }
-    });
-    const cats = Array.from(catMap.entries()).map(([id, name]) => ({
-      id,
-      name,
-    }));
-    this.categories.set(cats);
+  async loadCategories() {
+    const res = await this.posService.listCategories();
+    if (res.success && res.categories) {
+      this.categories.set(res.categories);
+    } else {
+      // Fallback empty category list
+      this.categories.set([]);
+    }
+  }
+
+  async createNewCategory() {
+    const name = this.newCategoryName().trim();
+    if (!name) {
+      this.notificationService.error(
+        'Category name required',
+        'Please enter a category name',
+      );
+      return;
+    }
+
+    this.isSaving.set(true);
+    const res = await this.posService.createCategory({ name });
+    this.isSaving.set(false);
+
+    if (res.success && res.category) {
+      this.categories.set([...this.categories(), res.category]);
+      this.form.get('category_id')?.setValue(res.category.id);
+      this.newCategoryName.set('');
+      this.isCreatingCategory.set(false);
+      this.notificationService.success(
+        'Category created',
+        `${name} has been added.`,
+      );
+    } else {
+      this.notificationService.error(
+        'Failed to create category',
+        res.error || 'Unknown error',
+      );
+    }
+  }
+
+  toggleInventoryItem(itemId: number) {
+    const current = this.selectedInventoryItems();
+    if (current.includes(itemId)) {
+      this.selectedInventoryItems.set(current.filter((id) => id !== itemId));
+    } else {
+      this.selectedInventoryItems.set([...current, itemId]);
+    }
   }
 
   applySearch() {

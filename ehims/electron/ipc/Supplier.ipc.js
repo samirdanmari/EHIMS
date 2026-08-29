@@ -209,6 +209,52 @@ function registerSupplierIPC(db) {
             return { success: false, error: err.message };
         }
     });
+
+    // ---------------------------------------------------------
+    // SUPPLIER DETAILS WITH ITEMS SUPPLIED
+    // ---------------------------------------------------------
+    ipcMain.handle('supplier:get-with-items', async (event, { supplier_id }) => {
+        try {
+            const supplier = db.prepare('SELECT * FROM suppliers WHERE id = ?').get(supplier_id);
+            if (!supplier) {
+                return { success: false, error: 'Supplier not found' };
+            }
+
+            // Get all purchases from this supplier
+            const purchases = db.prepare(`
+                SELECT 
+                    pe.id,
+                    pe.purchase_date,
+                    pe.total_cost,
+                    GROUP_CONCAT(pi.item_id || ':' || pi.quantity || ':' || i.name || ':' || pi.unit_cost, '|') as items
+                FROM purchase_entries pe
+                LEFT JOIN purchase_entry_items pi ON pe.id = pi.entry_id
+                LEFT JOIN inventory_items i ON pi.item_id = i.id
+                WHERE pe.supplier_id = ?
+                GROUP BY pe.id
+                ORDER BY pe.purchase_date DESC
+            `).all(supplier_id);
+
+            // Get all payments made to this supplier
+            const payments = db.prepare(`
+                SELECT * FROM supplier_payments
+                WHERE supplier_id = ?
+                ORDER BY payment_date DESC
+            `).all(supplier_id);
+
+            return {
+                success: true,
+                data: {
+                    supplier,
+                    purchases,
+                    payments
+                }
+            };
+        } catch (err) {
+            console.error('[supplier:get-with-items] Error:', err.message);
+            return { success: false, error: err.message };
+        }
+    });
 }
 
 module.exports = { registerSupplierIPC };
