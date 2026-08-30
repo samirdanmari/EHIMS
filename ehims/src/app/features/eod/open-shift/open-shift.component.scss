@@ -1,0 +1,239 @@
+@use '../../../styles/variables' as *;
+
+.tabs-container {
+  background: $bg-secondary;
+  border: 1px solid $glass-border;
+  border-radius: $radius-lg;
+  overflow: hidden;
+
+  .tabs-header {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid $glass-border;
+    background: $bg-primary;
+  }
+
+  .tab-button {
+    flex: 1;
+    padding: $space-4;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $text-secondary;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+
+    &:hover {
+      color: $text-primary;
+      background: $bg-hover;
+    }
+
+    &.active {
+      color: $primary;
+      border-bottom-color: $primary;
+    }
+  }
+}
+
+.tabs-content {
+  padding: $space-6;
+}
+
+.tab-pane {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.form-section {
+  background: $bg-hover;
+  border: 1px solid $glass-border;
+  border-radius: $radius-lg;
+  padding: $space-6;
+
+  h3 {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-bold;
+    color: $text-primary;
+    margin: 0 0 $space-6 0;
+  }
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: $space-4;
+  margin-bottom: $space-6;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+
+  .form-label {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $text-secondary;
+  }
+
+  .form-input {
+    padding: $space-2 $space-3;
+    background: $bg-primary;
+    border: 1px solid $glass-border;
+    border-radius: $radius-md;
+    font-size: $font-size-sm;
+    color: $text-primary;
+
+    &:focus {
+      outline: none;
+      border-color: $primary;
+    }
+  }
+
+  .form-error {
+    font-size: $font-size-xs;
+    color: $danger;
+  }
+}
+
+.form-info {
+  background: $primary-light;
+  border-left: 4px solid $primary;
+  padding: $space-4;
+  border-radius: $radius-md;
+  margin-bottom: $space-6;
+
+  p {
+    margin: 0 0 $space-2 0;
+    font-size: $font-size-sm;
+    color: $text-primary;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    strong {
+      color: $primary;
+      font-weight: $font-weight-bold;
+    }
+  }
+}
+
+.form-actions {
+  display: flex;
+  gap: $space-3;
+  justify-content: flex-end;
+  padding-top: $space-6;
+  border-top: 1px solid $glass-border;
+}
+
+.shifts-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: $space-6;
+}
+
+.shift-card {
+  background: $bg-hover;
+  border: 1px solid $glass-border;
+  border-radius: $radius-lg;
+  padding: $space-6;
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+
+  .shift-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid $glass-border;
+    padding-bottom: $space-3;
+
+    h4 {
+      font-size: $font-size-base;
+      font-weight: $font-weight-bold;
+      color: $text-primary;
+      margin: 0;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: $space-1 $space-3;
+      border-radius: $radius-full;
+      font-size: $font-size-xs;
+      font-weight: $font-weight-semibold;
+      background: $success-light;
+      color: $success;
+
+      &.active {
+        background: $success-light;
+        color: $success;
+      }
+    }
+  }
+
+  .shift-details {
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+  }
+
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .label {
+      font-size: $font-size-sm;
+      font-weight: $font-weight-semibold;
+      color: $text-secondary;
+    }
+
+    .value {
+      font-size: $font-size-sm;
+      font-weight: $font-weight-medium;
+      color: $text-primary;
+    }
+  }
+
+  .shift-actions {
+    display: flex;
+    gap: $space-3;
+    padding-top: $space-3;
+    border-top: 1px solid $glass-border;
+  }
+}
+
+.empty-message {
+  text-align: center;
+  padding: $space-12;
+  color: $text-secondary;
+
+  p {
+    margin: 0 0 $space-2 0;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    &.text-muted {
+      font-size: $font-size-sm;
+      color: $text-secondary;
+      opacity: 0.7;
+    }
+  }
+}
+
+.loading-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  color: $text-secondary;
+}

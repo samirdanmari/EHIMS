@@ -10,6 +10,8 @@ const { registerMenuItemIPC } = require('./ipc/menu.ipc');
 const { registerEODIPC } = require('./ipc/eod.ipc');
 const { registerUsersIPC } = require('./ipc/users.ipc');
 const { registerReportsIPC } = require('./ipc/reports.ipc');
+const { registerSettingsIPC } = require('./ipc/settings.ipc');
+const { registerPrinterIPC } = require('./ipc/printer.ipc');
 
 let mainWindow;
 
@@ -48,6 +50,8 @@ app.whenReady().then(() => {
     registerEODIPC(db);
     registerUsersIPC(db);
     registerReportsIPC(db);
+    registerSettingsIPC(db);
+    registerPrinterIPC(db);
 
     // Generic read-only query handler for Angular renderer
     ipcMain.handle('db:query', async (event, { sql, params = [] }) => {

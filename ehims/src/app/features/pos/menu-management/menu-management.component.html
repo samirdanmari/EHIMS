@@ -52,6 +52,7 @@
           <thead>
             <tr>
               <th>Item Name</th>
+              <th>Category</th>
               <th>Price</th>
               <th>Linked Inventory</th>
               <th>Stock</th>
@@ -63,8 +64,19 @@
             @for (item of filteredItems(); track item.id) {
             <tr>
               <td class="item-name">{{ item.name }}</td>
+              <td>{{ item.category_name || '—' }}</td>
               <td>{{ item.selling_price | appCurrency }}</td>
-              <td>{{ item.inventory_name || '—' }}</td>
+              <td>
+                @if ($any(item).linked_inventory?.length > 0) {
+                <span class="inv-tags">
+                  @for (inv of $any(item).linked_inventory; track inv.inventory_item_id) {
+                  <span class="inv-tag">{{ inv.name }}</span>
+                  }
+                </span>
+                } @else {
+                {{ item.inventory_name || '—' }}
+                }
+              </td>
               <td>
                 @if (item.current_stock !== undefined) {
                 <span class="stock-badge" [class.low-stock]="item.current_stock && item.current_stock <= 3">
@@ -166,15 +178,29 @@
           }
         </div>
 
+        <!-- Multi-inventory item selection -->
         <div class="form-group">
-          <label class="form-label">Link to Inventory Item</label>
-          <select class="form-select" formControlName="inventory_item_id">
-            <option [ngValue]="null">Not linked to inventory</option>
+          <label class="form-label">Link to Inventory Items</label>
+          <p class="form-hint">Select one or more inventory items that this menu item uses. Stock will be deducted when
+            orders are completed.</p>
+          @if (inventoryItems().length === 0) {
+          <p class="form-hint">No inventory items available. Add inventory items first.</p>
+          } @else {
+          <div class="inv-checklist">
             @for (inv of inventoryItems(); track inv.id) {
-            <option [ngValue]="inv.id">{{ inv.name }} ({{ inv.unit }})</option>
+            <label class="inv-check-item" [class.selected]="isInventoryItemSelected(inv.id)">
+              <input type="checkbox" [checked]="isInventoryItemSelected(inv.id)"
+                (change)="toggleInventoryItem(inv.id)" />
+              <span class="inv-check-name">{{ inv.name }}</span>
+              <span class="inv-check-meta">{{ inv.unit }} · Stock: {{ inv.current_stock }}</span>
+            </label>
             }
-          </select>
-          <p class="form-hint">Link menu items to inventory for automatic stock deduction when orders are completed.</p>
+          </div>
+          @if (selectedInventoryItemIds().size > 0) {
+          <p class="form-hint selected-hint">✓ {{ selectedInventoryItemIds().size }} item(s) linked:
+            {{ getSelectedInventoryNames() }}</p>
+          }
+          }
         </div>
 
         <div class="form-group">

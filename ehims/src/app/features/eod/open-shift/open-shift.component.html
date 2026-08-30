@@ -1,0 +1,117 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Shift Management</h2>
+      <p class="page-subtitle">Open new shifts or manage active shifts</p>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+  <div class="loading-state">
+    <p>Loading shifts...</p>
+  </div>
+  } @else {
+  <div class="page-content">
+    <!-- Tabs -->
+    <div class="tabs-container">
+      <div class="tabs-header">
+        <button class="tab-button" [class.active]="activeTab() === 'open'" (click)="setTab('open')">
+          Open New Shift
+        </button>
+        <button class="tab-button" [class.active]="activeTab() === 'active'" (click)="setTab('active')">
+          Active Shifts ({{ activeShifts().length }})
+        </button>
+      </div>
+
+      <div class="tabs-content">
+        <!-- Open Shift Tab -->
+        @if (activeTab() === 'open') {
+        <div class="tab-pane">
+          <div class="form-section">
+            <h3>Open New Shift</h3>
+            <form [formGroup]="openShiftForm" (ngSubmit)="onOpenShift()">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label">Shift Name *</label>
+                  <input class="form-input" type="text" formControlName="shift_name"
+                    placeholder="e.g., Morning Shift, Evening Shift" />
+                  @if (openShiftForm.get('shift_name')?.invalid && openShiftForm.get('shift_name')?.touched) {
+                  <span class="form-error">Shift name required (minimum 3 characters)</span>
+                  }
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Opening Cash *</label>
+                  <input class="form-input" type="number" step="1" min="0" formControlName="opening_cash"
+                    placeholder="Opening float amount" />
+                  @if (openShiftForm.get('opening_cash')?.invalid && openShiftForm.get('opening_cash')?.touched) {
+                  <span class="form-error">Opening cash required and must be ≥ 0</span>
+                  }
+                </div>
+              </div>
+
+              <div class="form-info">
+                <p><strong>User:</strong> {{ authService.currentUser()?.display_name || 'Current User' }}</p>
+                <p><strong>Opened By:</strong> {{ authService.currentUser()?.role || 'Staff' }}</p>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary" [disabled]="openShiftForm.invalid || isSaving()">
+                  {{ isSaving() ? 'Opening Shift...' : 'Open Shift' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+        }
+
+        <!-- Active Shifts Tab -->
+        @if (activeTab() === 'active') {
+        <div class="tab-pane">
+          @if (activeShifts().length > 0) {
+          <div class="shifts-container">
+            @for (shift of activeShifts(); track shift.id) {
+            <div class="shift-card">
+              <div class="shift-header">
+                <h4>{{ shift.shift_name }}</h4>
+                <span class="status-badge active">Active</span>
+              </div>
+
+              <div class="shift-details">
+                <div class="detail-row">
+                  <span class="label">Opened By:</span>
+                  <span class="value">{{ shift.user_name || 'Unknown' }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Opened At:</span>
+                  <span class="value">{{ shift.start_time | date: 'medium' }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Opening Cash:</span>
+                  <span class="value">{{ shift.opening_cash | appCurrency }}</span>
+                </div>
+              </div>
+
+              <div class="shift-actions">
+                <button class="btn btn-secondary" (click)="goToCloseShift()">
+                  Proceed to Close Shift
+                </button>
+              </div>
+            </div>
+            }
+          </div>
+          } @else {
+          <div class="empty-message">
+            <p>No active shifts.</p>
+            <p class="text-muted">Open a new shift to get started.</p>
+          </div>
+          }
+        </div>
+        }
+      </div>
+    </div>
+  </div>
+  }
+</div>
+
+<app-confirm-dialog></app-confirm-dialog>

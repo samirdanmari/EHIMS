@@ -1,8 +1,14 @@
 import { Routes } from '@angular/router';
-export const EOD_ROUTES: Routes = [
-  // { path: '', loadComponent: () => import('./eod-dashboard/eod-dashboard.component').then(m => m.EodDashboardComponent) }
 
-  { path: '', redirectTo: 'close-shift', pathMatch: 'full' },
+export const EOD_ROUTES: Routes = [
+  { path: '', redirectTo: 'open-shift', pathMatch: 'full' },
+  {
+    path: 'open-shift',
+    loadComponent: () =>
+      import('./open-shift/open-shift.component').then(
+        (m) => m.OpenShiftComponent,
+      ),
+  },
   {
     path: 'close-shift',
     loadComponent: () =>

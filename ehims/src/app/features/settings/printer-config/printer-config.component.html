@@ -1,0 +1,164 @@
+<div class="tab-pane">
+  @if (isLoading()) {
+    <div class="loading-state">
+      <p>Loading printer settings...</p>
+    </div>
+  } @else {
+    <div class="printer-config-layout">
+      <!-- Settings Form -->
+      <div class="settings-column">
+        <form [formGroup]="printerForm" (ngSubmit)="onSave()" class="printer-form">
+          <!-- Printer Selection -->
+          <div class="form-section">
+            <h3>Select Printer</h3>
+            
+            @if (availablePrinters().length > 0) {
+              <div class="form-group">
+                <label class="form-label">Default Printer</label>
+                <select class="form-select" formControlName="default_printer">
+                  <option value="">-- No Printer Selected --</option>
+                  @for (printer of availablePrinters(); track printer.name) {
+                    <option [value]="printer.name">
+                      {{ printer.displayName }}
+                      @if (printer.isDefault) { (Default) }
+                    </option>
+                  }
+                </select>
+              </div>
+            } @else {
+              <div class="no-printers">
+                <p>⚠️ No printers detected</p>
+                <small>Make sure your printer is connected and installed</small>
+              </div>
+            }
+          </div>
+
+          <!-- Receipt Format -->
+          <div class="form-section">
+            <h3>Receipt Format</h3>
+
+            <div class="form-group">
+              <label class="form-label">Paper Width</label>
+              <select class="form-select" formControlName="paper_width" (change)="updatePreview()">
+                @for (width of paperWidths; track width) {
+                  <option [value]="width">{{ width }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Line Width (Characters)</label>
+              <div class="input-with-value">
+                <input 
+                  class="form-input" 
+                  type="number" 
+                  min="30" 
+                  max="80" 
+                  formControlName="line_width"
+                  (change)="updatePreview()"
+                />
+                <span class="value-display">{{ printerForm.get('line_width')?.value }} chars</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Font Sizes -->
+          <div class="form-section">
+            <h3>Font Sizes</h3>
+
+            <div class="font-controls">
+              <div class="form-group">
+                <label class="form-label">Small</label>
+                <div class="input-with-preview">
+                  <input 
+                    class="form-input" 
+                    type="number" 
+                    min="8" 
+                    max="16" 
+                    formControlName="font_size_small"
+                    (change)="updatePreview()"
+                  />
+                  <span class="preview" [style.font-size.pt]="printerForm.get('font_size_small')?.value">Sample</span>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Normal</label>
+                <div class="input-with-preview">
+                  <input 
+                    class="form-input" 
+                    type="number" 
+                    min="8" 
+                    max="16" 
+                    formControlName="font_size_normal"
+                    (change)="updatePreview()"
+                  />
+                  <span class="preview" [style.font-size.pt]="printerForm.get('font_size_normal')?.value">Sample</span>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Large</label>
+                <div class="input-with-preview">
+                  <input 
+                    class="form-input" 
+                    type="number" 
+                    min="8" 
+                    max="16" 
+                    formControlName="font_size_large"
+                    (change)="updatePreview()"
+                  />
+                  <span class="preview" [style.font-size.pt]="printerForm.get('font_size_large')?.value">Sample</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Receipt Options -->
+          <div class="form-section">
+            <h3>Receipt Options</h3>
+
+            <div class="checkbox-group">
+              <label class="checkbox-label">
+                <input 
+                  type="checkbox" 
+                  formControlName="logo_on_receipt"
+                  (change)="updatePreview()"
+                />
+                <span>Print Logo on Receipt</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" (click)="onReset()" [disabled]="isSaving()">
+              Reset
+            </button>
+            <button 
+              type="button" 
+              class="btn btn-info" 
+              (click)="onTestPrint()" 
+              [disabled]="isSaving() || isTesting() || availablePrinters().length === 0"
+            >
+              {{ isTesting() ? 'Printing...' : '🖨️ Test Print' }}
+            </button>
+            <button type="submit" class="btn btn-primary" [disabled]="printerForm.invalid || isSaving()">
+              {{ isSaving() ? 'Saving...' : 'Save Settings' }}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Receipt Preview -->
+      <div class="preview-column">
+        <div class="preview-section">
+          <h3>Receipt Preview</h3>
+          <div class="receipt-preview">
+            <pre>{{ previewContent() }}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,114 @@
+<div class="tab-pane">
+  @if (isLoading()) {
+  <div class="loading-state">
+    <p>Loading company settings...</p>
+  </div>
+  } @else {
+  <form [formGroup]="companyForm" (ngSubmit)="onSave()" class="settings-form">
+    <!-- Basic Information Section -->
+    <div class="form-section">
+      <h3>Basic Information</h3>
+
+      <div class="form-group">
+        <label class="form-label">Company Name *</label>
+        <input class="form-input" type="text" formControlName="company_name" placeholder="Your company name" />
+        @if (companyForm.get('company_name')?.invalid && companyForm.get('company_name')?.touched) {
+        <span class="form-error">Company name is required</span>
+        }
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Registration Number</label>
+          <input class="form-input" type="text" formControlName="registration_number"
+            placeholder="Business registration #" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Tax ID / TIN</label>
+          <input class="form-input" type="text" formControlName="tax_id" placeholder="Tax ID" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Contact Information Section -->
+    <div class="form-section">
+      <h3>Contact Information</h3>
+
+      <div class="form-group">
+        <label class="form-label">Address</label>
+        <textarea class="form-input" formControlName="address" placeholder="Full business address" rows="3"></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Phone</label>
+          <input class="form-input" type="tel" formControlName="phone" placeholder="+234..." />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" type="email" formControlName="email" placeholder="contact@company.com" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Website</label>
+        <input class="form-input" type="url" formControlName="website" placeholder="https://example.com" />
+      </div>
+    </div>
+
+    <!-- Regional Settings Section -->
+    <div class="form-section">
+      <h3>Regional Settings</h3>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Currency</label>
+          <select class="form-select" formControlName="currency">
+            @for (curr of currencies; track curr) {
+            <option [value]="curr">{{ curr }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Timezone</label>
+          <select class="form-select" formControlName="timezone">
+            @for (tz of timezones; track tz) {
+            <option [value]="tz">{{ tz }}</option>
+            }
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Business Hours Section -->
+    <div class="form-section">
+      <h3>Business Hours</h3>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Opening Time</label>
+          <input class="form-input" type="time" formControlName="business_hours_open" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Closing Time</label>
+          <input class="form-input" type="time" formControlName="business_hours_close" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" (click)="onReset()" [disabled]="isSaving()">
+        Reset
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="companyForm.invalid || isSaving()">
+        {{ isSaving() ? 'Saving...' : 'Save Settings' }}
+      </button>
+    </div>
+  </form>
+  }
+</div>

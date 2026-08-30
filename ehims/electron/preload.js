@@ -8,11 +8,19 @@ const validChannels = [
     'auth:change-password',
     'db:query',
     'inventory:',
+    'menu:',
+    'order:',
     'pos:',
     'supplier:',
     'eod:',
-    'sync:',
-    'print:'
+    'shift:',
+    'users:',
+    'roles:',
+    'settings:',
+    'reports:',
+    'printer:',
+    'print:',
+    'sync:'
 ];
 
 function isChannelValid(channel) {

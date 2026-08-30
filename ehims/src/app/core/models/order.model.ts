@@ -30,6 +30,7 @@ export interface MenuItemInput {
   category_id: number | null;
   selling_price: number;
   inventory_item_id: number | null;
+  inventory_item_ids?: number[]; // Multiple items (new feature)
   description?: string;
 }
 

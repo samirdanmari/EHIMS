@@ -1,41 +1,204 @@
-import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterLink, Router } from '@angular/router';
+import { CompanyProfileComponent } from './company-profile/company-profile.component';
+import { PrinterConfigComponent } from './printer-config/printer-config.component';
+
+type Tab = 'company' | 'printer' | 'backup';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [RouterLink],
+  imports: [
+    CommonModule,
+    RouterLink,
+    CompanyProfileComponent,
+    PrinterConfigComponent,
+  ],
   template: `
-    <div class="coming-soon-page">
-      <div class="coming-soon-content animate-fadeInUp">
-        <div class="module-icon">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-          </svg>
+    <div class="page">
+      <div class="page-header">
+        <div>
+          <h2 class="page-title">System Settings</h2>
+          <p class="page-subtitle">
+            Configure company profile, printer, and system preferences
+          </p>
         </div>
-        <h2>System Settings</h2>
-        <p>The Settings module is built in Phase 6. Configure business profile, receipt layout, thermal printer, tax rates, and cloud synchronization.</p>
-        <div class="feature-list">
-          <div class="feature-item">🏢 Business Profile</div>
-          <div class="feature-item">🖨️ Printer Configuration</div>
-          <div class="feature-item">☁️ Cloud Sync (Firebase)</div>
-          <div class="feature-item">💾 Database Backup</div>
+      </div>
+
+      <div class="page-content">
+        <!-- Settings Tabs -->
+        <div class="tabs-container">
+          <div class="tabs-header">
+            <button
+              class="tab-button"
+              [class.active]="activeTab() === 'company'"
+              (click)="setTab('company')"
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+              </svg>
+              Company Profile
+            </button>
+
+            <button
+              class="tab-button"
+              [class.active]="activeTab() === 'printer'"
+              (click)="setTab('printer')"
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <polyline points="6 9 6 2 18 2 18 9" />
+                <path
+                  d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"
+                />
+                <rect x="6" y="14" width="12" height="8" />
+              </svg>
+              Printer Configuration
+            </button>
+
+            <button
+              class="tab-button"
+              [class.active]="activeTab() === 'backup'"
+              (click)="setTab('backup')"
+              disabled
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              Backup & Sync
+            </button>
+          </div>
+
+          <div class="tabs-content">
+            @if (activeTab() === 'company') {
+              <app-company-profile></app-company-profile>
+            }
+
+            @if (activeTab() === 'printer') {
+              <app-printer-config></app-printer-config>
+            }
+
+            @if (activeTab() === 'backup') {
+              <div class="tab-pane">
+                <div class="coming-soon">
+                  <p>Backup & Cloud Sync features coming in Phase 7b</p>
+                </div>
+              </div>
+            }
+          </div>
         </div>
-        <a routerLink="/dashboard" class="btn btn-primary">← Back to Dashboard</a>
       </div>
     </div>
   `,
-  styles: [`
-    .coming-soon-page { height: 100%; display: flex; align-items: center; justify-content: center; padding: 2rem; }
-    .coming-soon-content { text-align: center; max-width: 500px; }
-    .module-icon { width: 96px; height: 96px; background: rgba(6,182,212,0.12); border-radius: 24px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: #06b6d4; animation: pulse 3s ease-in-out infinite; }
-    h2 { font-size: 1.5rem; color: #f0f1f5; margin-bottom: 0.75rem; font-family: 'Outfit', sans-serif; }
-    p { color: #a0a4b8; line-height: 1.6; margin-bottom: 1.5rem; }
-    .feature-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 2rem; }
-    .feature-item { background: rgba(34,38,57,0.8); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 0.625rem 1rem; color: #a0a4b8; font-size: 0.875rem; text-align: left; }
-    .btn-primary { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.625rem 1.25rem; background: #06b6d4; color: #0f1117; border: none; border-radius: 8px; cursor: pointer; font-size: 0.875rem; font-weight: 600; text-decoration: none; transition: all 0.2s; }
-    .btn-primary:hover { background: #0891b2; transform: translateY(-1px); }
-  `]
+
+  styles: [
+    `
+      .tabs-container {
+        background: var(--bg-secondary);
+        border: 1px solid var(--glass-border);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+
+      .tabs-header {
+        display: flex;
+        gap: 0;
+        border-bottom: 2px solid var(--glass-border);
+        background: var(--bg-primary);
+      }
+
+      .tab-button {
+        flex: 1;
+        padding: 1rem;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+
+        &:hover:not(:disabled) {
+          color: var(--text-primary);
+          background: var(--bg-hover);
+        }
+
+        &.active {
+          color: var(--primary);
+          border-bottom-color: var(--primary);
+        }
+
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        svg {
+          width: 18px;
+          height: 18px;
+        }
+      }
+
+      .tabs-content {
+        padding: 1.5rem;
+      }
+
+      .tab-pane {
+        animation: fadeIn 0.3s ease;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      .coming-soon {
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-secondary);
+      }
+    `,
+  ],
 })
-export class SettingsComponent {}
+export class SettingsComponent {
+  private router = inject(Router);
+
+  activeTab = signal<Tab>('company');
+
+  setTab(tab: Tab) {
+    this.activeTab.set(tab);
+  }
+}

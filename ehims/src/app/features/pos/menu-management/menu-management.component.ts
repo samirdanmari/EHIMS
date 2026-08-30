@@ -40,7 +40,6 @@ export class MenuManagementComponent implements OnInit {
   items = signal<MenuItem[]>([]);
   inventoryItems = signal<InventoryItem[]>([]);
   categories = signal<{ id: number; name: string }[]>([]);
-  selectedInventoryItems = signal<number[]>([]);
 
   searchTerm = signal('');
   isModalOpen = signal(false);
@@ -64,6 +63,9 @@ export class MenuManagementComponent implements OnInit {
 
   filteredItems = signal<MenuItem[]>([]);
 
+  // Multi-select inventory items tracking
+  selectedInventoryItemIds = signal<Set<number>>(new Set());
+
   async ngOnInit() {
     await Promise.all([
       this.loadCategories(),
@@ -71,6 +73,28 @@ export class MenuManagementComponent implements OnInit {
       this.loadInventoryItems(),
     ]);
     this.isLoading.set(false);
+  }
+
+  isInventoryItemSelected(id: number): boolean {
+    return this.selectedInventoryItemIds().has(id);
+  }
+
+  toggleInventoryItem(id: number) {
+    const selected = new Set(this.selectedInventoryItemIds());
+    if (selected.has(id)) {
+      selected.delete(id);
+    } else {
+      selected.add(id);
+    }
+    this.selectedInventoryItemIds.set(selected);
+  }
+
+  getSelectedInventoryNames(): string {
+    const names = this.inventoryItems()
+      .filter((inv) => this.selectedInventoryItemIds().has(inv.id))
+      .map((inv) => inv.name)
+      .join(', ');
+    return names || '';
   }
 
   async loadMenuItems() {
@@ -129,15 +153,6 @@ export class MenuManagementComponent implements OnInit {
     }
   }
 
-  toggleInventoryItem(itemId: number) {
-    const current = this.selectedInventoryItems();
-    if (current.includes(itemId)) {
-      this.selectedInventoryItems.set(current.filter((id) => id !== itemId));
-    } else {
-      this.selectedInventoryItems.set([...current, itemId]);
-    }
-  }
-
   applySearch() {
     const search = this.searchTerm().toLowerCase();
     this.filteredItems.set(
@@ -152,6 +167,7 @@ export class MenuManagementComponent implements OnInit {
 
   openCreateModal() {
     this.editingItem.set(null);
+    this.selectedInventoryItemIds.set(new Set());
     this.form.reset({
       name: '',
       category_id: null,
@@ -164,6 +180,7 @@ export class MenuManagementComponent implements OnInit {
 
   openEditModal(item: MenuItem) {
     this.editingItem.set(item);
+    this.selectedInventoryItemIds.set(new Set());
     this.form.reset({
       name: item.name,
       category_id: item.category_id,
@@ -183,6 +200,7 @@ export class MenuManagementComponent implements OnInit {
     this.isSaving.set(true);
     try {
       const value = this.form.getRawValue();
+      const inventoryItemIds = Array.from(this.selectedInventoryItemIds());
       const editing = this.editingItem();
 
       if (editing) {
@@ -192,6 +210,7 @@ export class MenuManagementComponent implements OnInit {
           category_id: value.category_id,
           selling_price: value.selling_price,
           inventory_item_id: value.inventory_item_id,
+          inventory_item_ids: inventoryItemIds,
           description: value.description || undefined,
           is_available: true,
         });
@@ -214,6 +233,7 @@ export class MenuManagementComponent implements OnInit {
           category_id: value.category_id,
           selling_price: value.selling_price,
           inventory_item_id: value.inventory_item_id,
+          inventory_item_ids: inventoryItemIds,
           description: value.description || undefined,
         });
         if (res.success) {

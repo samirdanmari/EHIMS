@@ -71,7 +71,41 @@ function registerMenuItemIPC(db) {
         }
     });
 
-    ipcMain.handle('menu:create-item', async (event, { name, category_id, selling_price, inventory_item_id, description }) => {
+    ipcMain.handle('menu:get-item-details', async (event, { id }) => {
+        try {
+            const item = db.prepare(`
+                SELECT m.*, c.name as category_name, i.name as inventory_name, i.current_stock
+                FROM menu_items m
+                LEFT JOIN categories c ON m.category_id = c.id
+                LEFT JOIN inventory_items i ON m.inventory_item_id = i.id
+                WHERE m.id = ?
+            `).get(id);
+
+            if (!item) {
+                return { success: false, error: 'Menu item not found' };
+            }
+
+            // Get all associated inventory items
+            const inventoryItems = db.prepare(`
+                SELECT ii.id, ii.name, ii.current_stock, mii.quantity
+                FROM menu_item_inventory mii
+                JOIN inventory_items ii ON mii.inventory_item_id = ii.id
+                WHERE mii.menu_item_id = ?
+                ORDER BY ii.name ASC
+            `).all(id);
+
+            return { 
+                success: true, 
+                item, 
+                inventoryItems: inventoryItems || [] 
+            };
+        } catch (err) {
+            console.error('[menu:get-item-details] Error:', err.message);
+            return { success: false, error: err.message };
+        }
+    });
+
+    ipcMain.handle('menu:create-item', async (event, { name, category_id, selling_price, inventory_item_id, inventory_item_ids, description }) => {
         try {
             if (!name || !name.trim()) {
                 return { success: false, error: 'Menu item name is required' };
@@ -80,18 +114,35 @@ function registerMenuItemIPC(db) {
                 return { success: false, error: 'Selling price must be greater than 0' };
             }
 
-            const info = db.prepare(`
-                INSERT INTO menu_items (name, category_id, selling_price, inventory_item_id, description)
-                VALUES (?, ?, ?, ?, ?)
-            `).run(
-                name.trim(),
-                category_id || null,
-                Number(selling_price),
-                inventory_item_id || null,
-                description || null
-            );
+            const transaction = db.transaction(() => {
+                const info = db.prepare(`
+                    INSERT INTO menu_items (name, category_id, selling_price, inventory_item_id, description)
+                    VALUES (?, ?, ?, ?, ?)
+                `).run(
+                    name.trim(),
+                    category_id || null,
+                    Number(selling_price),
+                    inventory_item_id || null,
+                    description || null
+                );
 
-            const item = db.prepare('SELECT * FROM menu_items WHERE id = ?').get(info.lastInsertRowid);
+                // Insert multiple inventory items if provided
+                if (inventory_item_ids && Array.isArray(inventory_item_ids) && inventory_item_ids.length > 0) {
+                    const insertStmt = db.prepare(`
+                        INSERT OR IGNORE INTO menu_item_inventory (menu_item_id, inventory_item_id, quantity)
+                        VALUES (?, ?, 1)
+                    `);
+                    
+                    for (const invItemId of inventory_item_ids) {
+                        insertStmt.run(info.lastInsertRowid, invItemId);
+                    }
+                }
+
+                return info.lastInsertRowid;
+            });
+
+            const itemId = transaction();
+            const item = db.prepare('SELECT * FROM menu_items WHERE id = ?').get(itemId);
             return { success: true, item };
         } catch (err) {
             console.error('[menu:create-item] Error:', err.message);
@@ -99,27 +150,49 @@ function registerMenuItemIPC(db) {
         }
     });
 
-    ipcMain.handle('menu:update-item', async (event, { id, name, category_id, selling_price, inventory_item_id, description, is_available }) => {
+    ipcMain.handle('menu:update-item', async (event, { id, name, category_id, selling_price, inventory_item_id, inventory_item_ids, description, is_available }) => {
         try {
             const existing = db.prepare('SELECT * FROM menu_items WHERE id = ?').get(id);
             if (!existing) {
                 return { success: false, error: 'Menu item not found' };
             }
 
-            db.prepare(`
-                UPDATE menu_items
-                SET name = ?, category_id = ?, selling_price = ?, inventory_item_id = ?, 
-                    description = ?, is_available = ?, updated_at = datetime('now','localtime')
-                WHERE id = ?
-            `).run(
-                name?.trim() || existing.name,
-                category_id ?? existing.category_id,
-                Number(selling_price ?? existing.selling_price),
-                inventory_item_id ?? existing.inventory_item_id,
-                description ?? existing.description,
-                is_available !== undefined ? (is_available ? 1 : 0) : existing.is_available,
-                id
-            );
+            const transaction = db.transaction(() => {
+                db.prepare(`
+                    UPDATE menu_items
+                    SET name = ?, category_id = ?, selling_price = ?, inventory_item_id = ?, 
+                        description = ?, is_available = ?, updated_at = datetime('now','localtime')
+                    WHERE id = ?
+                `).run(
+                    name?.trim() || existing.name,
+                    category_id ?? existing.category_id,
+                    Number(selling_price ?? existing.selling_price),
+                    inventory_item_id ?? existing.inventory_item_id,
+                    description ?? existing.description,
+                    is_available !== undefined ? (is_available ? 1 : 0) : existing.is_available,
+                    id
+                );
+
+                // Update multiple inventory items if provided
+                if (inventory_item_ids && Array.isArray(inventory_item_ids)) {
+                    // Delete existing associations
+                    db.prepare('DELETE FROM menu_item_inventory WHERE menu_item_id = ?').run(id);
+                    
+                    // Insert new associations
+                    if (inventory_item_ids.length > 0) {
+                        const insertStmt = db.prepare(`
+                            INSERT INTO menu_item_inventory (menu_item_id, inventory_item_id, quantity)
+                            VALUES (?, ?, 1)
+                        `);
+                        
+                        for (const invItemId of inventory_item_ids) {
+                            insertStmt.run(id, invItemId);
+                        }
+                    }
+                }
+            });
+
+            transaction();
 
             const item = db.prepare('SELECT * FROM menu_items WHERE id = ?').get(id);
             return { success: true, item };

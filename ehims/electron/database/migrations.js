@@ -140,6 +140,27 @@ function runMigrations(db) {
             synced INTEGER NOT NULL DEFAULT 0
         );
 
+        -- Junction table: links a menu item to multiple inventory items
+        CREATE TABLE IF NOT EXISTS menu_item_inventory (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            menu_item_id INTEGER NOT NULL REFERENCES menu_items(id) ON DELETE CASCADE,
+            inventory_item_id INTEGER NOT NULL REFERENCES inventory_items(id),
+            quantity REAL NOT NULL DEFAULT 1,
+             created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+            UNIQUE(menu_item_id, inventory_item_id)
+        );
+
+        -- Normalized purchase entry header (many items per entry)
+        CREATE TABLE IF NOT EXISTS purchase_entry_items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            entry_id INTEGER NOT NULL REFERENCES purchase_entries(id) ON DELETE CASCADE,
+            item_id INTEGER NOT NULL REFERENCES inventory_items(id),
+            quantity REAL NOT NULL,
+            unit_cost REAL NOT NULL,
+            total_cost REAL NOT NULL,
+            synced INTEGER NOT NULL DEFAULT 0
+        );
+
         CREATE TABLE IF NOT EXISTS orders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             order_number TEXT NOT NULL UNIQUE,
@@ -232,6 +253,37 @@ function runMigrations(db) {
             synced_at TEXT,
             error TEXT,
             created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+        );
+
+        CREATE TABLE IF NOT EXISTS company_settings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            company_name TEXT NOT NULL,
+            company_logo BLOB,
+            registration_number TEXT,
+            tax_id TEXT,
+            address TEXT,
+            phone TEXT,
+            email TEXT,
+            website TEXT,
+            currency TEXT DEFAULT 'NGN',
+            timezone TEXT DEFAULT 'Africa/Lagos',
+            business_hours_open TEXT DEFAULT '08:00',
+            business_hours_close TEXT DEFAULT '20:00',
+            created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+            updated_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+        );
+
+        CREATE TABLE IF NOT EXISTS printer_settings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            default_printer TEXT,
+            paper_width TEXT DEFAULT '58mm',
+            font_size_normal INTEGER DEFAULT 12,
+            font_size_small INTEGER DEFAULT 10,
+            font_size_large INTEGER DEFAULT 14,
+            logo_on_receipt INTEGER DEFAULT 1,
+            line_width INTEGER DEFAULT 32,
+            created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+            updated_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
         );
     `);
 }
