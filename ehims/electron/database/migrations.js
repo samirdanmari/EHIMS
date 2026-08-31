@@ -91,7 +91,7 @@ function runMigrations(db) {
             synced INTEGER NOT NULL DEFAULT 0
         );
 
-        -- SHIFTS & STOCK ISSUANCE
+       -- SHIFTS & STOCK ISSUANCE
         CREATE TABLE IF NOT EXISTS shifts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             shift_name TEXT NOT NULL,
@@ -125,7 +125,7 @@ function runMigrations(db) {
             synced INTEGER NOT NULL DEFAULT 0
         );
 
-        -- POS
+          -- POS
         CREATE TABLE IF NOT EXISTS menu_items (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
@@ -284,6 +284,16 @@ function runMigrations(db) {
             line_width INTEGER DEFAULT 32,
             created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
             updated_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+        );
+
+        CREATE TABLE IF NOT EXISTS print_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_id INTEGER NOT NULL REFERENCES orders(id),
+            printer_name TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'success' CHECK(status IN ('success', 'failed')),
+            error_message TEXT,
+            printed_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+            created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
         );
     `);
 }

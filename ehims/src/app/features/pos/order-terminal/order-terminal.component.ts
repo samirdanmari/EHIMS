@@ -27,6 +27,7 @@ import { ActiveShift } from '../../../core/models/inventory.model';
 import { CurrencyPipe } from '../../../shared/pipes/currency.pipe';
 import { PosTabsComponent } from '../../../shared/components/pos/pos-tabs/pos-tabs.component';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
+import { ReceiptService } from '../../../core/services/receipt.service';
 
 @Component({
   selector: 'app-order-terminal',
@@ -47,6 +48,7 @@ export class OrderTerminalComponent implements OnInit {
   private inventoryService = inject(InventoryService);
   private authService = inject(AuthService);
   private notificationService = inject(NotificationService);
+  private receiptService = inject(ReceiptService);
 
   @ViewChild(ConfirmDialogComponent) confirmDialog!: ConfirmDialogComponent;
 
@@ -240,6 +242,10 @@ export class OrderTerminalComponent implements OnInit {
           'Order completed',
           `Order #${res.orderNumber} · Total: ${res.totalAmount?.toLocaleString('en-NG', { minimumFractionDigits: 2 })} NGN`,
         );
+
+        // Print receipt
+        await this.printReceipt(res);
+
         this.resetOrder();
         await this.loadMenuItems();
       } else {
@@ -250,6 +256,45 @@ export class OrderTerminalComponent implements OnInit {
       }
     } finally {
       this.isProcessing.set(false);
+    }
+  }
+
+  private async printReceipt(orderRes: any) {
+    try {
+      const currentUser = this.authService.currentUser();
+      const receiptData = {
+        orderId: orderRes.id,
+        orderNumber: orderRes.orderNumber,
+        items: this.cart().map((item) => ({
+          name: item.menu_item_name,
+          quantity: item.quantity,
+          unitPrice: item.unit_price,
+          lineTotal: item.quantity * item.unit_price,
+        })),
+        subtotal:
+          orderRes.subtotal ||
+          orderRes.totalAmount - (orderRes.tax_amount || 0),
+        discount: orderRes.discount_amount,
+        tax: orderRes.tax_amount || 0,
+        total: orderRes.totalAmount,
+        paymentMethod: this.paymentMethod(),
+        customerName: currentUser?.display_name,
+        tableNumber: this.form.controls.table_number.value || undefined,
+      };
+
+      const printRes = await this.receiptService.printReceipt(receiptData);
+
+      if (!printRes.success) {
+        console.warn('Receipt print failed:', printRes.error);
+        // Don't fail the order, just log the warning
+        this.notificationService.warning(
+          'Print Warning',
+          'Order completed but receipt print failed',
+        );
+      }
+    } catch (err) {
+      console.error('Receipt print error:', err);
+      // Silently fail - order was successful, just print failed
     }
   }
 

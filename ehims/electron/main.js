@@ -12,6 +12,7 @@ const { registerUsersIPC } = require('./ipc/users.ipc');
 const { registerReportsIPC } = require('./ipc/reports.ipc');
 const { registerSettingsIPC } = require('./ipc/settings.ipc');
 const { registerPrinterIPC } = require('./ipc/printer.ipc');
+const { registerReceiptIPC } = require('./ipc/receipt.ipc');
 
 let mainWindow;
 
@@ -52,6 +53,7 @@ app.whenReady().then(() => {
     registerReportsIPC(db);
     registerSettingsIPC(db);
     registerPrinterIPC(db);
+    registerReceiptIPC(db);
 
     // Generic read-only query handler for Angular renderer
     ipcMain.handle('db:query', async (event, { sql, params = [] }) => {

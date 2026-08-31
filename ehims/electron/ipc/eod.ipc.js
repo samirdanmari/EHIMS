@@ -28,7 +28,7 @@ function registerEODIPC(db) {
             `).run(shift_name.trim(), user_id, opening_cash || 0);
 
             if (info.changes > 0) {
-                const shift = db.prepare('SELECT * FROM shifts WHERE id = ?').get(info.lastInsertRowid);
+                const shift = db.prepare('SELECT * FROM shifts WHERE id = ?').get(info.lastID);
                 return { success: true, shift };
             }
             return { success: false, error: 'Failed to create shift' };
@@ -140,17 +140,17 @@ function registerEODIPC(db) {
                 const grossProfit = totalSales - totalCOGS;
                 const netProfit = grossProfit - totalDiscounts;
 
-                // Calculate total purchases (for reference)
+                // Calculate total purchases (for reference - by date, not shift)
                 const purchases = db.prepare(`
-                    SELECT SUM(total_cost) as total FROM purchase_entries WHERE shift_id = ?
-                `).get(shift_id);
+                    SELECT SUM(total_cost) as total FROM purchase_entries WHERE DATE(purchase_date) = ?
+                `).get(reportDate);
                 const totalPurchases = purchases.total || 0;
 
                 // Check if report exists, update or create
                 const existingReport = db.prepare('SELECT id FROM eod_reports WHERE report_date = ?').get(reportDate);
 
                 if (existingReport) {
-                    db.prepare(`s
+                    db.prepare(`
                         UPDATE eod_reports
                         SET total_sales = ?, total_cogs = ?, gross_profit = ?, total_discounts = ?,
                             total_voids = ?, net_profit = ?, total_orders = ?, total_purchases = ?,

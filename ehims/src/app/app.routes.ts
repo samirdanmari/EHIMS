@@ -62,7 +62,17 @@ export const routes: Routes = [
         canActivate: [roleGuard],
         data: { roles: ['admin', 'manager'] },
       },
-
+      {
+        path: 'reports',
+        loadChildren: () =>
+          import('./features/reports/reports.routes').then(
+            (m) => m.REPORTS_ROUTES,
+          ),
+        canActivate: [roleGuard],
+        data: {
+          roles: ['admin', 'manager', 'storekeeper', 'cashier', 'waiter'],
+        },
+      },
       {
         path: 'users',
         loadChildren: () =>
