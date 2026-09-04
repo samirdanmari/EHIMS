@@ -38,25 +38,28 @@ function registerSupplierIPC(db) {
         }
     });
 
-    ipcMain.handle('supplier:create', async (event, { name, contact_person, phone, email, address, payment_terms }) => {
+    ipcMain.handle('supplier:create', async (event, { name, contact_person, phone, email, address, payment_terms, bank_name, account_number }) => {
         try {
             if (!name || !name.trim()) {
                 return { success: false, error: 'Supplier name is required' };
             }
 
             const info = db.prepare(`
-                INSERT INTO suppliers (name, contact_person, phone, email, address, payment_terms)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO suppliers (name, contact_person, phone, email, address, payment_terms, bank_name, account_number)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             `).run(
                 name.trim(),
                 contact_person || null,
                 phone || null,
                 email || null,
                 address || null,
-                payment_terms || 'Net30'
+                payment_terms || 'Net30',
+                bank_name || null,
+                account_number || null
             );
 
             const supplier = db.prepare('SELECT * FROM suppliers WHERE id = ?').get(info.lastInsertRowid);
+            console.log('[supplier:create] Created supplier:', supplier.id, supplier.name);
             return { success: true, supplier };
         } catch (err) {
             console.error('[supplier:create] Error:', err.message);
@@ -64,7 +67,7 @@ function registerSupplierIPC(db) {
         }
     });
 
-    ipcMain.handle('supplier:update', async (event, { id, name, contact_person, phone, email, address, payment_terms, is_active }) => {
+    ipcMain.handle('supplier:update', async (event, { id, name, contact_person, phone, email, address, payment_terms, is_active, bank_name, account_number }) => {
         try {
             const existing = db.prepare('SELECT * FROM suppliers WHERE id = ?').get(id);
             if (!existing) {
@@ -74,7 +77,8 @@ function registerSupplierIPC(db) {
             db.prepare(`
                 UPDATE suppliers
                 SET name = ?, contact_person = ?, phone = ?, email = ?, address = ?, 
-                    payment_terms = ?, is_active = ?, updated_at = datetime('now','localtime')
+                    payment_terms = ?, is_active = ?, bank_name = ?, account_number = ?, 
+                    updated_at = datetime('now','localtime')
                 WHERE id = ?
             `).run(
                 name?.trim() || existing.name,
@@ -84,10 +88,13 @@ function registerSupplierIPC(db) {
                 address ?? existing.address,
                 payment_terms ?? existing.payment_terms,
                 is_active !== undefined ? (is_active ? 1 : 0) : existing.is_active,
+                bank_name ?? existing.bank_name,
+                account_number ?? existing.account_number,
                 id
             );
 
             const supplier = db.prepare('SELECT * FROM suppliers WHERE id = ?').get(id);
+            console.log('[supplier:update] Updated supplier:', id);
             return { success: true, supplier };
         } catch (err) {
             console.error('[supplier:update] Error:', err.message);
@@ -98,6 +105,7 @@ function registerSupplierIPC(db) {
     ipcMain.handle('supplier:deactivate', async (event, { id }) => {
         try {
             db.prepare(`UPDATE suppliers SET is_active = 0, updated_at = datetime('now','localtime') WHERE id = ?`).run(id);
+            console.log('[supplier:deactivate] Deactivated supplier:', id);
             return { success: true };
         } catch (err) {
             console.error('[supplier:deactivate] Error:', err.message);
@@ -131,7 +139,6 @@ function registerSupplierIPC(db) {
                 notes || null
             );
 
-            // Reduce supplier credit balance
             db.prepare(`
                 UPDATE suppliers 
                 SET credit_balance = CASE 
@@ -142,6 +149,7 @@ function registerSupplierIPC(db) {
             `).run(amount, amount, supplier_id);
 
             const payment = db.prepare('SELECT * FROM supplier_payments WHERE id = ?').get(info.lastInsertRowid);
+            console.log('[supplier:record-payment] Recorded payment:', info.lastInsertRowid);
             return { success: true, payment };
         } catch (err) {
             console.error('[supplier:record-payment] Error:', err.message);
@@ -220,27 +228,31 @@ function registerSupplierIPC(db) {
                 return { success: false, error: 'Supplier not found' };
             }
 
-            // Get all purchases from this supplier
             const purchases = db.prepare(`
                 SELECT 
                     pe.id,
                     pe.purchase_date,
                     pe.total_cost,
-                    GROUP_CONCAT(pi.item_id || ':' || pi.quantity || ':' || i.name || ':' || pi.unit_cost, '|') as items
+                    pe.quantity,
+                    pe.unit_cost,
+                    pe.is_credit,
+                    pe.payment_method,
+                    ii.name as items
                 FROM purchase_entries pe
-                LEFT JOIN purchase_entry_items pi ON pe.id = pi.entry_id
-                LEFT JOIN inventory_items i ON pi.item_id = i.id
+                LEFT JOIN inventory_items ii ON pe.item_id = ii.id
                 WHERE pe.supplier_id = ?
-                GROUP BY pe.id
                 ORDER BY pe.purchase_date DESC
             `).all(supplier_id);
 
-            // Get all payments made to this supplier
             const payments = db.prepare(`
-                SELECT * FROM supplier_payments
-                WHERE supplier_id = ?
-                ORDER BY payment_date DESC
+                SELECT sp.*, u.display_name as recorded_by_name
+                FROM supplier_payments sp
+                LEFT JOIN users u ON sp.recorded_by = u.id
+                WHERE sp.supplier_id = ?
+                ORDER BY sp.payment_date DESC
             `).all(supplier_id);
+
+            console.log('[supplier:get-with-items] Retrieved:', purchases.length, 'purchases,', payments.length, 'payments');
 
             return {
                 success: true,

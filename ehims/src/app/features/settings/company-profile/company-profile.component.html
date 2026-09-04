@@ -17,6 +17,35 @@
         }
       </div>
 
+      <!-- Logo Upload Section -->
+      <div class="form-group">
+        <label class="form-label">Company Logo</label>
+        <div class="logo-upload-container">
+          @if (logoPreview()) {
+          <div class="logo-preview">
+            <img [src]="logoPreview()" alt="Company Logo">
+          </div>
+          }
+          <div class="logo-upload-input">
+            <input #logoInput type="file" accept="image/*" (change)="onLogoSelected($event)"
+              [disabled]="isUploadingLogo()" style="display: none;">
+            <button type="button" class="btn btn-secondary" (click)="logoInput.click()" [disabled]="isUploadingLogo()">
+              @if (isUploadingLogo()) {
+              Uploading...
+              } @else {
+              Choose Logo Image
+              }
+            </button>
+            @if (logoPreview()) {
+            <button type="button" class="btn btn-danger" (click)="deleteLogo()" [disabled]="isUploadingLogo()">
+              Delete Logo
+            </button>
+            }
+          </div>
+          <p class="form-hint">Supported: PNG, JPG, GIF (Max 5MB). Logo will appear at top of all receipts.</p>
+        </div>
+      </div>
+
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Registration Number</label>

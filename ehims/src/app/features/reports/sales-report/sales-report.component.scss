@@ -1,4 +1,4 @@
-@use '../../../styles/variables' as *;
+@use "../../../styles/variables" as *;
 
 .filters-card {
   background: $bg-secondary;
@@ -70,6 +70,25 @@
   }
 }
 
+.form-actions {
+  .search-btn {
+    width: 100%;
+    padding: $space-2 $space-3;
+    background: $primary;
+    color: #fff;
+    border: 1px solid $primary;
+    border-radius: $radius-md;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    cursor: pointer;
+    transition: all $transition-fast;
+
+    &:hover {
+      filter: brightness(1.08);
+    }
+  }
+}
+
 .metrics-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -78,7 +97,11 @@
 }
 
 .metric-card {
-  background: linear-gradient(135deg, $bg-secondary 0%, rgba(59, 130, 246, 0.05) 100%);
+  background: linear-gradient(
+    135deg,
+    $bg-secondary 0%,
+    rgba(59, 130, 246, 0.05) 100%
+  );
   border: 1px solid $glass-border;
   border-radius: $radius-lg;
   padding: $space-4;

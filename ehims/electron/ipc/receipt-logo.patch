@@ -1,0 +1,45 @@
+// In receipt.ipc.js, update registerReceiptIPC function to fetch and include logo:
+
+  ipcMain.handle('receipt:print', async (event, { orderId, orderNumber, items, subtotal, discount, tax, total, paymentMethod, customerName, tableNumber, notes }) => {
+    try {
+      // Get printer settings
+      const settings = db.prepare('SELECT * FROM printer_settings LIMIT 1').get();
+      const printerName = settings?.default_printer || null;
+
+      if (!printerName) {
+        return { success: false, error: 'No printer configured. Go to Settings → Printer Configuration to set up your printer.' };
+      }
+
+      // GET COMPANY LOGO
+      const company = db.prepare('SELECT company_logo FROM company_settings LIMIT 1').get();
+      let logoBase64 = '';
+      if (company && company.company_logo) {
+        // Convert BLOB to Base64
+        logoBase64 = `data:image/png;base64,${company.company_logo.toString('base64')}`;
+      }
+
+      // ... rest of print code ...
+      const receiptHtml = formatReceiptHtml({
+        orderNumber,
+        items,
+        subtotal,
+        discount,
+        tax,
+        total,
+        paymentMethod,
+        customerName,
+        tableNumber,
+        notes,
+        logo: logoBase64  // ADD THIS
+      });
+
+      // ... continue printing ...
+    }
+  });
+
+// Update formatReceiptHtml to include logo:
+function formatReceiptHtml({ orderNumber, items, subtotal, discount, tax, total, paymentMethod, customerName, tableNumber, notes, logo }) {
+  const logoHtml = logo ? `<img src="${logo}" alt="Logo" style="max-width: 100px; margin-bottom: 10px;">` : '';
+  
+  // Add logoHtml to the body near the top
+}

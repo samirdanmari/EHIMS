@@ -50,231 +50,206 @@ function registerEODIPC(db) {
             return { success: true, shifts };
         } catch (err) {
             console.error('[shift:list-active] Error:', err.message);
-            return { success: false, error: err.message, shifts: [] };
+            return { success: false, error: err.message };
         }
     });
 
-    // ---------------------------------------------------------
-    // SHIFT HANDOVER
-    // ---------------------------------------------------------
-    ipcMain.handle('eod:close-shift', async (event, { shift_id, drawer_cash, expected_cash, stock_verified, notes, outgoing_user, incoming_user }) => {
+    ipcMain.handle('shift:close', async (event, { shift_id, closing_cash, notes }) => {
         try {
-            if (!shift_id) {
-                return { success: false, error: 'shift_id is required' };
-            }
-
             const shift = db.prepare('SELECT * FROM shifts WHERE id = ?').get(shift_id);
+
             if (!shift) {
                 return { success: false, error: 'Shift not found' };
             }
-            if (shift.status !== 'active') {
-                return { success: false, error: 'Shift is not active' };
+
+            db.prepare(`
+                UPDATE shifts 
+                SET status = 'closed', closing_cash = ?, notes = ?, end_time = CURRENT_TIMESTAMP
+                WHERE id = ?
+            `).run(closing_cash || 0, notes || '', shift_id);
+
+            const updated = db.prepare('SELECT * FROM shifts WHERE id = ?').get(shift_id);
+            return { success: true, shift: updated };
+        } catch (err) {
+            console.error('[shift:close] Error:', err.message);
+            return { success: false, error: err.message };
+        }
+    });
+
+    // Alias for frontend compatibility
+    ipcMain.handle('eod:close-shift', async (event, payload) => {
+        try {
+            const shift = db.prepare('SELECT * FROM shifts WHERE id = ?').get(payload.shift_id);
+
+            if (!shift) {
+                return { success: false, error: 'Shift not found' };
             }
 
-            const runTransaction = db.transaction(() => {
-                // Close the shift
-                db.prepare(`
-                    UPDATE shifts
-                    SET status = 'closed', end_time = datetime('now','localtime')
-                    WHERE id = ?
-                `).run(shift_id);
+            db.prepare(`
+                UPDATE shifts 
+                SET status = 'closed', closing_cash = ?, notes = ?, end_time = CURRENT_TIMESTAMP
+                WHERE id = ?
+            `).run(payload.closing_cash || 0, payload.notes || '', payload.shift_id);
 
-                // Create handover record
-                const variance = expected_cash > 0 ? drawer_cash - expected_cash : 0;
-                const handoverInfo = db.prepare(`
-                    INSERT INTO shift_handovers (shift_id, outgoing_user, incoming_user, drawer_cash, expected_cash, variance, stock_verified, notes)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                `).run(
-                    shift_id,
-                    outgoing_user,
-                    incoming_user || null,
-                    drawer_cash || 0,
-                    expected_cash || 0,
-                    variance,
-                    stock_verified ? 1 : 0,
-                    notes || null
-                );
-
-                // Generate EOD report
-                const today = new Date().toISOString().slice(0, 10);
-                const reportDate = today;
-
-                // Calculate sales (from orders in this shift)
-                const orders = db.prepare(`
-                    SELECT SUM(total_amount) as total, 
-                           SUM(CASE WHEN status != 'voided' THEN 1 ELSE 0 END) as count,
-                           SUM(CASE WHEN payment_method = 'cash' AND status != 'voided' THEN total_amount ELSE 0 END) as cash_collected,
-                           SUM(CASE WHEN payment_method = 'card' AND status != 'voided' THEN total_amount ELSE 0 END) as card_collected,
-                           SUM(CASE WHEN payment_method = 'transfer' AND status != 'voided' THEN total_amount ELSE 0 END) as transfer_collected,
-                           SUM(CASE WHEN status = 'voided' THEN total_amount ELSE 0 END) as voided_amount,
-                           SUM(discount_amount) as total_discounts
-                    FROM orders WHERE shift_id = ?
-                `).get(shift_id);
-
-                const totalSales = orders.total || 0;
-                const totalOrders = orders.count || 0;
-                const cashCollected = orders.cash_collected || 0;
-                const cardCollected = orders.card_collected || 0;
-                const transferCollected = orders.transfer_collected || 0;
-                const totalVoids = orders.voided_amount || 0;
-                const totalDiscounts = orders.total_discounts || 0;
-
-                // Calculate COGS (cost of goods sold from stock issued in shift)
-                const issuances = db.prepare(`
-                    SELECT SUM(sii.total_cost) as total_cost
-                    FROM stock_issuance_items sii
-                    JOIN stock_issuances si ON sii.issuance_id = si.id
-                    WHERE si.shift_id = ?
-                `).get(shift_id);
-
-                const totalCOGS = issuances.total_cost || 0;
-
-                // Find low stock items (below threshold)
-                const lowStockItems = db.prepare(`
-                    SELECT GROUP_CONCAT(name, ', ') as items
-                    FROM inventory_items
-                    WHERE current_stock <= low_stock_threshold AND is_active = 1
-                `).get().items || '';
-
-                // Calculate totals
-                const grossProfit = totalSales - totalCOGS;
-                const netProfit = grossProfit - totalDiscounts;
-
-                // Calculate total purchases (for reference - by date, not shift)
-                const purchases = db.prepare(`
-                    SELECT SUM(total_cost) as total FROM purchase_entries WHERE DATE(purchase_date) = ?
-                `).get(reportDate);
-                const totalPurchases = purchases.total || 0;
-
-                // Check if report exists, update or create
-                const existingReport = db.prepare('SELECT id FROM eod_reports WHERE report_date = ?').get(reportDate);
-
-                if (existingReport) {
-                    db.prepare(`
-                        UPDATE eod_reports
-                        SET total_sales = ?, total_cogs = ?, gross_profit = ?, total_discounts = ?,
-                            total_voids = ?, net_profit = ?, total_orders = ?, total_purchases = ?,
-                            cash_collected = ?, card_collected = ?, transfer_collected = ?,
-                            low_stock_items = ?, generated_by = ?, generated_at = datetime('now','localtime'), notes = ?
-                        WHERE report_date = ?
-                    `).run(
-                        totalSales, totalCOGS, grossProfit, totalDiscounts,
-                        totalVoids, netProfit, totalOrders, totalPurchases,
-                        cashCollected, cardCollected, transferCollected,
-                        lowStockItems, outgoing_user, notes, reportDate
-                    );
-                } else {
-                    db.prepare(`
-                        INSERT INTO eod_reports (report_date, total_sales, total_cogs, gross_profit, total_discounts,
-                            total_voids, net_profit, total_orders, total_purchases, cash_collected, card_collected,
-                            transfer_collected, low_stock_items, generated_by, notes)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    `).run(
-                        reportDate, totalSales, totalCOGS, grossProfit, totalDiscounts,
-                        totalVoids, netProfit, totalOrders, totalPurchases, cashCollected, cardCollected,
-                        transferCollected, lowStockItems, outgoing_user, notes
-                    );
-                }
-
-                return {
-                    handoverId: handoverInfo.lastInsertRowid,
-                    eodReport: {
-                        date: reportDate,
-                        totalSales,
-                        totalCOGS,
-                        grossProfit,
-                        totalDiscounts,
-                        totalVoids,
-                        netProfit,
-                        totalOrders,
-                        totalPurchases,
-                        cashCollected,
-                        cardCollected,
-                        transferCollected,
-                        variance,
-                    }
-                };
-            });
-
-            const result = runTransaction();
-            return { success: true, ...result };
+            const updated = db.prepare('SELECT * FROM shifts WHERE id = ?').get(payload.shift_id);
+            return { success: true, shift: updated };
         } catch (err) {
             console.error('[eod:close-shift] Error:', err.message);
             return { success: false, error: err.message };
         }
     });
 
-    // ---------------------------------------------------------
-    // EOD REPORTS
-    // ---------------------------------------------------------
-    ipcMain.handle('eod:get-report', async (event, { report_date }) => {
+    ipcMain.handle('shift:get-current', async (event, { user_id }) => {
         try {
-            const report = db.prepare(`
-                SELECT er.*, u.display_name as generated_by_name
-                FROM eod_reports er
-                LEFT JOIN users u ON er.generated_by = u.id
-                WHERE er.report_date = ?
-            `).get(report_date);
+            const shift = db.prepare(`
+                SELECT s.*, u.display_name as user_name
+                FROM shifts s
+                LEFT JOIN users u ON s.user_id = u.id
+                WHERE s.user_id = ? AND s.status = 'active'
+            `).get(user_id);
 
-            if (!report) {
-                return { success: false, error: 'Report not found' };
+            return shift ? { success: true, shift } : { success: false, error: 'No active shift' };
+        } catch (err) {
+            console.error('[shift:get-current] Error:', err.message);
+            return { success: false, error: err.message };
+        }
+    });
+
+    // ---------------------------------------------------------
+    // EOD PROCESS
+    // ---------------------------------------------------------
+    ipcMain.handle('eod:start', async (event, { shift_id }) => {
+        try {
+            const shift = db.prepare('SELECT * FROM shifts WHERE id = ? AND status = ?', 'closed').get(shift_id);
+
+            if (!shift) {
+                return { success: false, error: 'Closed shift not found' };
             }
 
-            return { success: true, report };
+            const eodRecord = db.prepare(`
+                INSERT INTO end_of_day_records (shift_id, recorded_by, status)
+                VALUES (?, ?, 'pending')
+            `).run(shift_id, event.sender._id || 0);
+
+            if (eodRecord.changes > 0) {
+                const record = db.prepare('SELECT * FROM end_of_day_records WHERE id = ?').get(eodRecord.lastID);
+                return { success: true, record };
+            }
+            return { success: false, error: 'Failed to create EOD record' };
+        } catch (err) {
+            console.error('[eod:start] Error:', err.message);
+            return { success: false, error: err.message };
+        }
+    });
+
+    ipcMain.handle('eod:get-report', async (event, { shift_id }) => {
+        try {
+            // Get shift data
+            const shift = db.prepare('SELECT * FROM shifts WHERE id = ?').get(shift_id);
+            if (!shift) {
+                return { success: false, error: 'Shift not found' };
+            }
+
+            // Get orders summary
+            const orders = db.prepare(`
+                SELECT o.* FROM orders o
+                WHERE o.shift_id = ? AND o.status = 'completed'
+                ORDER BY o.created_at ASC
+            `).all(shift_id);
+
+            const summary = db.prepare(`
+                SELECT 
+                    COUNT(*) as total_orders,
+                    COALESCE(SUM(total_amount), 0) as total_sales,
+                    COALESCE(SUM(discount_amount), 0) as total_discounts,
+                    COALESCE(SUM(tax_amount), 0) as total_tax
+                FROM orders
+                WHERE shift_id = ? AND status = 'completed'
+            `).get(shift_id);
+
+            // Get supplier payments
+            const supplier_payments = db.prepare(`
+                SELECT sp.* FROM supplier_payments sp
+                WHERE DATE(sp.payment_date) = DATE(?)
+            `).all(shift.end_time);
+
+            return {
+                success: true,
+                report: {
+                    shift,
+                    orders,
+                    summary,
+                    supplier_payments
+                }
+            };
         } catch (err) {
             console.error('[eod:get-report] Error:', err.message);
             return { success: false, error: err.message };
         }
     });
 
-    ipcMain.handle('eod:list-reports', async (event, { limit = 30, dateFrom = null, dateTo = null } = {}) => {
+    ipcMain.handle('eod:complete', async (event, { eod_record_id, actual_cash, variance_amount, notes }) => {
         try {
-            let sql = `
-                SELECT er.*, u.display_name as generated_by_name
-                FROM eod_reports er
-                LEFT JOIN users u ON er.generated_by = u.id
-                WHERE 1=1
-            `;
+            db.prepare(`
+                UPDATE end_of_day_records
+                SET status = 'completed', actual_cash = ?, variance_amount = ?, notes = ?, completed_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            `).run(actual_cash || 0, variance_amount || 0, notes || '', eod_record_id);
+
+            const record = db.prepare('SELECT * FROM end_of_day_records WHERE id = ?').get(eod_record_id);
+            return { success: true, record };
+        } catch (err) {
+            console.error('[eod:complete] Error:', err.message);
+            return { success: false, error: err.message };
+        }
+    });
+
+    ipcMain.handle('eod:list', async (event, { shift_id = null }) => {
+        try {
+            let sql = 'SELECT * FROM end_of_day_records WHERE 1=1';
             const params = [];
 
-            if (dateFrom) {
-                sql += ` AND er.report_date >= ?`;
-                params.push(dateFrom);
+            if (shift_id) {
+                sql += ' AND shift_id = ?';
+                params.push(shift_id);
             }
-            if (dateTo) {
-                sql += ` AND er.report_date <= ?`;
-                params.push(dateTo);
-            }
-            sql += ` ORDER BY er.report_date DESC LIMIT ?`;
-            params.push(limit);
 
-            const rows = db.prepare(sql).all(...params);
-            return { success: true, reports: rows };
+            sql += ' ORDER BY created_at DESC';
+            const records = db.prepare(sql).all(...params);
+            return { success: true, records };
         } catch (err) {
-            console.error('[eod:list-reports] Error:', err.message);
-            return { success: false, error: err.message, reports: [] };
+            console.error('[eod:list] Error:', err.message);
+            return { success: false, error: err.message };
         }
     });
 
     // ---------------------------------------------------------
-    // SHIFT HANDOVER FORMS
+    // SHIFT HANDOVER
     // ---------------------------------------------------------
+    ipcMain.handle('eod:create-handover', async (event, { from_shift_id, to_shift_id, notes }) => {
+        try {
+            const info = db.prepare(`
+                INSERT INTO shift_handovers (from_shift_id, to_shift_id, notes, status)
+                VALUES (?, ?, ?, 'pending')
+            `).run(from_shift_id, to_shift_id, notes || '');
+
+            if (info.changes > 0) {
+                const handover = db.prepare('SELECT * FROM shift_handovers WHERE id = ?').get(info.lastID);
+                return { success: true, handover };
+            }
+            return { success: false, error: 'Failed to create handover' };
+        } catch (err) {
+            console.error('[eod:create-handover] Error:', err.message);
+            return { success: false, error: err.message };
+        }
+    });
+
     ipcMain.handle('eod:get-handover', async (event, { handover_id }) => {
         try {
-            const handover = db.prepare(`
-                SELECT sh.*, 
-                       uo.display_name as outgoing_user_name,
-                       ui.display_name as incoming_user_name
-                FROM shift_handovers sh
-                LEFT JOIN users uo ON sh.outgoing_user = uo.id
-                LEFT JOIN users ui ON sh.incoming_user = ui.id
-                WHERE sh.id = ?
-            `).get(handover_id);
-
+            const handover = db.prepare('SELECT * FROM shift_handovers WHERE id = ?').get(handover_id);
             if (!handover) {
                 return { success: false, error: 'Handover not found' };
             }
-
             return { success: true, handover };
         } catch (err) {
             console.error('[eod:get-handover] Error:', err.message);
@@ -282,32 +257,8 @@ function registerEODIPC(db) {
         }
     });
 
-    ipcMain.handle('eod:list-handovers', async (event, { limit = 50 } = {}) => {
+    ipcMain.handle('eod:sign-handover', async (event, { handover_id, signature, is_incoming }) => {
         try {
-            const handovers = db.prepare(`
-                SELECT sh.*, 
-                       uo.display_name as outgoing_user_name,
-                       ui.display_name as incoming_user_name
-                FROM shift_handovers sh
-                LEFT JOIN users uo ON sh.outgoing_user = uo.id
-                LEFT JOIN users ui ON sh.incoming_user = ui.id
-                ORDER BY sh.handover_at DESC LIMIT ?
-            `).all(limit);
-
-            return { success: true, handovers };
-        } catch (err) {
-            console.error('[eod:list-handovers] Error:', err.message);
-            return { success: false, error: err.message, handovers: [] };
-        }
-    });
-
-    ipcMain.handle('eod:sign-handover', async (event, { handover_id, signature, is_incoming = false }) => {
-        try {
-            const handover = db.prepare('SELECT * FROM shift_handovers WHERE id = ?').get(handover_id);
-            if (!handover) {
-                return { success: false, error: 'Handover not found' };
-            }
-
             const field = is_incoming ? 'incoming_signature' : 'outgoing_signature';
             db.prepare(`UPDATE shift_handovers SET ${field} = ? WHERE id = ?`).run(signature, handover_id);
 
@@ -315,6 +266,119 @@ function registerEODIPC(db) {
             return { success: true, handover: updated };
         } catch (err) {
             console.error('[eod:sign-handover] Error:', err.message);
+            return { success: false, error: err.message };
+        }
+    });
+
+    // ---------------------------------------------------------
+    // GET ALL CLOSED SHIFTS WITH DETAILS (FOR ADMIN REPORTING)
+    // ---------------------------------------------------------
+    ipcMain.handle('eod:list-closed-shifts', async (event, { limit = 50, dateFrom = null, dateTo = null, user_id = null } = {}) => {
+        try {
+            let sql = `
+                SELECT 
+                    s.id,
+                    s.shift_name,
+                    s.user_id,
+                    s.start_time,
+                    s.end_time,
+                    s.opening_cash,
+                    s.closing_cash,
+                    s.status,
+                    s.notes,
+                    u.display_name as user_name,
+                    u.username,
+                    (SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE shift_id = s.id AND status = 'completed') as total_sales,
+                    (SELECT COUNT(*) FROM orders WHERE shift_id = s.id AND status = 'completed') as total_orders,
+                    (SELECT COALESCE(SUM(amount), 0) FROM supplier_payments WHERE CAST(payment_date as date) = CAST(s.end_time as date)) as supplier_payments
+                FROM shifts s
+                LEFT JOIN users u ON s.user_id = u.id
+                WHERE s.status = 'closed'
+            `;
+            const params = [];
+
+            if (dateFrom) {
+                sql += ` AND DATE(s.end_time) >= ?`;
+                params.push(dateFrom);
+            }
+            if (dateTo) {
+                sql += ` AND DATE(s.end_time) <= ?`;
+                params.push(dateTo);
+            }
+            if (user_id) {
+                sql += ` AND s.user_id = ?`;
+                params.push(user_id);
+            }
+
+            sql += ` ORDER BY s.end_time DESC LIMIT ?`;
+            params.push(limit);
+
+            const rows = db.prepare(sql).all(...params);
+            return { success: true, shifts: rows };
+        } catch (err) {
+            console.error('[eod:list-closed-shifts] Error:', err.message);
+            return { success: false, error: err.message, shifts: [] };
+        }
+    });
+
+    // ---------------------------------------------------------
+    // GET SHIFT DETAILS WITH SUMMARY
+    // ---------------------------------------------------------
+    ipcMain.handle('eod:get-shift-detail', async (event, { shift_id }) => {
+        try {
+            const shift = db.prepare(`
+                SELECT 
+                    s.*,
+                    u.display_name as user_name
+                FROM shifts s
+                LEFT JOIN users u ON s.user_id = u.id
+                WHERE s.id = ?
+            `).get(shift_id);
+
+            if (!shift) {
+                return { success: false, error: 'Shift not found' };
+            }
+
+            // Get all orders for this shift
+            const orders = db.prepare(`
+                SELECT * FROM orders
+                WHERE shift_id = ? AND status = 'completed'
+                ORDER BY created_at DESC
+            `).all(shift_id);
+
+            const getOrderItems = db.prepare(`
+                SELECT oi.quantity, oi.unit_price, oi.total_price, oi.notes,
+                       m.name as menu_item_name
+                FROM order_items oi
+                LEFT JOIN menu_items m ON m.id = oi.menu_item_id
+                WHERE oi.order_id = ?
+                ORDER BY oi.id
+            `);
+            orders.forEach((order) => {
+                order.order_items = getOrderItems.all(order.id);
+            });
+
+            // Get summary
+            const summary = db.prepare(`
+                SELECT 
+                    COUNT(*) as total_orders,
+                    COALESCE(SUM(total_amount), 0) as total_sales,
+                    COALESCE(SUM(discount_amount), 0) as total_discounts,
+                    COALESCE(SUM(tax_amount), 0) as total_tax
+                FROM orders
+                WHERE shift_id = ? AND status = 'completed'
+            `).get(shift_id);
+
+            return {
+                success: true,
+                data: {
+                    shift,
+                    orders,
+                    summary
+                }
+            };
+        } catch (err) {
+            console.error('[eod:get-shift-detail] Error:', err.message);
             return { success: false, error: err.message };
         }
     });

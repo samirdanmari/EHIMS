@@ -30,6 +30,15 @@ export class ReceiptService {
     return this.electronService.invoke('receipt:print', data);
   }
 
+  async reprintReceipt(
+    data: ReceiptPrintRequest,
+  ): Promise<{ success: boolean; error?: string }> {
+    return this.electronService.invoke('receipt:print', {
+      ...data,
+      reprint: true,
+    });
+  }
+
   async testPrint(
     printerName?: string,
   ): Promise<{ success: boolean; error?: string }> {

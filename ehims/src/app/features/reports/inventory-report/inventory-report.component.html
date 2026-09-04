@@ -4,6 +4,8 @@
       <h2 class="page-title">Inventory Report</h2>
       <p class="page-subtitle">Stock movement and valuation analysis.</p>
     </div>
+    <button type="button" class="search-btn" (click)="printReport()">Print Report</button>
+    <button type="button" class="search-btn" (click)="savePdf()">Save PDF</button>
   </div>
 
   <div class="page-content">
@@ -25,97 +27,102 @@
 
     <!-- Date Range Filter -->
     <div class="filters-card">
-      <form [formGroup]="form" class="filters-row">
+      <form [formGroup]="form" class="filters-row" (ngSubmit)="applyFilters()">
         <div class="form-group">
           <label class="form-label">From</label>
-          <input class="form-input" type="date" formControlName="dateFrom" (change)="onFilterChange()" />
+          <input class="form-input" type="date" formControlName="dateFrom" />
         </div>
 
         <div class="form-group">
           <label class="form-label">To</label>
-          <input class="form-input" type="date" formControlName="dateTo" (change)="onFilterChange()" />
+          <input class="form-input" type="date" formControlName="dateTo" />
+        </div>
+
+        <div class="form-group form-actions">
+          <label class="form-label">Action</label>
+          <button type="submit" class="search-btn">Search</button>
         </div>
       </form>
     </div>
 
     @if (isLoading()) {
-      <div class="empty-state">
-        <p>Loading inventory data...</p>
-      </div>
+    <div class="empty-state">
+      <p>Loading inventory data...</p>
+    </div>
     } @else {
-      <!-- Stock Alerts -->
-      @if (showAlerts() && alerts().length > 0) {
-        <div class="table-container">
-          <div class="table-header">
-            <h3>Stock Alerts</h3>
-          </div>
-
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Item Name</th>
-                <th>Current Stock</th>
-                <th>Threshold</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (alert of alerts(); track alert.item_id) {
-                <tr [class]="'status-' + alert.status">
-                  <td class="item-name">{{ alert.item_name }}</td>
-                  <td class="stock">{{ alert.current_stock }}</td>
-                  <td class="threshold">{{ alert.low_stock_threshold }}</td>
-                  <td class="status-cell">
-                    <span class="status-badge" [class]="alert.status">
-                      {{ alert.status === 'critical' ? '🔴 Critical' : alert.status === 'warning' ? '🟡 Warning' : '🟢 OK' }}
-                    </span>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      }
-
-      <!-- Inventory Movement -->
-      <div class="table-container">
-        <div class="table-header">
-          <h3>Inventory Movement</h3>
-        </div>
-
-        @if (inventory().length > 0) {
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Item Name</th>
-                <th>Category</th>
-                <th>Opening</th>
-                <th>Purchases</th>
-                <th>Issued</th>
-                <th>Closing</th>
-                <th>Valuation</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (item of inventory(); track item.item_id) {
-                <tr>
-                  <td class="item-name">{{ item.item_name }}</td>
-                  <td class="category">{{ item.category }}</td>
-                  <td class="number">{{ item.opening_stock }}</td>
-                  <td class="number positive">+{{ item.purchases }}</td>
-                  <td class="number negative">-{{ item.issued }}</td>
-                  <td class="number emphasis">{{ item.closing_stock }}</td>
-                  <td class="amount">{{ item.valuation | appCurrency }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        } @else {
-          <div class="empty-message">
-            <p>No inventory data available for the selected period.</p>
-          </div>
-        }
+    <!-- Stock Alerts -->
+    @if (showAlerts() && alerts().length > 0) {
+    <div class="table-container">
+      <div class="table-header">
+        <h3>Stock Alerts</h3>
       </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Item Name</th>
+            <th>Current Stock</th>
+            <th>Threshold</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (alert of alerts(); track alert.item_id) {
+          <tr [class]="'status-' + alert.status">
+            <td class="item-name">{{ alert.item_name }}</td>
+            <td class="stock">{{ alert.current_stock }}</td>
+            <td class="threshold">{{ alert.low_stock_threshold }}</td>
+            <td class="status-cell">
+              <span class="status-badge" [class]="alert.status">
+                {{ alert.status === 'critical' ? '🔴 Critical' : alert.status === 'warning' ? '🟡 Warning' : '🟢 OK' }}
+              </span>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    }
+
+    <!-- Inventory Movement -->
+    <div class="table-container">
+      <div class="table-header">
+        <h3>Inventory Movement</h3>
+      </div>
+
+      @if (inventory().length > 0) {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Item Name</th>
+            <th>Category</th>
+            <th>Opening</th>
+            <th>Purchases</th>
+            <th>Issued</th>
+            <th>Closing</th>
+            <th>Valuation</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of inventory(); track item.item_id) {
+          <tr>
+            <td class="item-name">{{ item.item_name }}</td>
+            <td class="category">{{ item.category }}</td>
+            <td class="number">{{ item.opening_stock }}</td>
+            <td class="number positive">+{{ item.purchases }}</td>
+            <td class="number negative">-{{ item.issued }}</td>
+            <td class="number emphasis">{{ item.closing_stock }}</td>
+            <td class="amount">{{ item.valuation | appCurrency }}</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+      } @else {
+      <div class="empty-message">
+        <p>No inventory data available for the selected period.</p>
+      </div>
+      }
+    </div>
     }
   </div>
 </div>

@@ -19,7 +19,9 @@ const validChannels = [
     'settings:',
     'reports:',
     'printer:',
+    'receipt:',
     'print:',
+    'suspended-orders:',
     'sync:'
 ];
 

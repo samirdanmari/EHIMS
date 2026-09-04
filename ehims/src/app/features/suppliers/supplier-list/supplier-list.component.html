@@ -50,6 +50,8 @@
           <thead>
             <tr>
               <th>Supplier Name</th>
+              <th>Account Number</th>
+              <th>Bank Name</th>
               <th>Contact</th>
               <th>Phone</th>
               <th>Payment Terms</th>
@@ -62,6 +64,8 @@
             @for (supplier of filteredSuppliers(); track supplier.id) {
             <tr>
               <td class="supplier-name">{{ supplier.name }}</td>
+              <td>{{ supplier.account_number || '—' }}</td>
+              <td>{{ supplier.bank_name || '—' }}</td>
               <td>{{ supplier.contact_person || '—' }}</td>
               <td>{{ supplier.phone || '—' }}</td>
               <td><span class="badge">{{ supplier.payment_terms }}</span></td>

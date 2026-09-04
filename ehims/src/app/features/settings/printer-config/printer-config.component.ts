@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
 import { SettingsService } from '../services/settings.service';
-import { PrinterService } from '../services/printer.service';
+import { PrinterService } from './../services/printer.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import {
   PrinterSettings,

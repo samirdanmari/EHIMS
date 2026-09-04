@@ -82,6 +82,16 @@
               </td>
               <td class="time">{{ formatDate(order.created_at) }}</td>
               <td class="actions-cell">
+                @if (order.status === 'completed') {
+                <button class="btn-icon" data-tooltip="Reprint receipt"
+                  (click)="$event.stopPropagation(); onReprintReceipt(order)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 9V2h12v7" />
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                    <path d="M6 14h12v8H6z" />
+                  </svg>
+                </button>
+                }
                 @if (order.status !== 'voided') {
                 <button class="btn-icon" data-tooltip="Void order"
                   (click)="$event.stopPropagation(); onVoidOrder(order)">

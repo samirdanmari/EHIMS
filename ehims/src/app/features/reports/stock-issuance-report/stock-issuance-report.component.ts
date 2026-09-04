@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
 import { ReportsService } from '../services/reports.service';
 import { EODService } from '../../eod/services/eod.service';
 import { CurrencyPipe } from '../../../shared/pipes/currency.pipe';
+import { NotificationService } from '../../../core/services/notification.service';
 
 interface IssuanceRow {
   id: number;
@@ -25,6 +26,7 @@ interface IssuanceRow {
 export class StockIssuanceReportComponent implements OnInit {
   private reportsService = inject(ReportsService);
   private eodService = inject(EODService);
+  private notificationService = inject(NotificationService);
 
   isLoading = signal(true);
   issuances = signal<IssuanceRow[]>([]);
@@ -85,9 +87,56 @@ export class StockIssuanceReportComponent implements OnInit {
     this.totalItems.set(totalItems);
   }
 
-  async onFilterChange() {
+  async applyFilters() {
     this.isLoading.set(true);
     await this.loadData();
     this.isLoading.set(false);
+  }
+
+  async printReport() {
+    const result = await this.reportsService.printReport(
+      'Stock Issuance Report',
+      [
+        { key: 'created_at', label: 'Date' },
+        { key: 'shift_name', label: 'Shift' },
+        { key: 'issued_by', label: 'Issued By' },
+        { key: 'item_count', label: 'Items' },
+        { key: 'total_cost', label: 'Total Cost' },
+      ],
+      this.issuances() as unknown as Array<Record<string, unknown>>,
+    );
+    result.success
+      ? this.notificationService.success(
+          'Report Printed',
+          result.message || 'Report sent to printer.',
+        )
+      : this.notificationService.error(
+          'Print Failed',
+          result.error || 'Could not print report.',
+        );
+  }
+
+  async savePdf() {
+    const result = await this.reportsService.saveReportPdf(
+      'Stock Issuance Report',
+      [
+        { key: 'created_at', label: 'Date' },
+        { key: 'shift_name', label: 'Shift' },
+        { key: 'issued_by', label: 'Issued By' },
+        { key: 'item_count', label: 'Items' },
+        { key: 'total_cost', label: 'Total Cost' },
+      ],
+      this.issuances() as unknown as Array<Record<string, unknown>>,
+    );
+    if (result.success)
+      this.notificationService.success(
+        'PDF Saved',
+        result.message || 'Report PDF saved.',
+      );
+    else if (!result.cancelled)
+      this.notificationService.error(
+        'Export Failed',
+        result.error || 'Could not save PDF.',
+      );
   }
 }

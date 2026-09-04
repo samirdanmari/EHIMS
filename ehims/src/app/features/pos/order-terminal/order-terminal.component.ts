@@ -1,3 +1,4 @@
+import { ElectronService } from '../../../core/services/electron.service';
 import {
   Component,
   OnInit,
@@ -6,7 +7,7 @@ import {
   computed,
   ViewChild,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import {
   ReactiveFormsModule,
   FormGroup,
@@ -24,16 +25,21 @@ import {
   PaymentMethod,
 } from '../../../core/models/order.model';
 import { ActiveShift } from '../../../core/models/inventory.model';
-import { CurrencyPipe } from '../../../shared/pipes/currency.pipe';
 import { PosTabsComponent } from '../../../shared/components/pos/pos-tabs/pos-tabs.component';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { ReceiptService } from '../../../core/services/receipt.service';
+import { CurrencyPipe } from '../../../shared/pipes/currency.pipe';
+import {
+  SuspendedOrder,
+  SuspendedOrdersService,
+} from '../services/suspended-orders.service';
 
 @Component({
   selector: 'app-order-terminal',
   standalone: true,
   imports: [
     CommonModule,
+    DatePipe,
     ReactiveFormsModule,
     FormsModule,
     CurrencyPipe,
@@ -48,6 +54,7 @@ export class OrderTerminalComponent implements OnInit {
   private inventoryService = inject(InventoryService);
   private authService = inject(AuthService);
   private notificationService = inject(NotificationService);
+  private electronService = inject(ElectronService);
   private receiptService = inject(ReceiptService);
 
   @ViewChild(ConfirmDialogComponent) confirmDialog!: ConfirmDialogComponent;
@@ -65,6 +72,9 @@ export class OrderTerminalComponent implements OnInit {
   discountAmount = signal(0);
   taxPercentage = signal(0);
   paymentMethod = signal<PaymentMethod>('cash');
+  suspendedOrders = signal<any[]>([]);
+  isSuspendedOrdersDialogOpen = signal(false);
+  private suspendedOrdersDialogResolve?: (id: number | null) => void;
 
   filteredMenuItems = computed(() => {
     const search = this.searchTerm().toLowerCase();
@@ -103,6 +113,8 @@ export class OrderTerminalComponent implements OnInit {
       validators: [Validators.required],
     }),
     table_number: new FormControl(''),
+    customer_name: new FormControl(''),
+    notes: new FormControl(''),
   });
 
   async ngOnInit() {
@@ -294,7 +306,10 @@ export class OrderTerminalComponent implements OnInit {
       }
     } catch (err) {
       console.error('Receipt print error:', err);
-      // Silently fail - order was successful, just print failed
+      this.notificationService.error(
+        'Receipt Print Failed',
+        `Order completed, but printing failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
 
@@ -306,5 +321,142 @@ export class OrderTerminalComponent implements OnInit {
 
   clearCart() {
     this.cart.set([]);
+  }
+
+  async onSuspendOrder() {
+    try {
+      if (this.cartEmpty()) {
+        this.notificationService.error(
+          'Empty Cart',
+          'Please add items before suspending order',
+        );
+        return;
+      }
+
+      // Generate order number (timestamp based)
+      const orderNumber = `ORD-${Date.now()}`;
+      const currentUser = this.authService.currentUser();
+
+      const cartData = {
+        orderNumber,
+        customerName: this.form.get('customer_name')?.value || '',
+        tableNumber: this.form.get('table_number')?.value || '',
+        items: this.cart(), // Pass as array, handler will stringify
+        subtotal: this.subtotal(),
+        discount: this.discountAmount(),
+        tax: this.taxAmount(),
+        notes: this.form.get('notes')?.value || '',
+        suspendedBy: currentUser?.id || 1, // Current user ID
+      };
+
+      const result = await this.electronService.invoke<any>(
+        'suspended-orders:suspend',
+        cartData,
+      );
+
+      if (result.success) {
+        this.notificationService.success(
+          'Order Suspended',
+          'Order has been saved and can be retrieved later',
+        );
+        this.resetOrder();
+      } else {
+        this.notificationService.error(
+          'Failed',
+          result.error || 'Could not suspend order',
+        );
+      }
+    } catch (err) {
+      console.error('Suspend order error:', err);
+      this.notificationService.error('Error', 'Failed to suspend order');
+    }
+  }
+
+  async onRetrieveSuspended() {
+    try {
+      const result = await this.electronService.invoke<any>(
+        'suspended-orders:list',
+      );
+
+      if (!result.success || !result.data || result.data.length === 0) {
+        this.notificationService.info(
+          'No Orders',
+          'No suspended orders available',
+        );
+        return;
+      }
+
+      // Show dialog to select which suspended order to retrieve
+      const selectedId = await this.showSuspendedOrdersDialog(result.data);
+
+      if (selectedId) {
+        const retrieveResult = await this.electronService.invoke<any>(
+          'suspended-orders:retrieve',
+          { id: Number(selectedId) },
+        );
+
+        if (retrieveResult.success && retrieveResult.data) {
+          // Restore cart with suspended order data
+          const order = retrieveResult.data;
+
+          this.form.patchValue({
+            customer_name: order.customerName || '',
+            table_number: order.tableNumber || '',
+            notes: order.notes || '',
+          });
+
+          // Items should already be parsed array from handler
+          let items = [];
+          try {
+            items = Array.isArray(order.items)
+              ? order.items
+              : JSON.parse(order.items || '[]');
+          } catch (e) {
+            console.warn('Could not parse suspended order items');
+            items = [];
+          }
+
+          this.cart.set(items);
+          this.discountAmount.set(order.discount || 0);
+
+          this.notificationService.success(
+            'Order Restored',
+            'Suspended order loaded into cart',
+          );
+        } else {
+          this.notificationService.error(
+            'Failed',
+            retrieveResult.error || 'Could not retrieve order',
+          );
+        }
+      }
+    } catch (err) {
+      console.error('Retrieve suspended order error:', err);
+      this.notificationService.error(
+        'Error',
+        err instanceof Error ? err.message : String(err),
+      );
+    }
+  }
+
+  private showSuspendedOrdersDialog(orders: any[]): Promise<number | null> {
+    this.suspendedOrders.set(orders);
+    this.isSuspendedOrdersDialogOpen.set(true);
+
+    return new Promise((resolve) => {
+      this.suspendedOrdersDialogResolve = resolve;
+    });
+  }
+
+  selectSuspendedOrder(id: number) {
+    this.isSuspendedOrdersDialogOpen.set(false);
+    this.suspendedOrdersDialogResolve?.(id);
+    this.suspendedOrdersDialogResolve = undefined;
+  }
+
+  cancelSuspendedOrdersDialog() {
+    this.isSuspendedOrdersDialogOpen.set(false);
+    this.suspendedOrdersDialogResolve?.(null);
+    this.suspendedOrdersDialogResolve = undefined;
   }
 }

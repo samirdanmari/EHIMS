@@ -1,4 +1,4 @@
-@use '../../../styles/variables' as *;
+@use "../../../styles/variables" as *;
 
 .alerts-summary {
   display: grid;
@@ -95,6 +95,25 @@
     &:focus {
       outline: none;
       border-color: $primary;
+    }
+  }
+}
+
+.form-actions {
+  .search-btn {
+    width: 100%;
+    padding: $space-2 $space-3;
+    background: $primary;
+    color: #fff;
+    border: 1px solid $primary;
+    border-radius: $radius-md;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    cursor: pointer;
+    transition: all $transition-fast;
+
+    &:hover {
+      filter: brightness(1.08);
     }
   }
 }

@@ -86,6 +86,8 @@ export class SupplierListComponent implements OnInit {
     this.editingSupplier.set(null);
     this.form.reset({
       name: '',
+      account_number: '',
+      bank_name: '',
       contact_person: '',
       phone: '',
       email: '',
@@ -99,6 +101,8 @@ export class SupplierListComponent implements OnInit {
     this.editingSupplier.set(supplier);
     this.form.reset({
       name: supplier.name,
+      account_number: supplier.account_number || '',
+      bank_name: supplier.bank_name || '',
       contact_person: supplier.contact_person,
       phone: supplier.phone,
       email: supplier.email,
@@ -123,6 +127,8 @@ export class SupplierListComponent implements OnInit {
         const res = await this.supplierService.updateSupplier({
           id: editing.id,
           name: value.name || undefined,
+          account_number: value.account_number || undefined,
+          bank_name: value.bank_name || undefined,
           contact_person: value.contact_person || undefined,
           phone: value.phone || undefined,
           email: value.email || undefined,
@@ -145,6 +151,8 @@ export class SupplierListComponent implements OnInit {
       } else {
         const res = await this.supplierService.createSupplier({
           name: value.name,
+          account_number: value.account_number || undefined,
+          bank_name: value.bank_name || undefined,
           contact_person: value.contact_person || undefined,
           phone: value.phone || undefined,
           email: value.email || undefined,

@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
 import { ReportsService } from '../services/reports.service';
 import { SalesMetrics, SalesTrend } from '../../../core/models/report.model';
 import { CurrencyPipe } from '../../../shared/pipes/currency.pipe';
+import { NotificationService } from '../../../core/services/notification.service';
 
 @Component({
   selector: 'app-sales-report',
@@ -14,6 +15,7 @@ import { CurrencyPipe } from '../../../shared/pipes/currency.pipe';
 })
 export class SalesReportComponent implements OnInit {
   private reportsService = inject(ReportsService);
+  private notificationService = inject(NotificationService);
 
   isLoading = signal(true);
   salesMetrics = signal<SalesMetrics[]>([]);
@@ -53,7 +55,7 @@ export class SalesReportComponent implements OnInit {
     }
   }
 
-  async onFilterChange() {
+  async applyFilters() {
     this.isLoading.set(true);
     await this.loadData();
     this.isLoading.set(false);
@@ -84,5 +86,64 @@ export class SalesReportComponent implements OnInit {
     const total = this.getTotalSales();
     const orders = this.getTotalOrders();
     return orders > 0 ? total / orders : 0;
+  }
+
+  async printReport() {
+    const result = await this.reportsService.printReport(
+      'Sales Report',
+      [
+        { key: 'date', label: 'Date' },
+        { key: 'total_orders', label: 'Orders' },
+        { key: 'total_sales', label: 'Sales' },
+        { key: 'net_sales', label: 'Net Sales' },
+        { key: 'cash_collected', label: 'Cash' },
+        { key: 'card_collected', label: 'Card' },
+        { key: 'transfer_collected', label: 'Transfer' },
+      ],
+      this.salesMetrics() as unknown as Array<Record<string, unknown>>,
+    );
+    this.notifyPrintResult(result);
+  }
+
+  private notifyPrintResult(result: {
+    success: boolean;
+    message?: string;
+    error?: string;
+  }) {
+    result.success
+      ? this.notificationService.success(
+          'Report Printed',
+          result.message || 'Report sent to printer.',
+        )
+      : this.notificationService.error(
+          'Print Failed',
+          result.error || 'Could not print report.',
+        );
+  }
+
+  async savePdf() {
+    const result = await this.reportsService.saveReportPdf(
+      'Sales Report',
+      [
+        { key: 'date', label: 'Date' },
+        { key: 'total_orders', label: 'Orders' },
+        { key: 'total_sales', label: 'Sales' },
+        { key: 'net_sales', label: 'Net Sales' },
+        { key: 'cash_collected', label: 'Cash' },
+        { key: 'card_collected', label: 'Card' },
+        { key: 'transfer_collected', label: 'Transfer' },
+      ],
+      this.salesMetrics() as unknown as Array<Record<string, unknown>>,
+    );
+    if (result.success)
+      this.notificationService.success(
+        'PDF Saved',
+        result.message || 'Report PDF saved.',
+      );
+    else if (!result.cancelled)
+      this.notificationService.error(
+        'Export Failed',
+        result.error || 'Could not save PDF.',
+      );
   }
 }

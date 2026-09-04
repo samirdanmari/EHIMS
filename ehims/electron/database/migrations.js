@@ -111,6 +111,7 @@ function runMigrations(db) {
             issued_by INTEGER NOT NULL REFERENCES users(id),
             received_by INTEGER NOT NULL REFERENCES users(id),
             issued_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+            created_at TEXT,
             notes TEXT,
             synced INTEGER NOT NULL DEFAULT 0
         );
@@ -192,6 +193,7 @@ function runMigrations(db) {
             total_price REAL NOT NULL,
             notes TEXT,
             status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','preparing','served','cancelled')),
+            created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
             synced INTEGER NOT NULL DEFAULT 0
         );
 
@@ -286,6 +288,23 @@ function runMigrations(db) {
             updated_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
         );
 
+        CREATE TABLE IF NOT EXISTS suspended_orders (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_number TEXT NOT NULL UNIQUE,
+            customer_name TEXT,
+            table_number TEXT,
+            items TEXT NOT NULL,
+            subtotal REAL NOT NULL DEFAULT 0,
+            discount_amount REAL,
+            tax_amount REAL,
+            notes TEXT,
+            suspended_by INTEGER NOT NULL REFERENCES users(id),
+            suspended_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+            retrieved_at TEXT,
+            status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active', 'retrieved', 'cancelled')),
+            created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+        );
+
         CREATE TABLE IF NOT EXISTS print_log (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             order_id INTEGER NOT NULL REFERENCES orders(id),
@@ -296,6 +315,52 @@ function runMigrations(db) {
             created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
         );
     `);
+
+    const orderItemColumns = db.prepare('PRAGMA table_info(order_items)').all();
+    const hasOrderItemCreatedAt = orderItemColumns.some((column) => column.name === 'created_at');
+
+    if (!hasOrderItemCreatedAt) {
+        db.exec(`
+            ALTER TABLE order_items ADD COLUMN created_at TEXT;
+        `);
+
+        db.prepare(`
+            UPDATE order_items
+            SET created_at = datetime('now','localtime')
+            WHERE created_at IS NULL
+        `).run();
+    }
+
+    const stockIssuanceColumns = db.prepare('PRAGMA table_info(stock_issuances)').all();
+    const hasStockIssuanceCreatedAt = stockIssuanceColumns.some((column) => column.name === 'created_at');
+
+    if (!hasStockIssuanceCreatedAt) {
+        db.exec(`
+            ALTER TABLE stock_issuances ADD COLUMN created_at TEXT;
+        `);
+
+        db.prepare(`
+            UPDATE stock_issuances
+            SET created_at = issued_at
+            WHERE created_at IS NULL
+        `).run();
+    }
+
+    const supplierColumns = db.prepare('PRAGMA table_info(suppliers)').all();
+    const hasAccountNumber = supplierColumns.some((column) => column.name === 'account_number');
+    const hasBankName = supplierColumns.some((column) => column.name === 'bank_name');
+
+    if (!hasAccountNumber) {
+        db.exec(`
+            ALTER TABLE suppliers ADD COLUMN account_number TEXT;
+        `);
+    }
+
+    if (!hasBankName) {
+        db.exec(`
+            ALTER TABLE suppliers ADD COLUMN bank_name TEXT;
+        `);
+    }
 }
 
 module.exports = { runMigrations };

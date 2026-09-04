@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
 import { ReportsService } from '../services/reports.service';
 import { CurrencyPipe } from '../../../shared/pipes/currency.pipe';
+import { NotificationService } from '../../../core/services/notification.service';
 
 interface PurchaseRow {
   id: number;
@@ -24,6 +25,7 @@ interface PurchaseRow {
 })
 export class PurchaseReportComponent implements OnInit {
   private reportsService = inject(ReportsService);
+  private notificationService = inject(NotificationService);
 
   isLoading = signal(true);
   purchases = signal<PurchaseRow[]>([]);
@@ -74,7 +76,7 @@ export class PurchaseReportComponent implements OnInit {
     this.totalOutstanding.set(totalCost - totalPaid);
   }
 
-  async onFilterChange() {
+  async applyFilters() {
     this.isLoading.set(true);
     await this.loadData();
     this.isLoading.set(false);
@@ -82,5 +84,54 @@ export class PurchaseReportComponent implements OnInit {
 
   getStatusClass(status: string): string {
     return status === 'paid' ? 'status-paid' : 'status-credit';
+  }
+
+  async printReport() {
+    const result = await this.reportsService.printReport(
+      'Purchase Report',
+      [
+        { key: 'purchase_date', label: 'Date' },
+        { key: 'supplier_name', label: 'Supplier' },
+        { key: 'total_cost', label: 'Total Cost' },
+        { key: 'total_paid', label: 'Paid' },
+        { key: 'outstanding', label: 'Outstanding' },
+        { key: 'credit_status', label: 'Status' },
+      ],
+      this.purchases() as unknown as Array<Record<string, unknown>>,
+    );
+    result.success
+      ? this.notificationService.success(
+          'Report Printed',
+          result.message || 'Report sent to printer.',
+        )
+      : this.notificationService.error(
+          'Print Failed',
+          result.error || 'Could not print report.',
+        );
+  }
+
+  async savePdf() {
+    const result = await this.reportsService.saveReportPdf(
+      'Purchase Report',
+      [
+        { key: 'purchase_date', label: 'Date' },
+        { key: 'supplier_name', label: 'Supplier' },
+        { key: 'total_cost', label: 'Total Cost' },
+        { key: 'total_paid', label: 'Paid' },
+        { key: 'outstanding', label: 'Outstanding' },
+        { key: 'credit_status', label: 'Status' },
+      ],
+      this.purchases() as unknown as Array<Record<string, unknown>>,
+    );
+    if (result.success)
+      this.notificationService.success(
+        'PDF Saved',
+        result.message || 'Report PDF saved.',
+      );
+    else if (!result.cancelled)
+      this.notificationService.error(
+        'Export Failed',
+        result.error || 'Could not save PDF.',
+      );
   }
 }

@@ -4,20 +4,22 @@
       <h2 class="page-title">Sales Report</h2>
       <p class="page-subtitle">Detailed sales metrics and trends analysis.</p>
     </div>
+    <button type="button" class="search-btn" (click)="printReport()">Print Report</button>
+    <button type="button" class="search-btn" (click)="savePdf()">Save PDF</button>
   </div>
 
   <div class="page-content">
     <!-- Date Range Filter -->
     <div class="filters-card">
-      <form [formGroup]="form" class="filters-row">
+      <form [formGroup]="form" class="filters-row" (ngSubmit)="applyFilters()">
         <div class="form-group">
           <label class="form-label">From</label>
-          <input class="form-input" type="date" formControlName="dateFrom" (change)="onFilterChange()" />
+          <input class="form-input" type="date" formControlName="dateFrom" />
         </div>
 
         <div class="form-group">
           <label class="form-label">To</label>
-          <input class="form-input" type="date" formControlName="dateTo" (change)="onFilterChange()" />
+          <input class="form-input" type="date" formControlName="dateTo" />
         </div>
 
         <div class="form-group">
@@ -30,6 +32,11 @@
             <button [class.active]="selectedPeriod() === 'monthly'" (click)="changePeriod('monthly')"
               type="button">Monthly</button>
           </div>
+        </div>
+
+        <div class="form-group form-actions">
+          <label class="form-label">Action</label>
+          <button type="submit" class="search-btn">Search</button>
         </div>
       </form>
     </div>

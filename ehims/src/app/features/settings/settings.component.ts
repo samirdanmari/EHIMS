@@ -118,28 +118,29 @@ type Tab = 'company' | 'printer' | 'backup';
   styles: [
     `
       .tabs-container {
-        background: var(--bg-secondary);
-        border: 1px solid var(--glass-border);
+        background: #0f172a;
+        border: 1px solid rgba(148, 163, 184, 0.18);
         border-radius: 12px;
         overflow: hidden;
+        box-shadow: 0 8px 30px rgba(2, 6, 23, 0.4);
       }
 
       .tabs-header {
         display: flex;
         gap: 0;
-        border-bottom: 2px solid var(--glass-border);
-        background: var(--bg-primary);
+        border-bottom: 2px solid rgba(148, 163, 184, 0.18);
+        background: #0b1220;
       }
 
       .tab-button {
         flex: 1;
         padding: 1rem;
-        background: none;
+        background: transparent;
         border: none;
         cursor: pointer;
         font-size: 0.875rem;
         font-weight: 600;
-        color: var(--text-secondary);
+        color: #dbe4ff;
         border-bottom: 3px solid transparent;
         transition: all 0.3s ease;
         display: flex;
@@ -148,13 +149,14 @@ type Tab = 'company' | 'printer' | 'backup';
         gap: 0.5rem;
 
         &:hover:not(:disabled) {
-          color: var(--text-primary);
-          background: var(--bg-hover);
+          color: #f8fafc;
+          background: rgba(59, 130, 246, 0.08);
         }
 
         &.active {
-          color: var(--primary);
-          border-bottom-color: var(--primary);
+          color: #7dd3fc;
+          border-bottom-color: #7dd3fc;
+          background: rgba(125, 211, 252, 0.06);
         }
 
         &:disabled {
@@ -170,6 +172,7 @@ type Tab = 'company' | 'printer' | 'backup';
 
       .tabs-content {
         padding: 1.5rem;
+        background: #0f172a;
       }
 
       .tab-pane {
@@ -188,7 +191,7 @@ type Tab = 'company' | 'printer' | 'backup';
       .coming-soon {
         text-align: center;
         padding: 3rem;
-        color: var(--text-secondary);
+        color: #dbe4ff;
       }
     `,
   ],

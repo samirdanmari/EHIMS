@@ -1,5 +1,15 @@
 const { ipcMain } = require('electron');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
+
+function verifyPassword(password, storedHash) {
+    if (bcrypt.compareSync(password, storedHash)) {
+        return { valid: true, legacy: false };
+    }
+
+    const legacyHash = crypto.createHash('sha256').update(password).digest('hex');
+    return { valid: legacyHash === storedHash, legacy: legacyHash === storedHash };
+}
 
 function registerAuthIPC(db) {
     ipcMain.handle('auth:login', async (event, { username, password }) => {
@@ -10,10 +20,16 @@ function registerAuthIPC(db) {
                 return { success: false, error: 'Invalid username or password' };
             }
 
-            const validPassword = bcrypt.compareSync(password, user.password_hash);
+            const passwordResult = verifyPassword(password, user.password_hash);
 
-            if (!validPassword) {
+            if (!passwordResult.valid) {
                 return { success: false, error: 'Invalid username or password' };
+            }
+
+            if (passwordResult.legacy) {
+                const upgradedHash = bcrypt.hashSync(password, 10);
+                db.prepare("UPDATE users SET password_hash = ?, updated_at = datetime('now','localtime') WHERE id = ?")
+                    .run(upgradedHash, user.id);
             }
 
             const info = db.prepare('INSERT INTO sessions (user_id) VALUES (?)').run(user.id);
@@ -32,7 +48,7 @@ function registerAuthIPC(db) {
     });
 
     ipcMain.handle('auth:logout', async (event, { session_id }) => {
-        db.prepare('UPDATE sessions SET logout_at = datetime("now", "localtime") WHERE id = ?').run(session_id);
+        db.prepare("UPDATE sessions SET logout_at = datetime('now','localtime') WHERE id = ?").run(session_id);
         return true;
     });
 

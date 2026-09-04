@@ -1,13 +1,14 @@
 const { ipcMain } = require('electron');
+const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
-// Password hashing (simple bcrypt would be better in production, but crypto works for demo)
 function hashPassword(password) {
-    return crypto.createHash('sha256').update(password).digest('hex');
+    return bcrypt.hashSync(password, 10);
 }
 
 function verifyPassword(password, hash) {
-    return hashPassword(password) === hash;
+    return bcrypt.compareSync(password, hash) ||
+        crypto.createHash('sha256').update(password).digest('hex') === hash;
 }
 
 function registerUsersIPC(db) {
@@ -127,7 +128,7 @@ function registerUsersIPC(db) {
                 return { success: false, error: 'No updates provided' };
             }
 
-            updates.push('updated_at = datetime("now","localtime")');
+            updates.push("updated_at = datetime('now','localtime')");
             values.push(id);
 
             const sql = `UPDATE users SET ${updates.join(', ')} WHERE id = ?`;

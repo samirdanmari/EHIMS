@@ -22,6 +22,36 @@ interface ReportResponse<T> {
 export class ReportsService {
   private electronService = inject(ElectronService);
 
+  printReport(
+    title: string,
+    columns: Array<{ key: string; label: string }>,
+    rows: Array<Record<string, unknown>>,
+  ): Promise<{ success: boolean; message?: string; error?: string }> {
+    return this.electronService.invoke('reports:print', {
+      title,
+      columns,
+      rows,
+    });
+  }
+
+  saveReportPdf(
+    title: string,
+    columns: Array<{ key: string; label: string }>,
+    rows: Array<Record<string, unknown>>,
+  ): Promise<{
+    success: boolean;
+    path?: string;
+    message?: string;
+    error?: string;
+    cancelled?: boolean;
+  }> {
+    return this.electronService.invoke('reports:save-pdf', {
+      title,
+      columns,
+      rows,
+    });
+  }
+
   // Dashboard Summary
   getDashboardSummary(): Promise<ReportResponse<DashboardSummary>> {
     return this.electronService.invoke('reports:dashboard-summary', {});

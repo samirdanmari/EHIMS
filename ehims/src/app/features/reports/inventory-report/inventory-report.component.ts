@@ -7,6 +7,7 @@ import {
   InventoryAlert,
 } from '../../../core/models/report.model';
 import { CurrencyPipe } from '../../../shared/pipes/currency.pipe';
+import { NotificationService } from '../../../core/services/notification.service';
 
 @Component({
   selector: 'app-inventory-report',
@@ -17,6 +18,7 @@ import { CurrencyPipe } from '../../../shared/pipes/currency.pipe';
 })
 export class InventoryReportComponent implements OnInit {
   private reportsService = inject(ReportsService);
+  private notificationService = inject(NotificationService);
 
   isLoading = signal(true);
   inventory = signal<InventoryMovement[]>([]);
@@ -60,7 +62,7 @@ export class InventoryReportComponent implements OnInit {
     }
   }
 
-  async onFilterChange() {
+  async applyFilters() {
     this.isLoading.set(true);
     await this.loadData();
     this.isLoading.set(false);
@@ -72,5 +74,54 @@ export class InventoryReportComponent implements OnInit {
 
   getWarningItems(): number {
     return this.alerts().filter((a) => a.status === 'warning').length;
+  }
+
+  async printReport() {
+    const result = await this.reportsService.printReport(
+      'Inventory Report',
+      [
+        { key: 'item_name', label: 'Item' },
+        { key: 'category', label: 'Category' },
+        { key: 'closing_stock', label: 'Stock' },
+        { key: 'purchases', label: 'Purchases' },
+        { key: 'issued', label: 'Issued' },
+        { key: 'valuation', label: 'Valuation' },
+      ],
+      this.inventory() as unknown as Array<Record<string, unknown>>,
+    );
+    result.success
+      ? this.notificationService.success(
+          'Report Printed',
+          result.message || 'Report sent to printer.',
+        )
+      : this.notificationService.error(
+          'Print Failed',
+          result.error || 'Could not print report.',
+        );
+  }
+
+  async savePdf() {
+    const result = await this.reportsService.saveReportPdf(
+      'Inventory Report',
+      [
+        { key: 'item_name', label: 'Item' },
+        { key: 'category', label: 'Category' },
+        { key: 'closing_stock', label: 'Stock' },
+        { key: 'purchases', label: 'Purchases' },
+        { key: 'issued', label: 'Issued' },
+        { key: 'valuation', label: 'Valuation' },
+      ],
+      this.inventory() as unknown as Array<Record<string, unknown>>,
+    );
+    if (result.success)
+      this.notificationService.success(
+        'PDF Saved',
+        result.message || 'Report PDF saved.',
+      );
+    else if (!result.cancelled)
+      this.notificationService.error(
+        'Export Failed',
+        result.error || 'Could not save PDF.',
+      );
   }
 }

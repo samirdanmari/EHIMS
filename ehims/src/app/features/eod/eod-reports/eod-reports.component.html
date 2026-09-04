@@ -1,147 +1,208 @@
-<div class="page">
+<div class="eod-reports-container">
   <div class="page-header">
-    <div>
-      <h2 class="page-title">EOD Reports</h2>
-      <p class="page-subtitle">Historical end-of-day financial summaries and reports.</p>
-    </div>
+    <h1>Shift Reports</h1>
+    <p class="page-subtitle">View and analyze closed shift reports</p>
   </div>
 
-  <div class="page-content">
-    <div class="filters-row">
-      <form [formGroup]="form" class="date-range">
-        <div class="form-group">
-          <label class="form-label">From</label>
-          <input class="form-input" type="date" formControlName="dateFrom" (change)="onFilterChange()" />
-        </div>
+  @if (isLoading()) {
+  <div class="loading">Loading shift reports...</div>
+  } @else {
+  <!-- Filters -->
+  <div class="filter-section">
+    <form [formGroup]="form" class="filter-form">
+      <div class="form-group">
+        <label>From Date:</label>
+        <input type="date" formControlName="dateFrom" class="form-input">
+      </div>
 
-        <div class="form-group">
-          <label class="form-label">To</label>
-          <input class="form-input" type="date" formControlName="dateTo" (change)="onFilterChange()" />
-        </div>
-      </form>
+      <div class="form-group">
+        <label>To Date:</label>
+        <input type="date" formControlName="dateTo" class="form-input">
+      </div>
+
+      <div class="form-group">
+        <label>Staff Member:</label>
+        <select formControlName="user_id" class="form-input">
+          <option value="">All Users</option>
+          @for (user of allUsers(); track user.id) {
+          <option [value]="user.id">{{ user.display_name }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="button-group">
+        <button type="button" class="btn btn-primary" (click)="onFilterChange()">
+          Apply Filters
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="onReset()">
+          Reset
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Summary Cards -->
+  @if (closedShifts().length > 0) {
+  <div class="summary-cards">
+    <div class="card">
+      <div class="card-label">Total Shifts</div>
+      <div class="card-value">{{ closedShifts().length }}</div>
     </div>
+    <div class="card">
+      <div class="card-label">Total Sales</div>
+      <div class="card-value">{{ getTotalSalesForPeriod() | appCurrency }}</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Total Orders</div>
+      <div class="card-value">{{ getTotalOrdersForPeriod() }}</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Average per Shift</div>
+      <div class="card-value">{{ getAverageSalePerShift() | appCurrency }}</div>
+    </div>
+  </div>
+  }
 
-    <div class="table-container">
-      <div class="table-body">
-        @if (isLoading()) {
-        <div class="empty-state">
-          <p class="empty-message">Loading reports...</p>
+  <!-- Closed Shifts List -->
+  @if (closedShifts().length > 0) {
+  <div class="shifts-list">
+    <h2>Closed Shifts ({{ closedShifts().length }})</h2>
+
+    @for (shift of closedShifts(); track shift.id) {
+    <div class="shift-card">
+      <div class="shift-header" (click)="expandShift(shift)" [class.expanded]="expandedShiftId() === shift.id">
+        <div class="shift-info">
+          <h3>{{ shift.shift_name }}</h3>
+          <p class="user-info">
+            <span class="user-name">{{ shift.user_name }}</span>
+            <span class="username">({{ shift.username }})</span>
+          </p>
         </div>
-        } @else if (reports().length === 0) {
-        <div class="empty-state">
-          <div class="empty-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-            </svg>
+
+        <div class="shift-metrics">
+          <div class="metric">
+            <span class="label">Orders:</span>
+            <span class="value">{{ shift.total_orders }}</span>
           </div>
-          <div class="empty-title">No reports found</div>
-          <div class="empty-message">EOD reports will appear here as shifts are closed.</div>
+          <div class="metric">
+            <span class="label">Sales:</span>
+            <span class="value">{{ shift.total_sales | appCurrency }}</span>
+          </div>
+          <div class="metric">
+            <span class="label">Time:</span>
+            <span class="value">
+              {{ formatTime(shift.start_time) }} - {{ formatTime(shift.end_time) }}
+            </span>
+          </div>
         </div>
-        } @else {
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th></th>
-              <th>Date</th>
-              <th>Total Sales</th>
-              <th>Orders</th>
-              <th>Gross Profit</th>
-              <th>Net Profit</th>
-              <th>Generated By</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (report of reports(); track report.id) {
-            <tr class="clickable-row" (click)="toggleExpand(report.id)">
-              <td class="expander-cell">
-                <svg [class.expanded]="expandedReportId() === report.id" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2">
-                  <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-              </td>
-              <td class="date">{{ formatDate(report.report_date) }}</td>
-              <td class="amount">{{ report.total_sales | appCurrency }}</td>
-              <td class="count">{{ report.total_orders }}</td>
-              <td class="profit">{{ report.gross_profit | appCurrency }}</td>
-              <td class="profit" [class.negative]="report.net_profit < 0">{{ report.net_profit | appCurrency }}</td>
-              <td class="user">{{ report.generated_by_name || '—' }}</td>
-            </tr>
 
-            @if (expandedReportId() === report.id) {
-            <tr class="expanded-row">
-              <td colspan="7">
-                <div class="report-details">
-                  <div class="details-grid">
-                    <div class="detail-item">
-                      <span class="label">Subtotal</span>
-                      <span
-                        class="value">{{ (report.total_sales + report.total_discounts + report.total_voids) | appCurrency }}</span>
-                    </div>
-                    <div class="detail-item">
-                      <span class="label">Discounts</span>
-                      <span class="value negative">−{{ report.total_discounts | appCurrency }}</span>
-                    </div>
-                    <div class="detail-item">
-                      <span class="label">Voids</span>
-                      <span class="value negative">−{{ report.total_voids | appCurrency }}</span>
-                    </div>
-                    <div class="detail-item">
-                      <span class="label">Net Sales</span>
-                      <span class="value">{{ report.total_sales | appCurrency }}</span>
-                    </div>
+        <div class="expand-icon">
+          @if (expandedShiftId() === shift.id) {
+          <span>▼</span>
+          } @else {
+          <span>▶</span>
+          }
+        </div>
+      </div>
 
-                    <div class="detail-item">
-                      <span class="label">COGS</span>
-                      <span class="value">{{ report.total_cogs | appCurrency }}</span>
-                    </div>
-                    <div class="detail-item">
-                      <span class="label">Gross Profit</span>
-                      <span class="value profit">{{ report.gross_profit | appCurrency }}</span>
-                    </div>
+      <!-- Expanded Details -->
+      @if (expandedShiftId() === shift.id && selectedShiftDetail()) {
+      <div class="shift-details">
+        <div class="details-grid">
+          <div class="detail-item">
+            <span class="label">Opening Cash:</span>
+            <span class="value">{{ shift.opening_cash | appCurrency }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Closing Cash:</span>
+            <span class="value">{{ shift.closing_cash | appCurrency }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Total Orders:</span>
+            <span class="value">{{ selectedShiftDetail().summary.total_orders }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Total Sales:</span>
+            <span class="value">{{ selectedShiftDetail().summary.total_sales | appCurrency }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Total Discounts:</span>
+            <span class="value">{{ selectedShiftDetail().summary.total_discounts | appCurrency }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Total Tax:</span>
+            <span class="value">{{ selectedShiftDetail().summary.total_tax | appCurrency }}</span>
+          </div>
+        </div>
 
-                    <div class="detail-item">
-                      <span class="label">Cash Collected</span>
-                      <span class="value">{{ report.cash_collected | appCurrency }}</span>
-                    </div>
-                    <div class="detail-item">
-                      <span class="label">Card Collected</span>
-                      <span class="value">{{ report.card_collected | appCurrency }}</span>
-                    </div>
-                    <div class="detail-item">
-                      <span class="label">Transfer Collected</span>
-                      <span class="value">{{ report.transfer_collected | appCurrency }}</span>
-                    </div>
-                    <div class="detail-item">
-                      <span class="label">Total Purchases</span>
-                      <span class="value">{{ report.total_purchases | appCurrency }}</span>
-                    </div>
-                  </div>
-
-                  @if (report.low_stock_items) {
-                  <div class="low-stock-notice">
-                    <strong>Low Stock Alert:</strong> {{ report.low_stock_items }}
-                  </div>
-                  }
-
-                  @if (report.notes) {
-                  <div class="notes">
-                    <strong>Notes:</strong> {{ report.notes }}
-                  </div>
-                  }
-                </div>
-              </td>
-            </tr>
-            }
-            }
-          </tbody>
-        </table>
+        @if (shift.notes) {
+        <div class="notes-section">
+          <h4>Notes:</h4>
+          <p>{{ shift.notes }}</p>
+        </div>
         }
-      </div>
 
-      <div class="table-footer">
-        <span>{{ reports().length }} report(s)</span>
+        <!-- Orders Summary -->
+        @if (selectedShiftDetail().orders && selectedShiftDetail().orders.length > 0) {
+        <div class="orders-section">
+          <h4>Orders ({{ selectedShiftDetail().orders.length }})</h4>
+          <div class="orders-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Order #</th>
+                  <th>Time</th>
+                  <th>Table</th>
+                  <th>Items</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (order of selectedShiftDetail().orders.slice(0, 10); track order.id) {
+                <tr>
+                  <td>{{ order.order_number }}</td>
+                  <td>{{ formatTime(order.created_at) }}</td>
+                  <td>{{ order.table_number || '—' }}</td>
+                  <td class="order-items">
+                    @if (order.order_items?.length) {
+                    @for (item of order.order_items; track $index) {
+                    <div>{{ item.menu_item_name || 'Item' }} × {{ item.quantity }}</div>
+                    }
+                    } @else {
+                    <span>No items</span>
+                    }
+                  </td>
+                  <td>{{ order.total_amount | appCurrency }}</td>
+                </tr>
+                }
+              </tbody>
+            </table>
+            @if (selectedShiftDetail().orders.length > 10) {
+            <p class="more-orders">
+              ... and {{ selectedShiftDetail().orders.length - 10 }} more orders
+            </p>
+            }
+          </div>
+        </div>
+        }
+
+        <div class="action-buttons">
+          <button type="button" class="btn btn-secondary" (click)="exportShiftReport(shift)">
+            Save PDF
+          </button>
+          <button type="button" class="btn btn-primary" (click)="printShiftReport(shift)">
+            Print Report
+          </button>
+        </div>
       </div>
+      }
     </div>
+    }
   </div>
+  } @else {
+  <div class="empty-state">
+    <p>No closed shifts found for the selected filters</p>
+  </div>
+  }
+  }
 </div>

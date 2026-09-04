@@ -2,7 +2,7 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const { getDatabase } = require('./database/connection');
 const { runMigrations } = require('./database/migrations');
-const { seedDatabase } = require('./database/seed');
+const { seedDatabase, seedSampleOrders } = require('./database/seed');
 const { registerAuthIPC } = require('./ipc/auth.ipc');
 const { registerInventoryIPC } = require('./ipc/inventory.ipc');
 const { registerSupplierIPC } = require('./ipc/supplier.ipc');
@@ -13,6 +13,7 @@ const { registerReportsIPC } = require('./ipc/reports.ipc');
 const { registerSettingsIPC } = require('./ipc/settings.ipc');
 const { registerPrinterIPC } = require('./ipc/printer.ipc');
 const { registerReceiptIPC } = require('./ipc/receipt.ipc');
+const { registerSuspendedOrdersIPC } = require('./ipc/suspended-orders.ipc');
 
 let mainWindow;
 
@@ -42,7 +43,7 @@ app.whenReady().then(() => {
     const db = getDatabase();
     runMigrations(db);
     seedDatabase(db);
-
+    seedSampleOrders(db);
     // Register IPC Handlers
     registerAuthIPC(db);
     registerInventoryIPC(db);
@@ -54,7 +55,7 @@ app.whenReady().then(() => {
     registerSettingsIPC(db);
     registerPrinterIPC(db);
     registerReceiptIPC(db);
-
+    registerSuspendedOrdersIPC(db);
     // Generic read-only query handler for Angular renderer
     ipcMain.handle('db:query', async (event, { sql, params = [] }) => {
         try {

@@ -25,6 +25,21 @@ export class SettingsService {
     );
   }
 
+  async uploadLogo(
+    logoBase64: string,
+  ): Promise<SettingsResponse<CompanySettings>> {
+    return this.electronService.invoke<SettingsResponse<CompanySettings>>(
+      'settings:upload-logo',
+      { logoBase64 },
+    );
+  }
+
+  async deleteLogo(): Promise<SettingsResponse<CompanySettings>> {
+    return this.electronService.invoke<SettingsResponse<CompanySettings>>(
+      'settings:delete-logo',
+    );
+  }
+
   async getPrinterSettings(): Promise<SettingsResponse<PrinterSettings>> {
     return this.electronService.invoke<SettingsResponse<PrinterSettings>>(
       'settings:get-printer',

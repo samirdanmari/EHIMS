@@ -5,6 +5,10 @@ import { PosService } from '../../../core/services/pos.service';
 import { InventoryService } from '../../../core/services/inventory.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import {
+  ReceiptService,
+  ReceiptPrintRequest,
+} from '../../../core/services/receipt.service';
 import { Order, OrderStatus } from '../../../core/models/order.model';
 import { CurrencyPipe } from '../../../shared/pipes/currency.pipe';
 import { PosTabsComponent } from '../../../shared/components/pos/pos-tabs/pos-tabs.component';
@@ -28,6 +32,7 @@ export class OrderHistoryComponent implements OnInit {
   private inventoryService = inject(InventoryService);
   private authService = inject(AuthService);
   private notificationService = inject(NotificationService);
+  private receiptService = inject(ReceiptService);
 
   @ViewChild(ConfirmDialogComponent) confirmDialog!: ConfirmDialogComponent;
 
@@ -151,6 +156,44 @@ export class OrderHistoryComponent implements OnInit {
     } finally {
       this.isProcessing.set(false);
     }
+  }
+
+  async onReprintReceipt(order: Order) {
+    const details = await this.posService.getOrderDetails(order.id);
+    if (!details.success || !details.order || !details.items) {
+      this.notificationService.error(
+        'Reprint Failed',
+        details.error || 'Could not load order items.',
+      );
+      return;
+    }
+
+    const request: ReceiptPrintRequest = {
+      orderId: order.id,
+      orderNumber: details.order.order_number,
+      items: details.items.map((item: any) => ({
+        name: item.menu_item_name || 'Item',
+        quantity: item.quantity,
+        unitPrice: item.unit_price,
+        lineTotal: item.total_price,
+      })),
+      subtotal: details.order.subtotal,
+      discount: details.order.discount_amount,
+      tax: details.order.tax_amount,
+      total: details.order.total_amount,
+      paymentMethod: details.order.payment_method,
+      tableNumber: details.order.table_number,
+    };
+    const result = await this.receiptService.reprintReceipt(request);
+    result.success
+      ? this.notificationService.success(
+          'Receipt Reprinted',
+          `Receipt for ${order.order_number} sent to printer.`,
+        )
+      : this.notificationService.error(
+          'Reprint Failed',
+          result.error || 'Could not print receipt.',
+        );
   }
 
   formatDate(dateStr: string): string {
