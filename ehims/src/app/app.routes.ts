@@ -81,6 +81,15 @@ export const routes: Routes = [
         data: { roles: ['admin', 'manager'] },
       },
       {
+        path: 'customers',
+        loadChildren: () =>
+          import('./features/customers/customers.routes').then(
+            (m) => m.CUSTOMER_ROUTES,
+          ),
+        canActivate: [roleGuard],
+        data: { roles: ['admin', 'manager', 'cashier'] },
+      },
+      {
         path: 'settings',
         loadChildren: () =>
           import('./features/settings/settings.routes').then(

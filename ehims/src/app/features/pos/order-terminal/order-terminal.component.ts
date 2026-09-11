@@ -6,6 +6,7 @@ import {
   signal,
   computed,
   ViewChild,
+  HostListener,
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import {
@@ -19,6 +20,8 @@ import { PosService } from '../../../core/services/pos.service';
 import { InventoryService } from '../../../core/services/inventory.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { CustomerService } from '../../../core/services/customer.service';
+import { CustomerSearchResult } from '../../../core/models/customer.model';
 import {
   MenuItem,
   CartItem,
@@ -56,6 +59,7 @@ export class OrderTerminalComponent implements OnInit {
   private notificationService = inject(NotificationService);
   private electronService = inject(ElectronService);
   private receiptService = inject(ReceiptService);
+  private customerService = inject(CustomerService);
 
   @ViewChild(ConfirmDialogComponent) confirmDialog!: ConfirmDialogComponent;
 
@@ -72,6 +76,11 @@ export class OrderTerminalComponent implements OnInit {
   discountAmount = signal(0);
   taxPercentage = signal(0);
   paymentMethod = signal<PaymentMethod>('cash');
+  customerSearchQuery = signal('');
+  customerSearchResults = signal<CustomerSearchResult[]>([]);
+  selectedCustomer = signal<CustomerSearchResult | null>(null);
+  showCustomerDropdown = signal(false);
+  isCredit = signal(false);
   suspendedOrders = signal<any[]>([]);
   isSuspendedOrdersDialogOpen = signal(false);
   private suspendedOrdersDialogResolve?: (id: number | null) => void;
@@ -209,6 +218,40 @@ export class OrderTerminalComponent implements OnInit {
     this.selectedCategoryId.set(value ? Number(value) : null);
   }
 
+  async onCustomerSearchInput(value: string) {
+    this.customerSearchQuery.set(value);
+    this.selectedCustomer.set(null);
+    this.isCredit.set(false);
+
+    const query = value.trim();
+    if (!query) {
+      this.customerSearchResults.set([]);
+      this.showCustomerDropdown.set(false);
+      return;
+    }
+
+    const res = await this.customerService.searchCustomers(query);
+    if (this.customerSearchQuery().trim() === query) {
+      this.customerSearchResults.set(res.success ? res.data : []);
+      this.showCustomerDropdown.set(res.success && res.data.length > 0);
+    }
+  }
+
+  selectCustomer(customer: CustomerSearchResult) {
+    this.selectedCustomer.set(customer);
+    this.customerSearchQuery.set(customer.full_name);
+    this.customerSearchResults.set([]);
+    this.showCustomerDropdown.set(false);
+  }
+
+  clearCustomer() {
+    this.selectedCustomer.set(null);
+    this.customerSearchQuery.set('');
+    this.customerSearchResults.set([]);
+    this.showCustomerDropdown.set(false);
+    this.isCredit.set(false);
+  }
+
   async onCompleteOrder() {
     if (this.form.invalid || this.cart().length === 0) {
       this.form.markAllAsTouched();
@@ -247,6 +290,8 @@ export class OrderTerminalComponent implements OnInit {
         discount_amount: this.discountAmount() || undefined,
         tax_amount: this.taxAmount() || undefined,
         payment_method: this.paymentMethod(),
+        customer_id: this.selectedCustomer()?.id,
+        is_credit: this.isCredit(),
       });
 
       if (res.success) {
@@ -317,6 +362,7 @@ export class OrderTerminalComponent implements OnInit {
     this.cart.set([]);
     this.discountAmount.set(0);
     this.form.patchValue({ table_number: '' });
+    this.clearCustomer();
   }
 
   clearCart() {

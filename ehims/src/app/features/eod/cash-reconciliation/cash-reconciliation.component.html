@@ -1,0 +1,207 @@
+<div class="reconciliation-container">
+  <div class="reconciliation-header">
+    <h2>Cash Register Reconciliation</h2>
+    <p class="subtitle">Count cash and reconcile with expected totals</p>
+  </div>
+
+  @if (activeShift()) {
+  <!-- Expected vs Actual Card -->
+  <div class="reconciliation-summary">
+    <div class="summary-card">
+      <div class="summary-item">
+        <span class="label">Shift</span>
+        <span class="value">{{ activeShift().shift_name }}</span>
+      </div>
+      <div class="summary-item">
+        <span class="label">Opening Cash</span>
+        <span class="value">{{ formatCurrency(activeShift().opening_cash) }}</span>
+      </div>
+      <div class="summary-item">
+        <span class="label">Total Sales</span>
+        <span class="value">{{ formatCurrency(activeShift().total_sales) }}</span>
+      </div>
+    </div>
+
+    <div class="summary-card highlight">
+      <div class="summary-item">
+        <span class="label">Expected Cash</span>
+        <span class="value">{{ formatCurrency(expectedCash()) }}</span>
+      </div>
+      <div class="summary-item">
+        <span class="label">Actual Counted</span>
+        <span class="value" [style.color]="isBalanced() ? '#10b981' : '#ef4444'">
+          {{ formatCurrency(totalCounted()) }}
+        </span>
+      </div>
+      <div class="summary-item">
+        <span class="label">Discrepancy</span>
+        <span class="value" [style.color]="isBalanced() ? '#10b981' : (isOver() ? '#3b82f6' : '#ef4444')">
+          {{ isBalanced() ? '✓ Balanced' : (isOver() ? '+' : '') }}{{ formatCurrency(discrepancy()) }}
+          @if (!isBalanced()) {
+          <span class="variance">({{ variancePercentage().toFixed(2) }}%)</span>
+          }
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Denomination Breakdown -->
+  <div class="denomination-section">
+    <h3>Denomination Breakdown</h3>
+    <div class="denomination-grid">
+      @for (denom of denominations(); track denom.value; let i = $index) {
+      <div class="denomination-item">
+        <label>₦{{ denom.value }}</label>
+        <input type="number" min="0" [ngModel]="denom.count" (ngModelChange)="updateDenominationCount(i, $event)"
+          class="count-input" placeholder="0">
+        <div class="total">{{ formatCurrency(denom.total) }}</div>
+      </div>
+      }
+    </div>
+    <div class="denomination-total">
+      <span>Total Counted:</span>
+      <span class="amount">{{ formatCurrency(totalCounted()) }}</span>
+    </div>
+  </div>
+
+  <!-- Discrepancy Details -->
+  <div class="discrepancy-section">
+    <h3>Discrepancy Details</h3>
+    <form [formGroup]="reconciliationForm" class="discrepancy-form">
+      <div class="form-group">
+        <label>Discrepancy Reason</label>
+        <select formControlName="discrepancy_reason" class="form-input">
+          <option value="">Select reason (optional)</option>
+          <option value="customer_overpayment">Customer Overpayment</option>
+          <option value="change_miscalculation">Change Miscalculation</option>
+          <option value="register_error">Register Error</option>
+          <option value="counting_error">Counting Error</option>
+          <option value="damaged_notes">Damaged Notes</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Additional Notes</label>
+        <textarea formControlName="notes" class="form-input" rows="3"
+          placeholder="Any additional notes about this reconciliation..."></textarea>
+      </div>
+
+      <div class="button-group">
+        <button type="button" class="btn btn-primary" (click)="submitReconciliation()" [disabled]="isProcessing()">
+          {{ isProcessing() ? 'Submitting...' : 'Submit Reconciliation' }}
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="resetForm()" [disabled]="isProcessing()">
+          Reset
+        </button>
+      </div>
+    </form>
+  </div>
+  } @else {
+  <div class="empty-state">
+    <p>No active shift found. Please open a shift first.</p>
+  </div>
+  }
+
+  <!-- Reconciliation History -->
+  @if (reconciliationHistory().length > 0) {
+  <div class="history-section">
+    <h3>Reconciliation History</h3>
+    <div class="history-list">
+      @for (rec of reconciliationHistory() | slice:0:10; track rec.id) {
+      <div class="history-item" [class.expanded]="expandedHistoryId() === rec.id">
+        <div class="history-header" (click)="expandReconciliation(rec.id)">
+          <div class="history-info">
+            <div class="date">{{ rec.reconciled_at | date:'short' }}</div>
+            <div class="user">{{ rec.reconciled_by_name }}</div>
+          </div>
+          <div class="history-stats">
+            <span class="expected">Expected: {{ formatCurrency(rec.expected_cash) }}</span>
+            <span class="actual">Actual: {{ formatCurrency(rec.actual_cash) }}</span>
+            <span class="discrepancy"
+              [style.color]="rec.discrepancy === 0 ? '#10b981' : (rec.discrepancy > 0 ? '#3b82f6' : '#ef4444')">
+              {{ rec.discrepancy > 0 ? '+' : '' }}{{ formatCurrency(rec.discrepancy) }}
+            </span>
+          </div>
+          <div class="status-badge" [style.backgroundColor]="rec.status === 'approved' ? '#10b981' : '#f59e0b'">
+            {{ rec.status }}
+          </div>
+        </div>
+
+        @if (expandedHistoryId() === rec.id) {
+        <div class="history-details">
+          <div class="detail-row">
+            <span class="label">Variance:</span>
+            <span class="value">{{ rec.variance_percentage?.toFixed(2) }}%</span>
+          </div>
+          @if (rec.discrepancy_reason) {
+          <div class="detail-row">
+            <span class="label">Reason:</span>
+            <span class="value">{{ rec.discrepancy_reason }}</span>
+          </div>
+          }
+          @if (rec.notes) {
+          <div class="detail-row">
+            <span class="label">Notes:</span>
+            <span class="value">{{ rec.notes }}</span>
+          </div>
+          }
+          @if (rec.denomination_breakdown) {
+          <div class="detail-row">
+            <span class="label">Breakdown:</span>
+            <div class="breakdown">
+              @for (denom of denominations(); track denom.value) {
+              @if (rec.denomination_breakdown[denom.value.toString()]) {
+              <span class="denom-item">
+                ₦{{ denom.value }} × {{ rec.denomination_breakdown[denom.value.toString()] }}
+              </span>
+              }
+              }
+            </div>
+          </div>
+          }
+        </div>
+        }
+      </div>
+      }
+    </div>
+  </div>
+  }
+
+  <!-- Variance Reports -->
+  @if (varianceReports().length > 0) {
+  <div class="reports-section">
+    <h3>Daily Variance Reports</h3>
+    <div class="reports-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Shifts</th>
+            <th>Expected</th>
+            <th>Actual</th>
+            <th>Variance</th>
+            <th>Over/Short</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (report of varianceReports() | slice:0:10; track report.id) {
+          <tr>
+            <td>{{ report.report_date }}</td>
+            <td>{{ report.total_shifts }}</td>
+            <td>{{ formatCurrency(report.total_expected_cash) }}</td>
+            <td>{{ formatCurrency(report.total_actual_cash) }}</td>
+            <td>{{ report.average_variance?.toFixed(2) }}%</td>
+            <td>
+              <span class="over-short">
+                Over: {{ report.over_count }} / Short: {{ report.short_count }}
+              </span>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+  }
+</div>

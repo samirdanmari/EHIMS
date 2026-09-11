@@ -1,5 +1,11 @@
-@use '../../../styles/variables' as *;
-@use '../../../styles/mixins' as *;
+@use "../../../styles/variables" as *;
+@use "../../../styles/mixins" as *;
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
 .login-page {
   width: 100vw;
@@ -8,6 +14,11 @@
   background: $bg-primary;
   overflow: hidden;
   position: relative;
+  min-height: 100dvh;
+  height: auto;
+  padding: $space-6;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 // Animated background blobs
@@ -56,7 +67,12 @@
   padding: $space-8;
   @include glass(rgba(22, 25, 35, 0.85), 20px);
   border-radius: $radius-2xl;
-  box-shadow: $shadow-xl, 0 0 60px rgba(59, 130, 246, 0.08);
+  box-shadow:
+    $shadow-xl,
+    0 0 60px rgba(59, 130, 246, 0.08);
+  width: min(100%, 440px);
+  max-height: calc(100dvh - #{$space-8});
+  overflow-y: auto;
 }
 
 // Brand section
@@ -141,6 +157,8 @@
   @include input-base();
   padding-left: $space-10;
   padding-right: $space-10;
+  width: 100%;
+  min-height: 44px;
 
   &:focus ~ .input-icon,
   &:focus + .toggle-password {
@@ -162,7 +180,9 @@
   transition: color $transition-fast;
   z-index: 1;
 
-  &:hover { color: $text-primary; }
+  &:hover {
+    color: $text-primary;
+  }
 }
 
 .form-error {
@@ -204,7 +224,9 @@
     cursor: not-allowed;
   }
 
-  &.loading { cursor: wait; }
+  &.loading {
+    cursor: wait;
+  }
 }
 
 // Loading spinner inside button
@@ -225,5 +247,77 @@
   font-size: $font-size-xs;
   color: $text-muted;
 
-  .separator { opacity: 0.4; }
+  .separator {
+    opacity: 0.4;
+  }
+}
+
+@media (max-width: 600px) {
+  .login-page {
+    align-items: flex-start;
+    padding: $space-4;
+  }
+
+  .login-card {
+    margin: auto 0;
+    padding: $space-5;
+    border-radius: $radius-xl;
+    max-height: none;
+  }
+
+  .brand {
+    gap: $space-3;
+    margin-bottom: $space-5;
+  }
+
+  .brand-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .brand-text h1 {
+    font-size: $font-size-xl;
+  }
+
+  .divider,
+  .login-title {
+    margin-bottom: $space-5;
+  }
+
+  .form-group {
+    margin-bottom: $space-4;
+  }
+
+  .bg-blob-1 {
+    width: 280px;
+    height: 280px;
+  }
+
+  .bg-blob-2 {
+    width: 240px;
+    height: 240px;
+  }
+
+  .bg-blob-3 {
+    display: none;
+  }
+}
+
+@media (max-height: 650px) {
+  .login-page {
+    align-items: flex-start;
+  }
+
+  .login-card {
+    margin: $space-4 auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bg-blob,
+  .btn-login,
+  .spinner {
+    animation: none;
+    transition: none;
+  }
 }

@@ -24,6 +24,13 @@ export const EOD_ROUTES: Routes = [
           ),
       },
       {
+        path: 'cash-reconciliation',
+        loadComponent: () =>
+          import('./cash-reconciliation/cash-reconciliation.component').then(
+            (m) => m.CashReconciliationComponent,
+          ),
+      },
+      {
         path: 'reports',
         loadComponent: () =>
           import('./eod-reports/eod-reports.component').then(

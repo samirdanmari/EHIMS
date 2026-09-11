@@ -21,6 +21,7 @@ const validChannels = [
     'printer:',
     'receipt:',
     'print:',
+    'customer:',
     'suspended-orders:',
     'sync:'
 ];

@@ -90,6 +90,8 @@ export interface OrderCreateInput {
   discount_reason?: string;
   tax_amount?: number;
   payment_method?: PaymentMethod;
+  customer_id?: number;
+  is_credit?: boolean;
   notes?: string;
 }
 

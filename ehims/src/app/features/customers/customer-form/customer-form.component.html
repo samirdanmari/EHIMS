@@ -1,0 +1,66 @@
+<div class="form-container">
+  <div class="form-header">
+    <h3>{{ isEdit ? 'Edit Customer' : 'New Customer' }}</h3>
+    <button class="btn-icon" (click)="onCancel()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+      </svg>
+    </button>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="form-body">
+    <div class="form-group" [class.has-error]="hasError('full_name')">
+      <label class="form-label">Full Name <span class="required">*</span></label>
+      <input class="form-control" formControlName="full_name" placeholder="e.g. Aminu Ibrahim" />
+      @if (hasError('full_name')) {
+      <p class="form-error">Full name is required (min. 2 characters)</p>
+      }
+    </div>
+
+    <div class="form-row">
+      <div class="form-group" [class.has-error]="hasError('phone')">
+        <label class="form-label">Phone Number</label>
+        <input class="form-control" formControlName="phone" placeholder="e.g. 08012345678" />
+      </div>
+
+      <div class="form-group" [class.has-error]="hasError('email')">
+        <label class="form-label">Email</label>
+        <input class="form-control" formControlName="email" type="email" placeholder="customer@example.com" />
+        @if (hasError('email')) {
+        <p class="form-error">Please enter a valid email address</p>
+        }
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Address</label>
+      <input class="form-control" formControlName="address" placeholder="Street, City" />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Credit Limit (₦)</label>
+      <input
+        class="form-control"
+        formControlName="credit_limit"
+        type="number"
+        min="0"
+        placeholder="0"
+      />
+      <p class="form-hint">Set to 0 to disable credit for this customer</p>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Notes</label>
+      <textarea class="form-control" formControlName="notes" rows="2" placeholder="Any additional notes…"></textarea>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn btn-ghost" (click)="onCancel()" [disabled]="isSaving()">
+        Cancel
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="isSaving()">
+        @if (isSaving()) { Saving… } @else { {{ isEdit ? 'Update Customer' : 'Create Customer' }} }
+      </button>
+    </div>
+  </form>
+</div>

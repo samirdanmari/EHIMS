@@ -316,6 +316,58 @@ function runMigrations(db) {
         );
     `);
 
+    // -------------------------------------------------------------------------
+    // REGULAR CUSTOMERS
+    // -------------------------------------------------------------------------
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS regular_customers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            full_name TEXT NOT NULL,
+            phone TEXT UNIQUE,
+            email TEXT,
+            address TEXT,
+            notes TEXT,
+            credit_limit REAL NOT NULL DEFAULT 0,
+            outstanding_balance REAL NOT NULL DEFAULT 0,
+            is_active INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+            updated_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+        );
+
+        CREATE TABLE IF NOT EXISTS customer_payments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            customer_id INTEGER NOT NULL REFERENCES regular_customers(id),
+            order_id INTEGER REFERENCES orders(id),
+            amount REAL NOT NULL,
+            payment_method TEXT NOT NULL DEFAULT 'cash' CHECK(payment_method IN ('cash','card','transfer')),
+            reference TEXT,
+            recorded_by INTEGER NOT NULL REFERENCES users(id),
+            payment_date TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+            notes TEXT
+        );
+    `);
+
+    
+
+    // -------------------------------------------------------------------------
+    // ALTER TABLE guards — orders new columns
+    // -------------------------------------------------------------------------
+    const orderColumns = db.prepare('PRAGMA table_info(orders)').all();
+
+    if (!orderColumns.some(c => c.name === 'customer_id')) {
+        db.exec(`ALTER TABLE orders ADD COLUMN customer_id INTEGER REFERENCES regular_customers(id);`);
+    }
+    if (!orderColumns.some(c => c.name === 'is_credit')) {
+        db.exec(`ALTER TABLE orders ADD COLUMN is_credit INTEGER NOT NULL DEFAULT 0;`);
+    }
+    if (!orderColumns.some(c => c.name === 'credit_status')) {
+        db.exec(`ALTER TABLE orders ADD COLUMN credit_status TEXT DEFAULT 'paid'
+            CHECK(credit_status IN ('paid','unpaid','partial'));`);
+    }
+
+    // -------------------------------------------------------------------------
+    // Existing ALTER TABLE guards
+    // -------------------------------------------------------------------------
     const orderItemColumns = db.prepare('PRAGMA table_info(order_items)').all();
     const hasOrderItemCreatedAt = orderItemColumns.some((column) => column.name === 'created_at');
 

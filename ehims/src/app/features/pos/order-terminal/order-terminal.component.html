@@ -111,6 +111,93 @@
             <option value="split">Split Payment</option>
           </select>
         </div>
+
+        <!-- Customer Account -->
+        <div class="form-group customer-search-group">
+          <label class="form-label">Customer Account (optional)</label>
+          <div class="customer-search-wrap">
+            <input
+              class="form-input"
+              type="text"
+              placeholder="Search customer by name or phone…"
+              [value]="customerSearchQuery()"
+              (input)="onCustomerSearchInput($any($event.target).value)"
+              (focus)="showCustomerDropdown.set(true)"
+              autocomplete="off"
+            />
+            @if (selectedCustomer()) {
+            <button class="clear-customer-btn" (click)="clearCustomer()" title="Remove customer">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+            }
+          </div>
+
+          @if (selectedCustomer()) {
+          <div class="selected-customer-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+            {{ selectedCustomer()!.full_name }}
+            @if (selectedCustomer()!.phone) { · {{ selectedCustomer()!.phone }} }
+            @if (selectedCustomer()!.outstanding_balance > 0) {
+            <span class="balance-hint">Owes ₦{{ selectedCustomer()!.outstanding_balance.toLocaleString('en-NG') }}</span>
+            }
+          </div>
+          }
+
+          @if (showCustomerDropdown() && customerSearchResults().length > 0) {
+          <div class="customer-dropdown">
+            @for (c of customerSearchResults(); track c.id) {
+            <button class="customer-option" (click)="selectCustomer(c)" type="button">
+              <span class="c-name">{{ c.full_name }}</span>
+              @if (c.phone) { <span class="c-phone">{{ c.phone }}</span> }
+              @if (c.outstanding_balance > 0) {
+              <span class="c-balance-badge">Owes ₦{{ c.outstanding_balance.toLocaleString('en-NG') }}</span>
+              }
+            </button>
+            }
+          </div>
+          }
+        </div>
+
+        <!-- Credit / Paid toggle (only visible when customer is selected) -->
+        @if (selectedCustomer()) {
+        <div class="form-group">
+          <label class="form-label">Sale Type</label>
+          <div class="sale-type-toggle">
+            <button
+              type="button"
+              class="toggle-btn"
+              [class.active]="!isCredit()"
+              (click)="isCredit.set(false)"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              Paid
+            </button>
+            <button
+              type="button"
+              class="toggle-btn toggle-btn-credit"
+              [class.active]="isCredit()"
+              (click)="isCredit.set(true)"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+                <line x1="12" y1="1" x2="12" y2="23"/>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              </svg>
+              Credit
+            </button>
+          </div>
+          @if (isCredit()) {
+          <p class="credit-hint">
+            ₦{{ grandTotal() | appCurrency }} will be added to {{ selectedCustomer()!.full_name }}'s outstanding balance.
+          </p>
+          }
+        </div>
+        }
       </form>
 
       <!-- Cart Items -->

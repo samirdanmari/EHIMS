@@ -1,0 +1,193 @@
+<div class="page">
+  <div class="page-header">
+    <div class="header-left">
+      <a routerLink="/customers" class="back-link">All Customers</a>
+      @if (customer()) {
+      <h2 class="page-title">{{ customer()!.full_name }}</h2>
+      }
+    </div>
+    @if (customer()) {
+    <div class="header-actions">
+      <button class="btn btn-ghost" (click)="printReport()" [disabled]="isExporting()">Print Report</button>
+      <button class="btn btn-ghost" (click)="savePdf()" [disabled]="isExporting()">Save PDF</button>
+      <button class="btn btn-ghost" (click)="showEditForm.set(true)">Edit Profile</button>
+    </div>
+    }
+  </div>
+
+  @if (showEditForm() && customer()) {
+  <div class="modal-overlay" (click)="showEditForm.set(false)">
+    <div class="modal-panel" (click)="$event.stopPropagation()">
+      <app-customer-form [customer]="customer()" (saved)="onEditSaved()" (cancelled)="showEditForm.set(false)">
+      </app-customer-form>
+    </div>
+  </div>
+  }
+
+  @if (isLoading()) {
+  <div class="empty-state">
+    <p class="empty-message">Loading...</p>
+  </div>
+  } @else if (!customer()) {
+  <div class="empty-state">
+    <p class="empty-message">Customer not found.</p>
+  </div>
+  } @else {
+  <div class="page-content detail-layout">
+    <div class="profile-column">
+      <div class="card profile-card">
+        <div class="avatar-large">{{ customer()!.full_name.charAt(0).toUpperCase() }}</div>
+        <h3 class="profile-name">{{ customer()!.full_name }}</h3>
+        @if (customer()!.phone) { <div class="profile-row">{{ customer()!.phone }}</div> }
+        @if (customer()!.email) { <div class="profile-row">{{ customer()!.email }}</div> }
+        @if (customer()!.address) { <div class="profile-row">{{ customer()!.address }}</div> }
+        @if (customer()!.notes) { <div class="profile-notes">{{ customer()!.notes }}</div> }
+
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-value">{{ purchases().length }}</div>
+            <div class="stat-label">Total Orders</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value credit-limit-val">₦{{ customer()!.credit_limit | appCurrency }}</div>
+            <div class="stat-label">Credit Limit</div>
+          </div>
+          <div class="stat-box" [class.stat-box-danger]="customer()!.outstanding_balance > 0">
+            <div class="stat-value" [class.danger-text]="customer()!.outstanding_balance > 0">
+              ₦{{ customer()!.outstanding_balance | appCurrency }}
+            </div>
+            <div class="stat-label">Outstanding</div>
+          </div>
+        </div>
+
+        @if (customer()!.outstanding_balance > 0) {
+        <button class="btn btn-primary btn-block" (click)="showPaymentForm.set(true)">Record Payment</button>
+        }
+        <div class="member-since">Member since {{ customer()!.created_at | date:'mediumDate' }}</div>
+      </div>
+
+      @if (showPaymentForm()) {
+      <div class="card payment-form-card">
+        <h4 class="form-section-title">Record Payment</h4>
+        <form [formGroup]="paymentForm" (ngSubmit)="onRecordPayment()">
+          <div class="form-group">
+            <label class="form-label">Amount (₦)</label>
+            <input class="form-control" formControlName="amount" type="number" min="0.01" step="0.01" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Payment Method</label>
+            <select class="form-control" formControlName="payment_method">
+              <option value="cash">Cash</option>
+              <option value="card">Card</option>
+              <option value="transfer">Bank Transfer</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Apply to Order</label>
+            <select class="form-control" formControlName="order_id">
+              <option [value]="null">General Payment</option>
+              @for (o of unpaidOrders; track o.id) {
+              <option [value]="o.id">#{{ o.order_number }} - ₦{{ o.total_amount | appCurrency }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Reference / Note</label>
+            <input class="form-control" formControlName="reference" />
+          </div>
+          <div class="form-actions-inline">
+            <button type="button" class="btn btn-ghost btn-sm" (click)="showPaymentForm.set(false)">Cancel</button>
+            <button type="submit" class="btn btn-primary btn-sm" [disabled]="isRecordingPayment()">
+              {{ isRecordingPayment() ? 'Recording...' : 'Record' }}
+            </button>
+          </div>
+        </form>
+      </div>
+      }
+    </div>
+
+    <div class="detail-column">
+      <div class="tab-bar">
+        <button class="tab-btn" [class.active]="activeTab() === 'purchases'" (click)="activeTab.set('purchases')">
+          Purchases ({{ purchases().length }})
+        </button>
+        <button class="tab-btn" [class.active]="activeTab() === 'payments'" (click)="activeTab.set('payments')">
+          Payment History ({{ payments().length }})
+        </button>
+      </div>
+
+      @if (activeTab() === 'purchases') {
+      @if (purchases().length === 0) {
+      <div class="empty-state">
+        <p class="empty-message">No purchases yet.</p>
+      </div>
+      } @else {
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Order #</th>
+              <th>Date</th>
+              <th>Items</th>
+              <th class="text-right">Total</th>
+              <th class="text-right">Paid</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of purchases(); track p.id) {
+            <tr>
+              <td class="order-number">{{ p.order_number }}</td>
+              <td>{{ p.created_at | date:'dd MMM yyyy' }}</td>
+              <td>
+                <div class="purchase-items">
+                  @for (item of p.items; track item.id) {
+                  <span class="purchase-item">{{ item.menu_item_name }} x {{ item.quantity }}</span>
+                  }
+                </div>
+              </td>
+              <td class="text-right">₦{{ p.total_amount | appCurrency }}</td>
+              <td class="text-right">₦{{ p.amount_paid | appCurrency }}</td>
+              <td><span class="badge" [ngClass]="getCreditStatusClass(p)">{{ getCreditStatusLabel(p) }}</span></td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      }
+      } @else {
+      @if (payments().length === 0) {
+      <div class="empty-state">
+        <p class="empty-message">No payments recorded yet.</p>
+      </div>
+      } @else {
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Method</th>
+              <th class="text-right">Amount</th>
+              <th>Reference</th>
+              <th>Recorded By</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (pay of payments(); track pay.id) {
+            <tr>
+              <td>{{ pay.payment_date | date:'dd MMM yyyy, HH:mm' }}</td>
+              <td class="capitalize">{{ pay.payment_method }}</td>
+              <td class="text-right amount-paid">₦{{ pay.amount | appCurrency }}</td>
+              <td>{{ pay.reference || '-' }}</td>
+              <td>{{ pay.recorded_by_name || '-' }}</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      }
+      }
+    </div>
+  </div>
+  }
+</div>

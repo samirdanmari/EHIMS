@@ -40,6 +40,7 @@ interface Shift {
   start_time: string;
   status: string;
   opening_cash: number;
+  total_sales?: number;
 }
 interface OpenShiftResponse {
   success: boolean;
@@ -70,6 +71,25 @@ export class EODService {
 
   listActiveShifts(): Promise<ListShiftsResponse> {
     return this.electronService.invoke<ListShiftsResponse>('shift:list-active');
+  }
+
+  async getActiveShift(userId?: number): Promise<OpenShiftResponse> {
+    const res = await this.listActiveShifts();
+
+    if (!res.success) {
+      return { success: false, error: res.error || 'No active shift found' };
+    }
+
+    const shift =
+      userId !== undefined
+        ? res.shifts.find((item) => item.user_id === userId)
+        : res.shifts[0];
+
+    if (!shift) {
+      return { success: false, error: 'No active shift found' };
+    }
+
+    return { success: true, shift };
   }
 
   closeShift(payload: ShiftCloseInput): Promise<CloseShiftResponse> {

@@ -197,6 +197,13 @@ export class EodLayoutComponent {
       description: 'End shift and reconcile cash',
     },
     {
+      label: 'Cash Reconciliation',
+      route: '/eod/cash-reconciliation',
+      icon: 'M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7H14.5a3.5 3.5 0 0 1 0 7H6',
+      description:
+        'Count cash, review discrepancies, and submit reconciliation',
+    },
+    {
       label: 'Shift Reports',
       route: '/eod/reports',
       icon: 'M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2zm0 0V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v10m-6 0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m0 0V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z',

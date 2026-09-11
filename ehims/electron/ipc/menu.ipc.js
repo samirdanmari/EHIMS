@@ -216,7 +216,7 @@ function registerMenuItemIPC(db) {
     // ---------------------------------------------------------
     // ORDERS
     // ---------------------------------------------------------
-    ipcMain.handle('order:create', async (event, { shift_id, cashier_id, waiter_id, table_number, items, discount_amount, tax_amount, payment_method, notes }) => {
+    ipcMain.handle('order:create', async (event, { shift_id, cashier_id, waiter_id, table_number, items, discount_amount, tax_amount, payment_method, customer_id, is_credit, notes }) => {
         try {
             if (!shift_id || !cashier_id) {
                 return { success: false, error: 'shift_id and cashier_id are required' };
@@ -248,9 +248,9 @@ function registerMenuItemIPC(db) {
             const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
 
             const insertOrder = db.prepare(`
-                INSERT INTO orders (order_number, shift_id, cashier_id, waiter_id, table_number, 
-                    subtotal, discount_amount, tax_amount, total_amount, payment_method, status)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO orders (order_number, shift_id, cashier_id, waiter_id, table_number,
+                    subtotal, discount_amount, tax_amount, total_amount, payment_method, customer_id, is_credit, credit_status, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `);
 
             const insertOrderItem = db.prepare(`
@@ -280,6 +280,9 @@ function registerMenuItemIPC(db) {
                     taxAmt,
                     totalAmount,
                     payment_method || 'cash',
+                    customer_id || null,
+                    is_credit ? 1 : 0,
+                    is_credit ? 'unpaid' : null,
                     'completed' // Assume order is completed immediately (for restaurant workflow)
                 );
                 const orderId = orderInfo.lastInsertRowid;
@@ -305,6 +308,15 @@ function registerMenuItemIPC(db) {
                         }
                         decrementInventory.run(qty, menuItem.inventory_item_id);
                     }
+                }
+
+                if (customer_id && is_credit) {
+                    db.prepare(`
+                        UPDATE regular_customers
+                        SET outstanding_balance = outstanding_balance + ?,
+                            updated_at = datetime('now','localtime')
+                        WHERE id = ?
+                    `).run(totalAmount, customer_id);
                 }
 
                 return { orderId, orderNumber, totalAmount };
