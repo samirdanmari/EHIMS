@@ -5,6 +5,7 @@ import { ReportsService } from '../services/reports.service';
 import { EODService } from '../../eod/services/eod.service';
 import { CurrencyPipe } from '../../../shared/pipes/currency.pipe';
 import { NotificationService } from '../../../core/services/notification.service';
+import { ReportTablePipe } from '../../../shared/pipes/report-table.pipe';
 
 interface IssuanceRow {
   id: number;
@@ -19,7 +20,7 @@ interface IssuanceRow {
 @Component({
   selector: 'app-stock-issuance-report',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, CurrencyPipe],
+  imports: [CommonModule, ReactiveFormsModule, CurrencyPipe, ReportTablePipe],
   templateUrl: './stock-issuance-report.component.html',
   styleUrls: ['./stock-issuance-report.component.scss'],
 })
@@ -33,6 +34,9 @@ export class StockIssuanceReportComponent implements OnInit {
   shifts = signal<any[]>([]);
   totalCost = signal(0);
   totalItems = signal(0);
+  searchTerm = signal('');
+  sortKey = signal('created_at');
+  sortDirection = signal<'asc' | 'desc'>('desc');
 
   form = new FormGroup({
     shiftId: new FormControl<number | null>(null),
@@ -91,6 +95,17 @@ export class StockIssuanceReportComponent implements OnInit {
     this.isLoading.set(true);
     await this.loadData();
     this.isLoading.set(false);
+  }
+
+  sortBy(key: string) {
+    if (this.sortKey() === key)
+      this.sortDirection.update((direction) =>
+        direction === 'asc' ? 'desc' : 'asc',
+      );
+    else {
+      this.sortKey.set(key);
+      this.sortDirection.set('asc');
+    }
   }
 
   async printReport() {

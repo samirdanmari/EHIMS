@@ -2,14 +2,19 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
 import { ReportsService } from '../services/reports.service';
-import { SalesMetrics, SalesTrend } from '../../../core/models/report.model';
+import {
+  SalesItem,
+  SalesMetrics,
+  SalesTrend,
+} from '../../../core/models/report.model';
 import { CurrencyPipe } from '../../../shared/pipes/currency.pipe';
 import { NotificationService } from '../../../core/services/notification.service';
+import { ReportTablePipe } from '../../../shared/pipes/report-table.pipe';
 
 @Component({
   selector: 'app-sales-report',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, CurrencyPipe],
+  imports: [CommonModule, ReactiveFormsModule, CurrencyPipe, ReportTablePipe],
   templateUrl: './sales-report.component.html',
   styleUrls: ['./sales-report.component.scss'],
 })
@@ -20,7 +25,11 @@ export class SalesReportComponent implements OnInit {
   isLoading = signal(true);
   salesMetrics = signal<SalesMetrics[]>([]);
   salesTrends = signal<SalesTrend[]>([]);
+  salesItems = signal<SalesItem[]>([]);
   selectedPeriod = signal<'daily' | 'weekly' | 'monthly'>('daily');
+  searchTerm = signal('');
+  sortKey = signal('date');
+  sortDirection = signal<'asc' | 'desc'>('desc');
 
   form = new FormGroup({
     dateFrom: new FormControl(''),
@@ -49,9 +58,16 @@ export class SalesReportComponent implements OnInit {
     const trendsRes = await this.reportsService.getSalesTrends(
       this.selectedPeriod(),
       30,
+      dateFrom,
+      dateTo,
     );
     if (trendsRes.success && trendsRes.data) {
       this.salesTrends.set(trendsRes.data);
+    }
+
+    const itemsRes = await this.reportsService.getSalesItems(dateFrom, dateTo);
+    if (itemsRes.success && itemsRes.data) {
+      this.salesItems.set(itemsRes.data);
     }
   }
 
@@ -86,6 +102,17 @@ export class SalesReportComponent implements OnInit {
     const total = this.getTotalSales();
     const orders = this.getTotalOrders();
     return orders > 0 ? total / orders : 0;
+  }
+
+  sortBy(key: string) {
+    if (this.sortKey() === key) {
+      this.sortDirection.update((direction) =>
+        direction === 'asc' ? 'desc' : 'asc',
+      );
+    } else {
+      this.sortKey.set(key);
+      this.sortDirection.set('asc');
+    }
   }
 
   async printReport() {

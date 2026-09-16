@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
 import { EODService } from '../services/eod.service';
@@ -15,12 +15,18 @@ interface ClosedShift {
   username: string;
   start_time: string;
   end_time: string;
+  shift_date: string;
   opening_cash: number;
   closing_cash: number;
   total_sales: number;
   total_orders: number;
   supplier_payments: number;
   notes?: string;
+}
+
+interface ShiftDateGroup {
+  date: string;
+  shifts: ClosedShift[];
 }
 
 @Component({
@@ -38,6 +44,27 @@ export class EODReportsComponent implements OnInit {
 
   isLoading = signal(true);
   closedShifts = signal<ClosedShift[]>([]);
+  shiftDateGroups = computed<ShiftDateGroup[]>(() => {
+    const groups = new Map<string, ClosedShift[]>();
+    for (const shift of this.closedShifts()) {
+      const date = shift.shift_date || shift.end_time?.slice(0, 10) || '';
+      const shifts = groups.get(date) || [];
+      shifts.push(shift);
+      groups.set(date, shifts);
+    }
+
+    return [...groups.entries()]
+      .sort(([left], [right]) => right.localeCompare(left))
+      .map(([date, shifts]) => ({
+        date,
+        shifts: shifts.sort((left, right) =>
+          left.shift_name.localeCompare(right.shift_name, undefined, {
+            sensitivity: 'base',
+            numeric: true,
+          }),
+        ),
+      }));
+  });
   allUsers = signal<any[]>([]);
   expandedShiftId = signal<number | null>(null);
   selectedShiftDetail = signal<any>(null);
@@ -148,6 +175,7 @@ export class EODReportsComponent implements OnInit {
 
     const rows = detail.orders.flatMap((order: any) =>
       (order.order_items || []).map((item: any) => ({
+        shift_date: shift.shift_date,
         order: order.order_number,
         time: this.formatTime(order.created_at),
         item: item.menu_item_name || 'Item',
@@ -159,6 +187,7 @@ export class EODReportsComponent implements OnInit {
       `EOD Report - ${shift.shift_name}`,
       [
         { key: 'order', label: 'Order #' },
+        { key: 'shift_date', label: 'Shift Date' },
         { key: 'time', label: 'Time' },
         { key: 'item', label: 'Item' },
         { key: 'quantity', label: 'Qty' },
@@ -184,6 +213,7 @@ export class EODReportsComponent implements OnInit {
     if (!detail) return;
     const rows = detail.orders.flatMap((order: any) =>
       (order.order_items || []).map((item: any) => ({
+        shift_date: shift.shift_date,
         order: order.order_number,
         item: item.menu_item_name || 'Item',
         quantity: item.quantity,
@@ -194,6 +224,7 @@ export class EODReportsComponent implements OnInit {
       `EOD Report - ${shift.shift_name}`,
       [
         { key: 'order', label: 'Order #' },
+        { key: 'shift_date', label: 'Shift Date' },
         { key: 'item', label: 'Item' },
         { key: 'quantity', label: 'Qty' },
         { key: 'amount', label: 'Amount' },

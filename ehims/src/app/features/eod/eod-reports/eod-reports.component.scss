@@ -134,6 +134,24 @@
       color: #1f2937;
     }
 
+    .shift-date-group {
+      margin-bottom: 24px;
+
+      .date-heading {
+        margin: 0 0 10px;
+        padding: 10px 14px;
+        background: #eff6ff;
+        border-left: 4px solid #2563eb;
+        color: #1e3a8a;
+        font-size: 16px;
+        font-weight: 700;
+      }
+
+      .shift-card {
+        margin-left: 12px;
+      }
+    }
+
     .shift-card {
       background: #ffffff;
       border: 1px solid #e5e7eb;
@@ -165,6 +183,13 @@
             font-size: 16px;
             font-weight: 600;
             color: #1f2937;
+          }
+
+          .shift-date {
+            margin: 0 0 4px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #2563eb;
           }
 
           .user-info {

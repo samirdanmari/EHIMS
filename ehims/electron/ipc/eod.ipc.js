@@ -282,12 +282,13 @@ function registerEODIPC(db) {
                     s.user_id,
                     s.start_time,
                     s.end_time,
+                    DATE(s.end_time) as shift_date,
                     s.opening_cash,
                     s.closing_cash,
                     s.status,
                     s.notes,
-                    u.display_name as user_name,
-                    u.username,
+                    COALESCE(NULLIF(u.display_name, ''), NULLIF(u.username, ''), 'Unknown Staff') as user_name,
+                    COALESCE(u.username, '') as username,
                     (SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE shift_id = s.id AND status = 'completed') as total_sales,
                     (SELECT COUNT(*) FROM orders WHERE shift_id = s.id AND status = 'completed') as total_orders,
                     (SELECT COALESCE(SUM(amount), 0) FROM supplier_payments WHERE CAST(payment_date as date) = CAST(s.end_time as date)) as supplier_payments
@@ -310,7 +311,7 @@ function registerEODIPC(db) {
                 params.push(user_id);
             }
 
-            sql += ` ORDER BY s.end_time DESC LIMIT ?`;
+            sql += ` ORDER BY DATE(s.end_time) DESC, s.shift_name ASC, s.end_time DESC LIMIT ?`;
             params.push(limit);
 
             const rows = db.prepare(sql).all(...params);

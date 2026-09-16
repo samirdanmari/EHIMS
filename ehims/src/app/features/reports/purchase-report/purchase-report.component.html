@@ -65,24 +65,26 @@
     <div class="table-container">
       <div class="table-header">
         <h3>Purchases</h3>
+        <input class="table-search" type="search" placeholder="Search report" [value]="searchTerm()"
+          (input)="searchTerm.set($any($event.target).value)" />
       </div>
 
       @if (purchases().length > 0) {
       <table class="data-table">
         <thead>
           <tr>
-            <th>Date</th>
-            <th>Supplier</th>
-            <th>Account #</th>
-            <th>Total Cost</th>
-            <th>Paid</th>
-            <th>Outstanding</th>
-            <th>Status</th>
+            <th><button class="sort-button" (click)="sortBy('purchase_date')">Date</button></th>
+            <th><button class="sort-button" (click)="sortBy('supplier_name')">Supplier</button></th>
+            <th><button class="sort-button" (click)="sortBy('account_number')">Account #</button></th>
+            <th><button class="sort-button" (click)="sortBy('total_cost')">Total Cost</button></th>
+            <th><button class="sort-button" (click)="sortBy('total_paid')">Paid</button></th>
+            <th><button class="sort-button" (click)="sortBy('outstanding')">Outstanding</button></th>
+            <th><button class="sort-button" (click)="sortBy('credit_status')">Status</button></th>
           </tr>
         </thead>
 
         <tbody>
-          @for (purchase of purchases(); track purchase.id) {
+          @for (purchase of purchases() | reportTable: searchTerm() : sortKey() : sortDirection(); track purchase.id) {
           <tr>
             <td class="date">
               {{ purchase.purchase_date | date: 'mediumDate' }}

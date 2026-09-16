@@ -20,10 +20,10 @@ let mainWindow;
 
 function createWindow() {
     mainWindow = new BrowserWindow({
-        width: 1400,
-        height: 900,
-        minWidth: 1024,
-        minHeight: 768,
+        width: 1200,
+        height: 800,
+        minWidth: 900,
+        minHeight: 700,
         titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),

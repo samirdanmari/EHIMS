@@ -18,6 +18,13 @@ export interface SalesTrend {
   growth_percent?: number;
 }
 
+export interface SalesItem {
+  date: string;
+  item_name: string;
+  quantity: number;
+  sales: number;
+}
+
 export interface InventoryMovement {
   item_id: number;
   item_name: string;

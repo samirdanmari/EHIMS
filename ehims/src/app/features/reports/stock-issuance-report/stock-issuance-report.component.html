@@ -66,23 +66,25 @@
     <div class="table-container">
       <div class="table-header">
         <h3>Stock Issuances</h3>
+        <input class="table-search" type="search" placeholder="Search report" [value]="searchTerm()"
+          (input)="searchTerm.set($any($event.target).value)" />
       </div>
 
       @if (issuances().length > 0) {
       <table class="data-table">
         <thead>
           <tr>
-            <th>Date & Time</th>
-            <th>Shift</th>
-            <th>Issued By</th>
-            <th>Items</th>
-            <th>Item Count</th>
-            <th>Total Cost</th>
+            <th><button class="sort-button" (click)="sortBy('created_at')">Date & Time</button></th>
+            <th><button class="sort-button" (click)="sortBy('shift_name')">Shift</button></th>
+            <th><button class="sort-button" (click)="sortBy('issued_by')">Issued By</button></th>
+            <th><button class="sort-button" (click)="sortBy('items')">Items</button></th>
+            <th><button class="sort-button" (click)="sortBy('item_count')">Item Count</button></th>
+            <th><button class="sort-button" (click)="sortBy('total_cost')">Total Cost</button></th>
           </tr>
         </thead>
 
         <tbody>
-          @for (issuance of issuances(); track issuance.id) {
+          @for (issuance of issuances() | reportTable: searchTerm() : sortKey() : sortDirection(); track issuance.id) {
           <tr>
             <td class="date">
               {{ issuance.created_at | date: 'short' }}

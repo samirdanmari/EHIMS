@@ -88,23 +88,25 @@
     <div class="table-container">
       <div class="table-header">
         <h3>Inventory Movement</h3>
+        <input class="table-search" type="search" placeholder="Search report" [value]="searchTerm()"
+          (input)="searchTerm.set($any($event.target).value)" />
       </div>
 
       @if (inventory().length > 0) {
       <table class="data-table">
         <thead>
           <tr>
-            <th>Item Name</th>
-            <th>Category</th>
-            <th>Opening</th>
-            <th>Purchases</th>
-            <th>Issued</th>
-            <th>Closing</th>
-            <th>Valuation</th>
+            <th><button class="sort-button" (click)="sortBy('item_name')">Item Name</button></th>
+            <th><button class="sort-button" (click)="sortBy('category')">Category</button></th>
+            <th><button class="sort-button" (click)="sortBy('opening_stock')">Opening</button></th>
+            <th><button class="sort-button" (click)="sortBy('purchases')">Purchases</button></th>
+            <th><button class="sort-button" (click)="sortBy('issued')">Issued</button></th>
+            <th><button class="sort-button" (click)="sortBy('closing_stock')">Closing</button></th>
+            <th><button class="sort-button" (click)="sortBy('valuation')">Valuation</button></th>
           </tr>
         </thead>
         <tbody>
-          @for (item of inventory(); track item.item_id) {
+          @for (item of inventory() | reportTable: searchTerm() : sortKey() : sortDirection(); track item.item_id) {
           <tr>
             <td class="item-name">{{ item.item_name }}</td>
             <td class="category">{{ item.category }}</td>

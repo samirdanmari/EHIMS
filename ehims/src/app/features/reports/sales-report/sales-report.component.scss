@@ -133,11 +133,24 @@
     padding: $space-4;
     border-bottom: 1px solid $glass-border;
     background: $bg-primary;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: $space-4;
 
     h3 {
       margin: 0;
       font-size: $font-size-base;
       font-weight: $font-weight-semibold;
+      color: $text-primary;
+    }
+
+    .table-search {
+      max-width: 240px;
+      padding: $space-2 $space-3;
+      border: 1px solid $glass-border;
+      border-radius: $radius-md;
+      background: $bg-secondary;
       color: $text-primary;
     }
   }
@@ -157,6 +170,15 @@
       font-size: $font-size-sm;
       font-weight: $font-weight-semibold;
       color: $text-primary;
+    }
+
+    .sort-button {
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
     }
 
     td {

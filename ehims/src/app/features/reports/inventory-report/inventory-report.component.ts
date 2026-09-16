@@ -8,11 +8,12 @@ import {
 } from '../../../core/models/report.model';
 import { CurrencyPipe } from '../../../shared/pipes/currency.pipe';
 import { NotificationService } from '../../../core/services/notification.service';
+import { ReportTablePipe } from '../../../shared/pipes/report-table.pipe';
 
 @Component({
   selector: 'app-inventory-report',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, CurrencyPipe],
+  imports: [CommonModule, ReactiveFormsModule, CurrencyPipe, ReportTablePipe],
   templateUrl: './inventory-report.component.html',
   styleUrls: ['./inventory-report.component.scss'],
 })
@@ -25,6 +26,9 @@ export class InventoryReportComponent implements OnInit {
   alerts = signal<InventoryAlert[]>([]);
   totalValuation = signal(0);
   showAlerts = signal(true);
+  searchTerm = signal('');
+  sortKey = signal('item_name');
+  sortDirection = signal<'asc' | 'desc'>('asc');
 
   form = new FormGroup({
     dateFrom: new FormControl(''),
@@ -74,6 +78,17 @@ export class InventoryReportComponent implements OnInit {
 
   getWarningItems(): number {
     return this.alerts().filter((a) => a.status === 'warning').length;
+  }
+
+  sortBy(key: string) {
+    if (this.sortKey() === key)
+      this.sortDirection.update((direction) =>
+        direction === 'asc' ? 'desc' : 'asc',
+      );
+    else {
+      this.sortKey.set(key);
+      this.sortDirection.set('asc');
+    }
   }
 
   async printReport() {

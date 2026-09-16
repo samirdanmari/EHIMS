@@ -1,0 +1,125 @@
+@use "../../../styles/variables" as *;
+
+.filters-card {
+  display: flex;
+  gap: $space-4;
+  align-items: flex-end;
+  margin-bottom: $space-6;
+  padding: $space-5;
+  background: $bg-secondary;
+  border: 1px solid $glass-border;
+  border-radius: $radius-lg;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+.form-label {
+  color: $text-secondary;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+}
+.form-input,
+.form-select {
+  padding: $space-2 $space-3;
+  background: $bg-primary;
+  border: 1px solid $glass-border;
+  border-radius: $radius-md;
+  color: $text-primary;
+}
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: $space-4;
+  margin-bottom: $space-6;
+}
+.metric-card {
+  padding: $space-4;
+  background: $bg-secondary;
+  border: 1px solid $glass-border;
+  border-radius: $radius-lg;
+}
+.metric-label {
+  color: $text-secondary;
+  font-size: $font-size-sm;
+}
+.metric-value {
+  margin-top: $space-2;
+  color: $primary;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+}
+.table-container {
+  overflow: hidden;
+  background: $bg-secondary;
+  border: 1px solid $glass-border;
+  border-radius: $radius-lg;
+}
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  gap: $space-4;
+  align-items: center;
+  padding: $space-4;
+  background: $bg-primary;
+  border-bottom: 1px solid $glass-border;
+}
+.table-header h3 {
+  margin: 0;
+}
+.table-search {
+  max-width: 240px;
+  padding: $space-2 $space-3;
+  border: 1px solid $glass-border;
+  border-radius: $radius-md;
+  background: $bg-secondary;
+  color: $text-primary;
+}
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.data-table th,
+.data-table td {
+  padding: $space-3;
+  border-bottom: 1px solid $glass-border;
+  text-align: left;
+}
+.sort-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.positive {
+  color: $success;
+}
+.negative {
+  color: $danger;
+}
+.closing-value {
+  font-weight: $font-weight-semibold;
+}
+.row-low .closing-value {
+  color: $warning;
+}
+.row-critical .closing-value {
+  color: $danger;
+}
+.search-btn {
+  padding: $space-2 $space-3;
+  background: $primary;
+  border: 1px solid $primary;
+  border-radius: $radius-md;
+  color: white;
+  cursor: pointer;
+}
+.empty-state,
+.empty-message {
+  padding: $space-8;
+  text-align: center;
+  color: $text-secondary;
+}

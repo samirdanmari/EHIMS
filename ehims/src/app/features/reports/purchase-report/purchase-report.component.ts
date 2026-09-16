@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
 import { ReportsService } from '../services/reports.service';
 import { CurrencyPipe } from '../../../shared/pipes/currency.pipe';
 import { NotificationService } from '../../../core/services/notification.service';
+import { ReportTablePipe } from '../../../shared/pipes/report-table.pipe';
 
 interface PurchaseRow {
   id: number;
@@ -19,7 +20,7 @@ interface PurchaseRow {
 @Component({
   selector: 'app-purchase-report',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, CurrencyPipe],
+  imports: [CommonModule, ReactiveFormsModule, CurrencyPipe, ReportTablePipe],
   templateUrl: './purchase-report.component.html',
   styleUrls: ['./purchase-report.component.scss'],
 })
@@ -32,6 +33,9 @@ export class PurchaseReportComponent implements OnInit {
   totalCost = signal(0);
   totalPaid = signal(0);
   totalOutstanding = signal(0);
+  searchTerm = signal('');
+  sortKey = signal('purchase_date');
+  sortDirection = signal<'asc' | 'desc'>('desc');
 
   form = new FormGroup({
     status: new FormControl('all'),
@@ -84,6 +88,17 @@ export class PurchaseReportComponent implements OnInit {
 
   getStatusClass(status: string): string {
     return status === 'paid' ? 'status-paid' : 'status-credit';
+  }
+
+  sortBy(key: string) {
+    if (this.sortKey() === key)
+      this.sortDirection.update((direction) =>
+        direction === 'asc' ? 'desc' : 'asc',
+      );
+    else {
+      this.sortKey.set(key);
+      this.sortDirection.set('asc');
+    }
   }
 
   async printReport() {

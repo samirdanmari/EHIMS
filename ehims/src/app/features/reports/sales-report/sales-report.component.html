@@ -69,25 +69,29 @@
       <div class="table-header">
         <h3>Sales Breakdown by
           {{ selectedPeriod() === 'daily' ? 'Date' : selectedPeriod() === 'weekly' ? 'Week' : 'Month' }}</h3>
+        <input class="table-search" type="search" placeholder="Search report" [value]="searchTerm()"
+          (input)="searchTerm.set($any($event.target).value)" />
       </div>
 
       @if (salesMetrics().length > 0) {
       <table class="data-table">
         <thead>
           <tr>
-            <th>{{ selectedPeriod() === 'daily' ? 'Date' : selectedPeriod() === 'weekly' ? 'Week' : 'Month' }}</th>
-            <th>Orders</th>
-            <th>Sales</th>
-            <th>Discounts</th>
-            <th>Voids</th>
-            <th>Net Sales</th>
-            <th>Cash</th>
-            <th>Card</th>
-            <th>Transfer</th>
+            <th><button class="sort-button"
+                (click)="sortBy('date')">{{ selectedPeriod() === 'daily' ? 'Date' : selectedPeriod() === 'weekly' ? 'Week' : 'Month' }}</button>
+            </th>
+            <th><button class="sort-button" (click)="sortBy('total_orders')">Orders</button></th>
+            <th><button class="sort-button" (click)="sortBy('total_sales')">Sales</button></th>
+            <th><button class="sort-button" (click)="sortBy('total_discounts')">Discounts</button></th>
+            <th><button class="sort-button" (click)="sortBy('total_voids')">Voids</button></th>
+            <th><button class="sort-button" (click)="sortBy('net_sales')">Net Sales</button></th>
+            <th><button class="sort-button" (click)="sortBy('cash_collected')">Cash</button></th>
+            <th><button class="sort-button" (click)="sortBy('card_collected')">Card</button></th>
+            <th><button class="sort-button" (click)="sortBy('transfer_collected')">Transfer</button></th>
           </tr>
         </thead>
         <tbody>
-          @for (metric of salesMetrics(); track metric.date) {
+          @for (metric of salesMetrics() | reportTable: searchTerm() : sortKey() : sortDirection(); track metric.date) {
           <tr>
             <td class="date">{{ metric.date | date: 'mediumDate' }}</td>
             <td class="count">{{ metric.total_orders }}</td>
@@ -105,6 +109,41 @@
       } @else {
       <div class="empty-message">
         <p>No sales data available for the selected period.</p>
+      </div>
+      }
+    </div>
+
+    <div class="table-container">
+      <div class="table-header">
+        <h3>Items Sold</h3>
+        <input class="table-search" type="search" placeholder="Search item" [value]="searchTerm()"
+          (input)="searchTerm.set($any($event.target).value)" />
+      </div>
+      @if (salesItems().length > 0) {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th><button class="sort-button" (click)="sortBy('date')">Date</button></th>
+            <th><button class="sort-button" (click)="sortBy('item_name')">Item Sold</button></th>
+            <th><button class="sort-button" (click)="sortBy('quantity')">Quantity</button></th>
+            <th><button class="sort-button" (click)="sortBy('sales')">Sales</button></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of salesItems() | reportTable: searchTerm() : sortKey() : sortDirection(); track item.date +
+          item.item_name) {
+          <tr>
+            <td class="date">{{ item.date | date: 'mediumDate' }}</td>
+            <td>{{ item.item_name }}</td>
+            <td class="count">{{ item.quantity }}</td>
+            <td class="amount">{{ item.sales | appCurrency }}</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+      } @else {
+      <div class="empty-message">
+        <p>No items sold for the selected period.</p>
       </div>
       }
     </div>

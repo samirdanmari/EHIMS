@@ -3,6 +3,7 @@ import { ElectronService } from '../../../core/services/electron.service';
 import {
   SalesMetrics,
   SalesTrend,
+  SalesItem,
   InventoryMovement,
   InventoryAlert,
   SupplierMetrics,
@@ -71,10 +72,24 @@ export class ReportsService {
   getSalesTrends(
     period: 'daily' | 'weekly' | 'monthly',
     limit?: number,
+    dateFrom?: string,
+    dateTo?: string,
   ): Promise<ReportResponse<SalesTrend[]>> {
     return this.electronService.invoke('reports:sales-trends', {
       period,
       limit,
+      date_from: dateFrom,
+      date_to: dateTo,
+    });
+  }
+
+  getSalesItems(
+    dateFrom?: string,
+    dateTo?: string,
+  ): Promise<ReportResponse<SalesItem[]>> {
+    return this.electronService.invoke('reports:sales-items', {
+      date_from: dateFrom,
+      date_to: dateTo,
     });
   }
 

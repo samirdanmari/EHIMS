@@ -262,7 +262,7 @@ function registerReportsIPC(db) {
   // ---------------------------------------------------------
   // SALES TRENDS
   // ---------------------------------------------------------
-  ipcMain.handle('reports:sales-trends', async (event, { period = 'daily', limit = 30 } = {}) => {
+  ipcMain.handle('reports:sales-trends', async (event, { period = 'daily', limit = 30, date_from, date_to } = {}) => {
     try {
       let datePart = 'DATE(created_at)';
 
@@ -272,7 +272,7 @@ function registerReportsIPC(db) {
         datePart = `DATE(created_at, 'start of month')`;
       }
 
-      const sql = `
+      let sql = `
         SELECT 
           ${datePart} as period,
           COALESCE(SUM(total_amount), 0) as sales,
@@ -283,12 +283,20 @@ function registerReportsIPC(db) {
           ) as average_order_value
         FROM orders
         WHERE status != 'voided'
-        GROUP BY ${datePart}
-        ORDER BY period DESC
-        LIMIT ?
       `;
+      const params = [];
+      if (date_from) {
+        sql += ` AND DATE(created_at) >= ?`;
+        params.push(date_from);
+      }
+      if (date_to) {
+        sql += ` AND DATE(created_at) <= ?`;
+        params.push(date_to);
+      }
+      sql += ` GROUP BY ${datePart} ORDER BY period DESC LIMIT ?`;
+      params.push(limit);
 
-      const rows = db.prepare(sql).all(limit);
+      const rows = db.prepare(sql).all(...params);
 
       const withGrowth = rows.map((row, idx) => {
         if (idx < rows.length - 1) {
@@ -317,10 +325,45 @@ function registerReportsIPC(db) {
   });
 
   // ---------------------------------------------------------
+  // SALES ITEMS
+  // ---------------------------------------------------------
+  ipcMain.handle('reports:sales-items', async (event, { date_from, date_to } = {}) => {
+    try {
+      let sql = `
+        SELECT
+          DATE(o.created_at) as date,
+          m.name as item_name,
+          SUM(oi.quantity) as quantity,
+          COALESCE(SUM(oi.total_price), 0) as sales
+        FROM order_items oi
+        JOIN orders o ON oi.order_id = o.id
+        JOIN menu_items m ON oi.menu_item_id = m.id
+        WHERE o.status != 'voided'
+      `;
+      const params = [];
+      if (date_from) {
+        sql += ` AND DATE(o.created_at) >= ?`;
+        params.push(date_from);
+      }
+      if (date_to) {
+        sql += ` AND DATE(o.created_at) <= ?`;
+        params.push(date_to);
+      }
+      sql += ` GROUP BY DATE(o.created_at), oi.menu_item_id ORDER BY date DESC, item_name ASC`;
+      return { success: true, data: db.prepare(sql).all(...params) };
+    } catch (err) {
+      console.error('[reports:sales-items] Error:', err.message);
+      return { success: false, error: err.message, data: [] };
+    }
+  });
+
+  // ---------------------------------------------------------
   // INVENTORY MOVEMENT
   // ---------------------------------------------------------
-  ipcMain.handle('reports:inventory-movement', async (event, { date_from, date_to } = {}) => {
+  ipcMain.handle('reports:inventory-movement', async (event, payload = {}) => {
   try {
+    const date_from = payload.date_from ?? payload.dateFrom;
+    const date_to = payload.date_to ?? payload.dateTo;
     const sql = `
       SELECT 
         i.id as item_id,
@@ -328,10 +371,9 @@ function registerReportsIPC(db) {
         c.name as category,
         i.current_stock as closing_stock,
         COALESCE((
-          SELECT SUM(pei.quantity)
-          FROM purchase_entry_items pei
-          JOIN purchase_entries pe ON pe.id = pei.entry_id
-          WHERE pei.item_id = i.id
+          SELECT SUM(pe.quantity)
+          FROM purchase_entries pe
+          WHERE pe.item_id = i.id
             AND DATE(pe.purchase_date) >= ?
             ${date_to ? `AND DATE(pe.purchase_date) <= ?` : ''}
         ), 0) as purchases,
@@ -781,8 +823,11 @@ function registerReportsIPC(db) {
   // ---------------------------------------------------------
   // PURCHASE REPORT
   // ---------------------------------------------------------
-  ipcMain.handle('reports:purchase-report', async (event, { status = 'all', dateFrom, dateTo } = {}) => {
+  ipcMain.handle('reports:purchase-report', async (event, payload = {}) => {
     try {
+      const status = payload.status || 'all';
+      const date_from = payload.date_from ?? payload.dateFrom;
+      const date_to = payload.date_to ?? payload.dateTo;
       let sql = `
         SELECT 
           pe.id,
@@ -831,14 +876,14 @@ function registerReportsIPC(db) {
 
       const params = [];
 
-      if (dateFrom) {
+      if (date_from) {
         sql += ` AND DATE(pe.purchase_date) >= ?`;
-        params.push(dateFrom);
+        params.push(date_from);
       }
 
-      if (dateTo) {
+      if (date_to) {
         sql += ` AND DATE(pe.purchase_date) <= ?`;
-        params.push(dateTo);
+        params.push(date_to);
       }
 
       if (status === 'credit') {
@@ -885,8 +930,11 @@ function registerReportsIPC(db) {
   // ---------------------------------------------------------
   // STOCK ISSUANCE REPORT
   // ---------------------------------------------------------
-  ipcMain.handle('reports:stock-issuance-report', async (event, { shiftId, dateFrom, dateTo } = {}) => {
+  ipcMain.handle('reports:stock-issuance-report', async (event, payload = {}) => {
     try {
+      const shift_id = payload.shift_id ?? payload.shiftId;
+      const date_from = payload.date_from ?? payload.dateFrom;
+      const date_to = payload.date_to ?? payload.dateTo;
       let sql = `
         SELECT 
           si.id,
@@ -909,19 +957,19 @@ function registerReportsIPC(db) {
 
       const params = [];
 
-      if (shiftId) {
+      if (shift_id) {
         sql += ` AND si.shift_id = ?`;
-        params.push(shiftId);
+        params.push(shift_id);
       }
 
-      if (dateFrom) {
+      if (date_from) {
         sql += ` AND DATE(COALESCE(si.created_at, si.issued_at)) >= ?`;
-        params.push(dateFrom);
+        params.push(date_from);
       }
 
-      if (dateTo) {
+      if (date_to) {
         sql += ` AND DATE(COALESCE(si.created_at, si.issued_at)) <= ?`;
-        params.push(dateTo);
+        params.push(date_to);
       }
 
       sql += ` GROUP BY si.id ORDER BY COALESCE(si.created_at, si.issued_at) DESC`;
