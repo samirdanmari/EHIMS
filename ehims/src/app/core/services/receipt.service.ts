@@ -15,6 +15,12 @@ export interface ReceiptPrintRequest {
   tax: number;
   total: number;
   paymentMethod: string;
+  isCredit?: boolean;
+  splitPayment?: {
+    cash: number;
+    card: number;
+    transfer: number;
+  };
   customerName?: string;
   tableNumber?: string;
   notes?: string;

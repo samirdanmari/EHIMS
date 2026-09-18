@@ -20,6 +20,7 @@ interface ClosedShift {
   closing_cash: number;
   total_sales: number;
   total_orders: number;
+  total_purchases: number;
   supplier_payments: number;
   notes?: string;
 }

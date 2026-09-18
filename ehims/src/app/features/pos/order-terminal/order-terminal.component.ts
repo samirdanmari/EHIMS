@@ -76,6 +76,9 @@ export class OrderTerminalComponent implements OnInit {
   discountAmount = signal(0);
   taxPercentage = signal(0);
   paymentMethod = signal<PaymentMethod>('cash');
+  splitCashAmount = signal(0);
+  splitCardAmount = signal(0);
+  splitTransferAmount = signal(0);
   customerSearchQuery = signal('');
   customerSearchResults = signal<CustomerSearchResult[]>([]);
   selectedCustomer = signal<CustomerSearchResult | null>(null);
@@ -116,6 +119,18 @@ export class OrderTerminalComponent implements OnInit {
   });
 
   cartEmpty = computed(() => this.cart().length === 0);
+
+  splitPaymentTotal = computed(
+    () =>
+      this.splitCashAmount() +
+      this.splitCardAmount() +
+      this.splitTransferAmount(),
+  );
+
+  splitPaymentDifference = computed(
+    () =>
+      Math.round((this.grandTotal() - this.splitPaymentTotal()) * 100) / 100,
+  );
 
   form = new FormGroup({
     shift_id: new FormControl<number | null>(null, {
@@ -252,9 +267,27 @@ export class OrderTerminalComponent implements OnInit {
     this.isCredit.set(false);
   }
 
+  setSplitAmount(method: 'cash' | 'card' | 'transfer', value: string) {
+    const amount = Math.max(0, Number(value) || 0);
+    if (method === 'cash') this.splitCashAmount.set(amount);
+    if (method === 'card') this.splitCardAmount.set(amount);
+    if (method === 'transfer') this.splitTransferAmount.set(amount);
+  }
+
   async onCompleteOrder() {
     if (this.form.invalid || this.cart().length === 0) {
       this.form.markAllAsTouched();
+      return;
+    }
+
+    if (
+      this.paymentMethod() === 'split' &&
+      Math.abs(this.splitPaymentDifference()) > 0.01
+    ) {
+      this.notificationService.error(
+        'Incomplete split payment',
+        `Split amounts must equal ${this.grandTotal().toLocaleString('en-NG', { minimumFractionDigits: 2 })} NGN`,
+      );
       return;
     }
 
@@ -292,6 +325,12 @@ export class OrderTerminalComponent implements OnInit {
         payment_method: this.paymentMethod(),
         customer_id: this.selectedCustomer()?.id,
         is_credit: this.isCredit(),
+        split_cash_amount:
+          this.paymentMethod() === 'split' ? this.splitCashAmount() : 0,
+        split_card_amount:
+          this.paymentMethod() === 'split' ? this.splitCardAmount() : 0,
+        split_transfer_amount:
+          this.paymentMethod() === 'split' ? this.splitTransferAmount() : 0,
       });
 
       if (res.success) {
@@ -335,6 +374,12 @@ export class OrderTerminalComponent implements OnInit {
         tax: orderRes.tax_amount || 0,
         total: orderRes.totalAmount,
         paymentMethod: this.paymentMethod(),
+        isCredit: this.isCredit(),
+        splitPayment: {
+          cash: this.splitCashAmount(),
+          card: this.splitCardAmount(),
+          transfer: this.splitTransferAmount(),
+        },
         customerName: currentUser?.display_name,
         tableNumber: this.form.controls.table_number.value || undefined,
       };
@@ -361,6 +406,9 @@ export class OrderTerminalComponent implements OnInit {
   resetOrder() {
     this.cart.set([]);
     this.discountAmount.set(0);
+    this.splitCashAmount.set(0);
+    this.splitCardAmount.set(0);
+    this.splitTransferAmount.set(0);
     this.form.patchValue({ table_number: '' });
     this.clearCustomer();
   }

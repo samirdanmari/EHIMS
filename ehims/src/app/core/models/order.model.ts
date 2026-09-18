@@ -71,6 +71,10 @@ export interface Order {
   tax_amount: number;
   total_amount: number;
   payment_method: PaymentMethod;
+  split_cash_amount?: number;
+  split_card_amount?: number;
+  split_transfer_amount?: number;
+  is_credit?: number;
   status: OrderStatus;
   void_reason?: string;
   void_approved_by?: number;
@@ -92,6 +96,9 @@ export interface OrderCreateInput {
   payment_method?: PaymentMethod;
   customer_id?: number;
   is_credit?: boolean;
+  split_cash_amount?: number;
+  split_card_amount?: number;
+  split_transfer_amount?: number;
   notes?: string;
 }
 

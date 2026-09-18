@@ -40,3 +40,17 @@ export interface SettingsResponse<T> {
   data?: T;
   error?: string;
 }
+
+export interface BackupInfo {
+  dbPath: string;
+  fileSizeBytes: number;
+  lastModified: string;
+}
+
+export interface BackupResponse {
+  success: boolean;
+  filePath?: string;
+  data?: BackupInfo;
+  error?: string;
+  message?: string;
+}

@@ -182,6 +182,12 @@ export class OrderHistoryComponent implements OnInit {
       tax: details.order.tax_amount,
       total: details.order.total_amount,
       paymentMethod: details.order.payment_method,
+      isCredit: details.order.is_credit === 1,
+      splitPayment: {
+        cash: details.order.split_cash_amount || 0,
+        card: details.order.split_card_amount || 0,
+        transfer: details.order.split_transfer_amount || 0,
+      },
       tableNumber: details.order.table_number,
     };
     const result = await this.receiptService.reprintReceipt(request);

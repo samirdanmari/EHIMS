@@ -10,7 +10,7 @@ function registerReceiptIPC(db) {
   ipcMain.handle('receipt:print', async (event, {
     orderId, orderNumber, items, subtotal, discount, tax, total,
     paymentMethod, customerName, tableNumber, notes, reprint = false,
-    isCredit = false
+    isCredit = false, splitPayment
   }) => {
     try {
       const settings = db.prepare('SELECT * FROM printer_settings LIMIT 1').get();
@@ -41,7 +41,8 @@ function registerReceiptIPC(db) {
       const html = buildMergedReceiptHtml({
         orderNumber, items, subtotal, discount, tax, total,
         paymentMethod, customerName, tableNumber, notes,
-        logo: logoBase64, company, paperWidthMicrons, reprint, isCredit
+        logo: settings?.logo_on_receipt ? logoBase64 : '',
+        company, paperWidthMicrons, settings, reprint, isCredit, splitPayment
       });
 
       const result = await printHtml(html, printerName, paperWidthMicrons);
@@ -103,6 +104,7 @@ function registerReceiptIPC(db) {
         logo: logoBase64,
         company,
         paperWidthMicrons,
+        settings,
         reprint: false,
         isCredit: false
       });
@@ -205,20 +207,20 @@ function buildMergedReceiptHtml({
   orderNumber, items, subtotal, discount, tax, total,
   paymentMethod, customerName, tableNumber, notes,
   logo, company = {}, paperWidthMicrons = 80000,
-  reprint = false, isCredit = false
+  settings = {}, reprint = false, isCredit = false, splitPayment
 }) {
   const widthMm = paperWidthMicrons / 1000;
 
   const customerCopy = buildReceiptBlock({
     orderNumber, items, subtotal, discount, tax, total,
     paymentMethod, customerName, tableNumber, notes,
-    logo, company, copyLabel: 'Customer Copy', reprint, isCredit
+    logo, company, settings, copyLabel: 'Customer Copy', reprint, isCredit, splitPayment
   });
 
   const merchantCopy = buildReceiptBlock({
     orderNumber, items, subtotal, discount, tax, total,
     paymentMethod, customerName, tableNumber, notes,
-    logo, company, copyLabel: 'Merchant Copy', reprint, isCredit
+    logo, company, settings, copyLabel: 'Merchant Copy', reprint, isCredit, splitPayment
   });
 
   return `<!DOCTYPE html>
@@ -238,7 +240,10 @@ function buildMergedReceiptHtml({
       color: #000;
       font-family: 'Courier New', monospace;
       line-height: 1.1;
-      font-size: 9px;
+      font-size: ${Number(settings.font_size_normal) || 12}px;
+      --receipt-font-normal: ${Number(settings.font_size_normal) || 12}px;
+      --receipt-font-small: ${Number(settings.font_size_small) || 10}px;
+      --receipt-font-large: ${Number(settings.font_size_large) || 14}px;
     }
 
     /* ---- receipt block ---- */
@@ -249,7 +254,7 @@ function buildMergedReceiptHtml({
 
     .copy-tag {
       text-align: center;
-      font-size: 8px;
+      font-size: var(--receipt-font-small);
       font-weight: bold;
       letter-spacing: 0.06em;
       text-transform: uppercase;
@@ -267,13 +272,13 @@ function buildMergedReceiptHtml({
 
     .company-name {
       text-align: center;
-      font-size: 11px;
+      font-size: var(--receipt-font-large);
       font-weight: bold;
       margin: 0 0 1px;
     }
     .company-detail {
       text-align: center;
-      font-size: 7px;
+      font-size: var(--receipt-font-small);
       margin: 0;
     }
 
@@ -290,27 +295,27 @@ function buildMergedReceiptHtml({
 
     .receipt-title {
       text-align: center;
-      font-size: 10px;
+      font-size: var(--receipt-font-large);
       font-weight: bold;
       margin: 0;
     }
     .receipt-meta {
-      font-size: 8px;
+      font-size: var(--receipt-font-normal);
       margin: 0;
     }
 
     .order-info p {
-      font-size: 8px;
+      font-size: var(--receipt-font-normal);
       margin: 0;
     }
 
     table {
       width: 100%;
-      font-size: 8px;
+      font-size: var(--receipt-font-normal);
       border-collapse: collapse;
     }
     th {
-      font-size: 8px;
+      font-size: var(--receipt-font-normal);
       font-weight: bold;
       text-align: left;
       padding: 1px 0;
@@ -322,7 +327,7 @@ function buildMergedReceiptHtml({
     }
 
     .summary {
-      font-size: 8px;
+      font-size: var(--receipt-font-normal);
     }
     .summary-row {
       display: flex;
@@ -330,30 +335,30 @@ function buildMergedReceiptHtml({
       margin: 1px 0;
     }
     .summary-row.total-row {
-      font-size: 10px;
+      font-size: var(--receipt-font-large);
       font-weight: bold;
     }
 
     .payment-info {
-      font-size: 8px;
+      font-size: var(--receipt-font-normal);
       margin: 0;
     }
     .credit-badge {
       display: inline-block;
       border: 1px solid #000;
       padding: 0 3px;
-      font-size: 8px;
+      font-size: var(--receipt-font-small);
       font-weight: bold;
     }
 
     .notes-line {
-      font-size: 8px;
+      font-size: var(--receipt-font-normal);
       margin: 1px 0 0;
     }
 
     .footer {
       text-align: center;
-      font-size: 8px;
+      font-size: var(--receipt-font-small);
       margin: 2px 0 0;
     }
     .footer p { margin: 0; }
@@ -386,7 +391,7 @@ function buildMergedReceiptHtml({
 function buildReceiptBlock({
   orderNumber, items, subtotal, discount, tax, total,
   paymentMethod, customerName, tableNumber, notes,
-  logo, company = {}, copyLabel, reprint, isCredit
+  logo, company = {}, settings = {}, copyLabel, reprint, isCredit, splitPayment
 }) {
   const logoHtml = logo
     ? `<div class="logo-wrap"><img src="data:image/png;base64,${logo}" alt="Logo"></div>`
@@ -414,9 +419,12 @@ function buildReceiptBlock({
     ? `<div class="summary-row"><span>Discount:</span><span>-&#8358;${Number(discount).toFixed(2)}</span></div>`
     : '';
 
-  const paymentLabel = isCredit
+  const normalizedPaymentMethod = String(paymentMethod || 'cash').toLowerCase();
+  const paymentLabel = isCredit || normalizedPaymentMethod === 'credit'
     ? `<span class="credit-badge">CREDIT</span>`
-    : esc(paymentMethod);
+    : normalizedPaymentMethod === 'split'
+      ? `SPLIT (Cash: &#8358;${Number(splitPayment?.cash || 0).toFixed(2)}, Card: &#8358;${Number(splitPayment?.card || 0).toFixed(2)}, Transfer: &#8358;${Number(splitPayment?.transfer || 0).toFixed(2)})`
+      : esc(normalizedPaymentMethod === 'transfer' ? 'TRANSFER' : normalizedPaymentMethod.toUpperCase());
 
   const dateStr = new Date().toLocaleString('en-NG', {
     dateStyle: 'medium', timeStyle: 'short'

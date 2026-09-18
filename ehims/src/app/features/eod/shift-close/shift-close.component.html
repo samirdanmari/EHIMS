@@ -54,6 +54,18 @@
             <span class="label">Transfer Collected</span>
             <span class="value">{{ closeResult()?.transferCollected | appCurrency }}</span>
           </div>
+          <div class="metric">
+            <span class="label">Split Payments</span>
+            <span class="value">{{ closeResult()?.splitCollected | appCurrency }}</span>
+          </div>
+          <div class="metric">
+            <span class="label">Total Collected</span>
+            <span class="value">{{ closeResult()?.totalCollected | appCurrency }}</span>
+          </div>
+          <div class="metric">
+            <span class="label">Credit</span>
+            <span class="value">{{ closeResult()?.creditCollected | appCurrency }}</span>
+          </div>
         </div>
 
         <div class="report-section">
@@ -69,6 +81,10 @@
           <div class="metric total">
             <span class="label">Net Profit</span>
             <span class="value">{{ closeResult()?.netProfit | appCurrency }}</span>
+          </div>
+          <div class="metric">
+            <span class="label">Total Purchases</span>
+            <span class="value">{{ closeResult()?.totalPurchases | appCurrency }}</span>
           </div>
         </div>
 

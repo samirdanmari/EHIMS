@@ -15,6 +15,8 @@ const { registerPrinterIPC } = require('./ipc/printer.ipc');
 const { registerReceiptIPC } = require('./ipc/receipt.ipc');
 const { registerSuspendedOrdersIPC } = require('./ipc/suspended-orders.ipc');
 const { registerCustomerIPC } = require('./ipc/customer.ipc');
+const { registerBackupIPC } = require('./ipc/backup.ipc');
+const { registerUpdateIPC } = require('./ipc/update.ipc');
 
 let mainWindow;
 
@@ -71,6 +73,12 @@ app.whenReady().then(() => {
     });
 
     createWindow();
+
+    // Register backup IPC after createWindow so mainWindow is available for dialogs
+    registerBackupIPC(db, mainWindow);
+
+    // Register update IPC after createWindow so mainWindow is available for push events
+    registerUpdateIPC(mainWindow);
 
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) createWindow();

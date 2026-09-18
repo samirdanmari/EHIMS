@@ -60,5 +60,8 @@ export interface EODSummary {
   cashCollected: number;
   cardCollected: number;
   transferCollected: number;
+  creditCollected: number;
+  splitCollected: number;
+  totalCollected: number;
   variance: number;
 }

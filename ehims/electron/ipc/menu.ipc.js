@@ -216,7 +216,7 @@ function registerMenuItemIPC(db) {
     // ---------------------------------------------------------
     // ORDERS
     // ---------------------------------------------------------
-    ipcMain.handle('order:create', async (event, { shift_id, cashier_id, waiter_id, table_number, items, discount_amount, tax_amount, payment_method, customer_id, is_credit, notes }) => {
+    ipcMain.handle('order:create', async (event, { shift_id, cashier_id, waiter_id, table_number, items, discount_amount, tax_amount, payment_method, customer_id, is_credit, notes, split_cash_amount, split_card_amount, split_transfer_amount }) => {
         try {
             if (!shift_id || !cashier_id) {
                 return { success: false, error: 'shift_id and cashier_id are required' };
@@ -243,14 +243,27 @@ function registerMenuItemIPC(db) {
             const discountAmt = Number(discount_amount) || 0;
             const taxAmt = Number(tax_amount) || 0;
             const totalAmount = Math.max(0, subtotal - discountAmt) + taxAmt;
+            const splitCashAmount = Number(split_cash_amount) || 0;
+            const splitCardAmount = Number(split_card_amount) || 0;
+            const splitTransferAmount = Number(split_transfer_amount) || 0;
+            if (is_credit && payment_method === 'split') {
+                return { success: false, error: 'Credit orders cannot use split payment' };
+            }
+            if (payment_method === 'split' && Math.abs(
+                splitCashAmount + splitCardAmount + splitTransferAmount - totalAmount
+            ) > 0.01) {
+                return { success: false, error: 'Split payment amounts must equal the order total' };
+            }
 
             // Generate order number: ORD-TIMESTAMP-RANDOM
             const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
 
             const insertOrder = db.prepare(`
                 INSERT INTO orders (order_number, shift_id, cashier_id, waiter_id, table_number,
-                    subtotal, discount_amount, tax_amount, total_amount, payment_method, customer_id, is_credit, credit_status, status)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    subtotal, discount_amount, tax_amount, total_amount, payment_method,
+                    split_cash_amount, split_card_amount, split_transfer_amount,
+                    customer_id, is_credit, credit_status, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `);
 
             const insertOrderItem = db.prepare(`
@@ -280,6 +293,9 @@ function registerMenuItemIPC(db) {
                     taxAmt,
                     totalAmount,
                     payment_method || 'cash',
+                    payment_method === 'split' ? splitCashAmount : 0,
+                    payment_method === 'split' ? splitCardAmount : 0,
+                    payment_method === 'split' ? splitTransferAmount : 0,
                     customer_id || null,
                     is_credit ? 1 : 0,
                     is_credit ? 'unpaid' : null,

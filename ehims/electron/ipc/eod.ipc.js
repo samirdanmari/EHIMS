@@ -89,10 +89,50 @@ function registerEODIPC(db) {
                 UPDATE shifts 
                 SET status = 'closed', closing_cash = ?, notes = ?, end_time = CURRENT_TIMESTAMP
                 WHERE id = ?
-            `).run(payload.closing_cash || 0, payload.notes || '', payload.shift_id);
+            `).run(payload.drawer_cash ?? payload.closing_cash ?? 0, payload.notes || '', payload.shift_id);
 
             const updated = db.prepare('SELECT * FROM shifts WHERE id = ?').get(payload.shift_id);
-            return { success: true, shift: updated };
+            const summary = db.prepare(`
+                SELECT
+                    COALESCE(SUM(total_amount), 0) as total_sales,
+                    COALESCE(SUM(discount_amount), 0) as total_discounts,
+                    COUNT(*) as total_orders,
+                    COALESCE(SUM(CASE WHEN payment_method = 'cash' AND is_credit = 0 THEN total_amount WHEN payment_method = 'split' AND is_credit = 0 THEN split_cash_amount ELSE 0 END), 0) as cash_collected,
+                    COALESCE(SUM(CASE WHEN payment_method = 'card' AND is_credit = 0 THEN total_amount WHEN payment_method = 'split' AND is_credit = 0 THEN split_card_amount ELSE 0 END), 0) as card_collected,
+                    COALESCE(SUM(CASE WHEN payment_method = 'transfer' AND is_credit = 0 THEN total_amount WHEN payment_method = 'split' AND is_credit = 0 THEN split_transfer_amount ELSE 0 END), 0) as transfer_collected,
+                    COALESCE(SUM(CASE WHEN payment_method = 'split' AND is_credit = 0 THEN total_amount ELSE 0 END), 0) as split_collected,
+                    COALESCE(SUM(CASE WHEN is_credit = 0 THEN total_amount ELSE 0 END), 0) as total_collected,
+                    COALESCE(SUM(CASE WHEN is_credit = 1 THEN total_amount ELSE 0 END), 0) as credit_collected
+                FROM orders
+                WHERE shift_id = ? AND status = 'completed'
+            `).get(payload.shift_id);
+            const purchases = db.prepare(`
+                SELECT COALESCE(SUM(total_cost), 0) as total
+                FROM purchase_entries
+                WHERE purchase_date >= ? AND purchase_date <= ?
+            `).get(updated.start_time, updated.end_time);
+            return {
+                success: true,
+                shift: updated,
+                eodReport: {
+                    date: updated.end_time,
+                    totalSales: summary.total_sales,
+                    totalCOGS: 0,
+                    grossProfit: summary.total_sales,
+                    totalDiscounts: summary.total_discounts,
+                    totalVoids: 0,
+                    netProfit: summary.total_sales,
+                    totalOrders: summary.total_orders,
+                    totalPurchases: purchases.total,
+                    cashCollected: summary.cash_collected,
+                    cardCollected: summary.card_collected,
+                    transferCollected: summary.transfer_collected,
+                    splitCollected: summary.split_collected,
+                    totalCollected: summary.total_collected,
+                    creditCollected: summary.credit_collected,
+                    variance: (payload.drawer_cash ?? 0) - (payload.expected_cash ?? 0)
+                }
+            };
         } catch (err) {
             console.error('[eod:close-shift] Error:', err.message);
             return { success: false, error: err.message };
@@ -291,6 +331,13 @@ function registerEODIPC(db) {
                     COALESCE(u.username, '') as username,
                     (SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE shift_id = s.id AND status = 'completed') as total_sales,
                     (SELECT COUNT(*) FROM orders WHERE shift_id = s.id AND status = 'completed') as total_orders,
+                    (SELECT COALESCE(SUM(CASE WHEN payment_method = 'cash' AND is_credit = 0 THEN total_amount WHEN payment_method = 'split' AND is_credit = 0 THEN split_cash_amount ELSE 0 END), 0) FROM orders WHERE shift_id = s.id AND status = 'completed') as cash_collected,
+                    (SELECT COALESCE(SUM(CASE WHEN payment_method = 'card' AND is_credit = 0 THEN total_amount WHEN payment_method = 'split' AND is_credit = 0 THEN split_card_amount ELSE 0 END), 0) FROM orders WHERE shift_id = s.id AND status = 'completed') as card_collected,
+                    (SELECT COALESCE(SUM(CASE WHEN payment_method = 'transfer' AND is_credit = 0 THEN total_amount WHEN payment_method = 'split' AND is_credit = 0 THEN split_transfer_amount ELSE 0 END), 0) FROM orders WHERE shift_id = s.id AND status = 'completed') as transfer_collected,
+                    (SELECT COALESCE(SUM(CASE WHEN payment_method = 'split' AND is_credit = 0 THEN total_amount ELSE 0 END), 0) FROM orders WHERE shift_id = s.id AND status = 'completed') as split_collected,
+                    (SELECT COALESCE(SUM(CASE WHEN is_credit = 0 THEN total_amount ELSE 0 END), 0) FROM orders WHERE shift_id = s.id AND status = 'completed') as total_collected,
+                    (SELECT COALESCE(SUM(CASE WHEN is_credit = 1 THEN total_amount ELSE 0 END), 0) FROM orders WHERE shift_id = s.id AND status = 'completed') as credit_collected,
+                    (SELECT COALESCE(SUM(total_cost), 0) FROM purchase_entries WHERE purchase_date >= s.start_time AND purchase_date <= COALESCE(s.end_time, datetime('now','localtime'))) as total_purchases,
                     (SELECT COALESCE(SUM(amount), 0) FROM supplier_payments WHERE CAST(payment_date as date) = CAST(s.end_time as date)) as supplier_payments
                 FROM shifts s
                 LEFT JOIN users u ON s.user_id = u.id
@@ -370,12 +417,34 @@ function registerEODIPC(db) {
                 WHERE shift_id = ? AND status = 'completed'
             `).get(shift_id);
 
+            const paymentSummary = db.prepare(`
+                SELECT
+                    COALESCE(SUM(CASE WHEN payment_method = 'cash' AND is_credit = 0 THEN total_amount WHEN payment_method = 'split' AND is_credit = 0 THEN split_cash_amount ELSE 0 END), 0) as cash,
+                    COALESCE(SUM(CASE WHEN payment_method = 'card' AND is_credit = 0 THEN total_amount WHEN payment_method = 'split' AND is_credit = 0 THEN split_card_amount ELSE 0 END), 0) as card,
+                    COALESCE(SUM(CASE WHEN payment_method = 'transfer' AND is_credit = 0 THEN total_amount WHEN payment_method = 'split' AND is_credit = 0 THEN split_transfer_amount ELSE 0 END), 0) as transfer,
+                    COALESCE(SUM(CASE WHEN payment_method = 'split' AND is_credit = 0 THEN total_amount ELSE 0 END), 0) as split,
+                    COALESCE(SUM(CASE WHEN is_credit = 0 THEN total_amount ELSE 0 END), 0) as total_collected,
+                    COALESCE(SUM(CASE WHEN is_credit = 1 THEN total_amount ELSE 0 END), 0) as credit
+                FROM orders
+                WHERE shift_id = ? AND status = 'completed'
+            `).get(shift_id);
+
+            const purchases = db.prepare(`
+                SELECT COALESCE(SUM(total_cost), 0) as total
+                FROM purchase_entries
+                WHERE purchase_date >= ? AND purchase_date <= COALESCE(?, datetime('now','localtime'))
+            `).get(shift.start_time, shift.end_time);
+
             return {
                 success: true,
                 data: {
                     shift,
                     orders,
-                    summary
+                    summary: {
+                        ...summary,
+                        payment_summary: paymentSummary,
+                        total_purchases: purchases.total
+                    }
                 }
             };
         } catch (err) {

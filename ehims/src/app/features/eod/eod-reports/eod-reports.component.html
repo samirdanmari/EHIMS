@@ -93,6 +93,10 @@
               <span class="value">{{ shift.total_sales | appCurrency }}</span>
             </div>
             <div class="metric">
+              <span class="label">Purchases:</span>
+              <span class="value">{{ shift.total_purchases | appCurrency }}</span>
+            </div>
+            <div class="metric">
               <span class="label">Time:</span>
               <span class="value">
                 {{ formatTime(shift.start_time) }} - {{ formatTime(shift.end_time) }}
@@ -136,6 +140,29 @@
             <div class="detail-item">
               <span class="label">Total Tax:</span>
               <span class="value">{{ selectedShiftDetail().summary.total_tax | appCurrency }}</span>
+            </div>
+          </div>
+
+          <div class="payment-summary">
+            <h4>Payment Summary</h4>
+            <div class="details-grid">
+              <div class="detail-item"><span class="label">Cash:</span><span
+                  class="value">{{ selectedShiftDetail().summary.payment_summary.cash | appCurrency }}</span></div>
+              <div class="detail-item"><span class="label">Card:</span><span
+                  class="value">{{ selectedShiftDetail().summary.payment_summary.card | appCurrency }}</span></div>
+              <div class="detail-item"><span class="label">Transfer:</span><span
+                  class="value">{{ selectedShiftDetail().summary.payment_summary.transfer | appCurrency }}</span></div>
+              <div class="detail-item"><span class="label">Split:</span><span
+                  class="value">{{ selectedShiftDetail().summary.payment_summary.split | appCurrency }}</span></div>
+              <div class="detail-item"><span class="label">Total Collected:</span><span
+                  class="value">{{ selectedShiftDetail().summary.payment_summary.total_collected | appCurrency }}</span>
+              </div>
+              <div class="detail-item"><span class="label">Total Sales:</span><span
+                  class="value">{{ selectedShiftDetail().summary.total_sales | appCurrency }}</span></div>
+              <div class="detail-item"><span class="label">Credit:</span><span
+                  class="value">{{ selectedShiftDetail().summary.payment_summary.credit | appCurrency }}</span></div>
+              <div class="detail-item"><span class="label">Total Purchases:</span><span
+                  class="value">{{ selectedShiftDetail().summary.total_purchases | appCurrency }}</span></div>
             </div>
           </div>
 

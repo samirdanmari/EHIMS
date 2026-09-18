@@ -23,7 +23,9 @@ const validChannels = [
     'print:',
     'customer:',
     'suspended-orders:',
-    'sync:'
+    'sync:',
+    'backup:',
+    'update:'
 ];
 
 function isChannelValid(channel) {

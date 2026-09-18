@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { CompanyProfileComponent } from './company-profile/company-profile.component';
 import { PrinterConfigComponent } from './printer-config/printer-config.component';
+import { BackupComponent } from './backup/backup.component';
 
 type Tab = 'company' | 'printer' | 'backup';
 
@@ -14,6 +15,7 @@ type Tab = 'company' | 'printer' | 'backup';
     RouterLink,
     CompanyProfileComponent,
     PrinterConfigComponent,
+    BackupComponent,
   ],
   template: `
     <div class="page">
@@ -75,7 +77,6 @@ type Tab = 'company' | 'printer' | 'backup';
               class="tab-button"
               [class.active]="activeTab() === 'backup'"
               (click)="setTab('backup')"
-              disabled
             >
               <svg
                 width="18"
@@ -89,7 +90,7 @@ type Tab = 'company' | 'printer' | 'backup';
                 <polyline points="7 10 12 15 17 10" />
                 <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
-              Backup & Sync
+              Backup & Restore
             </button>
           </div>
 
@@ -103,11 +104,7 @@ type Tab = 'company' | 'printer' | 'backup';
             }
 
             @if (activeTab() === 'backup') {
-              <div class="tab-pane">
-                <div class="coming-soon">
-                  <p>Backup & Cloud Sync features coming in Phase 7b</p>
-                </div>
-              </div>
+              <app-backup></app-backup>
             }
           </div>
         </div>
@@ -186,12 +183,6 @@ type Tab = 'company' | 'printer' | 'backup';
         to {
           opacity: 1;
         }
-      }
-
-      .coming-soon {
-        text-align: center;
-        padding: 3rem;
-        color: #dbe4ff;
       }
     `,
   ],

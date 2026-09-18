@@ -176,6 +176,9 @@ function runMigrations(db) {
             tax_amount REAL NOT NULL DEFAULT 0,
             total_amount REAL NOT NULL DEFAULT 0,
             payment_method TEXT NOT NULL DEFAULT 'cash' CHECK(payment_method IN ('cash','card','transfer','split')),
+            split_cash_amount REAL NOT NULL DEFAULT 0,
+            split_card_amount REAL NOT NULL DEFAULT 0,
+            split_transfer_amount REAL NOT NULL DEFAULT 0,
             status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','confirmed','preparing','served','completed','voided')),
             void_reason TEXT,
             void_approved_by INTEGER REFERENCES users(id),
@@ -363,6 +366,15 @@ function runMigrations(db) {
     if (!orderColumns.some(c => c.name === 'credit_status')) {
         db.exec(`ALTER TABLE orders ADD COLUMN credit_status TEXT DEFAULT 'paid'
             CHECK(credit_status IN ('paid','unpaid','partial'));`);
+    }
+    if (!orderColumns.some(c => c.name === 'split_cash_amount')) {
+        db.exec(`ALTER TABLE orders ADD COLUMN split_cash_amount REAL NOT NULL DEFAULT 0;`);
+    }
+    if (!orderColumns.some(c => c.name === 'split_card_amount')) {
+        db.exec(`ALTER TABLE orders ADD COLUMN split_card_amount REAL NOT NULL DEFAULT 0;`);
+    }
+    if (!orderColumns.some(c => c.name === 'split_transfer_amount')) {
+        db.exec(`ALTER TABLE orders ADD COLUMN split_transfer_amount REAL NOT NULL DEFAULT 0;`);
     }
 
     // -------------------------------------------------------------------------

@@ -2,6 +2,7 @@ import { Component, inject, input, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { UpdateService } from '../../../core/services/update.service';
 
 @Component({
   selector: 'app-header',
@@ -13,6 +14,7 @@ import { AuthService } from '../../../core/services/auth.service';
 export class HeaderComponent {
   authService = inject(AuthService);
   router = inject(Router);
+  updateService = inject(UpdateService);
 
   pageTitle = input<string>('Dashboard');
   pageSubtitle = input<string>('');
@@ -31,5 +33,9 @@ export class HeaderComponent {
   changePassword() {
     this.isDropdownOpen.set(false);
     // implement password change logic or navigate
+  }
+
+  onUpdateClick() {
+    this.updateService.openRelease();
   }
 }
