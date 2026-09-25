@@ -72,3 +72,38 @@
   color: $text-secondary;
   font-style: italic;
 }
+
+.permission-group {
+  min-width: 0;
+  margin: $space-4 0 0;
+  padding: $space-3 0 0;
+  border: 0;
+  border-top: 1px solid $glass-border;
+}
+
+.permission-hint {
+  margin: 0 0 $space-3;
+  color: $text-secondary;
+  font-size: $font-size-xs;
+}
+
+.permission-option {
+  display: flex;
+  align-items: flex-start;
+  gap: $space-3;
+  padding: $space-2 0;
+  cursor: pointer;
+
+  input {
+    margin-top: 3px;
+  }
+
+  span {
+    display: grid;
+    gap: 2px;
+  }
+
+  small {
+    color: $text-secondary;
+  }
+}

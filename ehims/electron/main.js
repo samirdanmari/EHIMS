@@ -1,11 +1,12 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
+const { resetDatabaseForNewInstallation } = require('./database/installation');
 const { getDatabase } = require('./database/connection');
 const { runMigrations } = require('./database/migrations');
 const { seedDatabase, seedSampleOrders } = require('./database/seed');
 const { registerAuthIPC } = require('./ipc/auth.ipc');
-const { registerInventoryIPC } = require('./ipc/inventory.ipc');
-const { registerSupplierIPC } = require('./ipc/supplier.ipc');
+const { registerInventoryIPC } = require('./ipc/Inventory.ipc');
+const { registerSupplierIPC } = require('./ipc/Supplier.ipc');
 const { registerMenuItemIPC } = require('./ipc/menu.ipc');
 const { registerEODIPC } = require('./ipc/eod.ipc');
 const { registerUsersIPC } = require('./ipc/users.ipc');
@@ -42,11 +43,15 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+    resetDatabaseForNewInstallation();
+
     // Initialize Database
     const db = getDatabase();
     runMigrations(db);
     seedDatabase(db);
-    seedSampleOrders(db);
+    if (!app.isPackaged) {
+        seedSampleOrders(db);
+    }
     // Register IPC Handlers
     registerAuthIPC(db);
     registerInventoryIPC(db);

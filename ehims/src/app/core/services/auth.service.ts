@@ -3,6 +3,7 @@ import {
   User,
   LoginCredentials,
   LoginResponse,
+  AppPermission,
   UserRole,
 } from '../models/user.model';
 import { ElectronService } from './electron.service';
@@ -67,5 +68,15 @@ export class AuthService {
     const role = this.userRole();
     if (!role) return false;
     return roles.includes(role);
+  }
+
+  hasPermission(permission: AppPermission): boolean {
+    return this.currentUser()?.permissions?.includes(permission) ?? false;
+  }
+
+  canAccess(roles: UserRole[], permission?: AppPermission): boolean {
+    return (
+      (!!permission && this.hasPermission(permission)) || this.hasRole(roles)
+    );
   }
 }

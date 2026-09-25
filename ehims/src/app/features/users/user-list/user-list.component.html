@@ -159,6 +159,19 @@
             {{ getRoleDescription(form.get('role')?.value || 'cashier') }}
           </p>
         </div>
+
+        <fieldset class="permission-group">
+          <legend class="form-label">Additional Permissions</legend>
+          <p class="permission-hint">These grants add access on top of the selected role.</p>
+          <label class="permission-option" *ngFor="let permission of permissionOptions">
+            <input type="checkbox" [checked]="selectedPermissions().includes(permission.key)"
+              (change)="togglePermission(permission.key, $any($event.target).checked)" />
+            <span>
+              <strong>{{ permission.label }}</strong>
+              <small>{{ permission.description }}</small>
+            </span>
+          </label>
+        </fieldset>
       </div>
 
       <div class="modal-footer">

@@ -1,7 +1,7 @@
 const { ipcMain, BrowserWindow, dialog } = require('electron');
 
 function registerReportsIPC(db) {
-  ipcMain.handle('reports:save-pdf', async (event, { title, columns = [], rows = [] } = {}) => {
+  ipcMain.handle('reports:save-pdf', async (event, { title, columns = [], rows = [], metadata = {} } = {}) => {
     let printWindow;
     try {
       const saveResult = await dialog.showSaveDialog({
@@ -13,7 +13,7 @@ function registerReportsIPC(db) {
 
       printWindow = new BrowserWindow({ show: false, webPreferences: { nodeIntegration: false, contextIsolation: true } });
       const company = db.prepare('SELECT * FROM company_settings LIMIT 1').get() || {};
-      await printWindow.loadURL(`data:text/html;charset=UTF-8,${encodeURIComponent(buildReportHtml(title, columns, rows, company))}`);
+      await printWindow.loadURL(`data:text/html;charset=UTF-8,${encodeURIComponent(buildReportHtml(title, columns, rows, company, metadata))}`);
       const pdf = await printWindow.webContents.printToPDF({ printBackground: true, pageSize: 'A4' });
       require('fs').writeFileSync(saveResult.filePath, pdf);
       return { success: true, path: saveResult.filePath, message: 'Report PDF saved.' };
@@ -25,7 +25,7 @@ function registerReportsIPC(db) {
     }
   });
 
-  ipcMain.handle('reports:print', async (event, { title, columns = [], rows = [] } = {}) => {
+  ipcMain.handle('reports:print', async (event, { title, columns = [], rows = [], metadata = {} } = {}) => {
     let printWindow;
 
     try {
@@ -42,7 +42,7 @@ function registerReportsIPC(db) {
       }
 
       const company = db.prepare('SELECT * FROM company_settings LIMIT 1').get() || {};
-      const html = buildReportHtml(title, columns, rows, company);
+      const html = buildReportHtml(title, columns, rows, company, metadata);
 
       printWindow = new BrowserWindow({
         show: false,
@@ -223,7 +223,7 @@ function registerReportsIPC(db) {
   ipcMain.handle('reports:sales-metrics', async (event, { date_from, date_to } = {}) => {
     try {
       let sql = `
-        SELECT 
+        SELECT
           DATE(created_at) as date,
           COUNT(*) as total_orders,
           COALESCE(SUM(total_amount), 0) as total_sales,
@@ -273,7 +273,7 @@ function registerReportsIPC(db) {
       }
 
       let sql = `
-        SELECT 
+        SELECT
           ${datePart} as period,
           COALESCE(SUM(total_amount), 0) as sales,
           COUNT(*) as orders,
@@ -365,7 +365,7 @@ function registerReportsIPC(db) {
     const date_from = payload.date_from ?? payload.dateFrom;
     const date_to = payload.date_to ?? payload.dateTo;
     const sql = `
-      SELECT 
+      SELECT
         i.id as item_id,
         i.name as item_name,
         c.name as category,
@@ -413,7 +413,7 @@ function registerReportsIPC(db) {
   // ipcMain.handle('reports:inventory-movement', async (event, { date_from, date_to } = {}) => {
   //   try {
   //     const sql = `
-  //       SELECT 
+  //       SELECT
   //         i.id as item_id,
   //         i.name as item_name,
   //         c.name as category,
@@ -489,12 +489,12 @@ function registerReportsIPC(db) {
   ipcMain.handle('reports:inventory-alerts', async (event) => {
     try {
       const alerts = db.prepare(`
-        SELECT 
+        SELECT
           id as item_id,
           name as item_name,
           current_stock,
           low_stock_threshold,
-          CASE 
+          CASE
             WHEN current_stock = 0 THEN 'critical'
             WHEN current_stock <= low_stock_threshold THEN 'warning'
             ELSE 'ok'
@@ -518,7 +518,7 @@ function registerReportsIPC(db) {
   ipcMain.handle('reports:inventory-valuation', async (event) => {
     try {
       const items = db.prepare(`
-        SELECT 
+        SELECT
           id as item_id,
           name as item_name,
           category_id,
@@ -555,7 +555,7 @@ function registerReportsIPC(db) {
   ipcMain.handle('reports:supplier-metrics', async (event) => {
     try {
       const suppliers = db.prepare(`
-        SELECT 
+        SELECT
           s.id as supplier_id,
           s.name as supplier_name,
           COALESCE(SUM(DISTINCT pe.total_cost), 0) as total_purchases,
@@ -584,7 +584,7 @@ function registerReportsIPC(db) {
   ipcMain.handle('reports:staff-metrics', async (event, { date_from, date_to } = {}) => {
   try {
     let sql = `
-      SELECT 
+      SELECT
         o.cashier_id as user_id,
         u.display_name as user_name,
         u.role,
@@ -626,7 +626,7 @@ function registerReportsIPC(db) {
   // ipcMain.handle('reports:staff-metrics', async (event, { date_from, date_to } = {}) => {
   //   try {
   //     let sql = `
-  //       SELECT 
+  //       SELECT
   //         o.created_by as user_id,
   //         u.display_name as user_name,
   //         u.role,
@@ -829,7 +829,7 @@ function registerReportsIPC(db) {
       const date_from = payload.date_from ?? payload.dateFrom;
       const date_to = payload.date_to ?? payload.dateTo;
       let sql = `
-        SELECT 
+        SELECT
           pe.id,
           pe.purchase_date,
           s.name as supplier_name,
@@ -936,7 +936,7 @@ function registerReportsIPC(db) {
       const date_from = payload.date_from ?? payload.dateFrom;
       const date_to = payload.date_to ?? payload.dateTo;
       let sql = `
-        SELECT 
+        SELECT
           si.id,
           COALESCE(si.created_at, si.issued_at) as created_at,
           s.shift_name,
@@ -984,9 +984,21 @@ function registerReportsIPC(db) {
   });
 }
 
-function buildReportHtml(title, columns, rows, company = {}) {
+function buildReportHtml(title, columns, rows, company = {}, metadata = {}) {
   const header = columns.map((column) => `<th>${escapeHtml(column.label)}</th>`).join('');
   const body = rows.map((row) => `<tr>${columns.map((column) => `<td>${escapeHtml(row[column.key])}</td>`).join('')}</tr>`).join('');
+  const totals = columns.map((column, index) => {
+    if (index === 0) return '<td><strong>Totals</strong></td>';
+
+    const values = rows.map((row) => row[column.key]);
+    const isNumeric = values.length > 0 && values.every((value) => value !== null && value !== '' && Number.isFinite(Number(value)));
+    if (!isNumeric) return '<td></td>';
+
+    const total = values.reduce((sum, value) => sum + Number(value), 0);
+    const formattedTotal = Number(total.toFixed(2));
+    return `<td><strong>${escapeHtml(formattedTotal)}</strong></td>`;
+  }).join('');
+  const footer = rows.length > 0 ? `<tfoot><tr>${totals}</tr></tfoot>` : '';
   const logo = company.company_logo
     ? `<img src="data:image/png;base64,${Buffer.from(company.company_logo).toString('base64')}" alt="Company logo">`
     : '';
@@ -998,8 +1010,8 @@ function buildReportHtml(title, columns, rows, company = {}) {
     company.registration_number ? `Reg: ${company.registration_number}` : '',
     company.tax_id ? `Tax ID: ${company.tax_id}` : ''
   ].filter(Boolean).map(escapeHtml).join(' | ');
-  const reportDate = new Date().toLocaleDateString();
   const generatedAt = new Date().toLocaleString();
+  const dateRange = getReportDateRange(rows, metadata);
 
   return `<!doctype html><html><head><meta charset="UTF-8"><title>${escapeHtml(title || 'Report')}</title><style>
     @page { margin: 12mm; }
@@ -1013,13 +1025,41 @@ function buildReportHtml(title, columns, rows, company = {}) {
     table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 14px; }
     th, td { border: 1px solid #bbb; padding: 5px; text-align: left; }
     th { background: #eee; }
+    tfoot td { background: #f5f5f5; border-top: 2px solid #111; }
   </style></head><body>
     <header class="company-header">${logo}<div><p class="company-name">${escapeHtml(company.company_name || 'Your Company')}</p><p class="company-details">${companyDetails}</p></div></header>
     <h1>${escapeHtml(title || 'Report')}</h1>
-    <p class="metadata"><strong>Report date:</strong> ${escapeHtml(reportDate)}</p>
+    <p class="metadata"><strong>Report type:</strong> ${escapeHtml(title || 'Report')}</p>
+    <p class="metadata"><strong>Report period:</strong> ${escapeHtml(dateRange)}</p>
     <p class="metadata"><strong>Generated:</strong> ${escapeHtml(generatedAt)}</p>
-    <table><thead><tr>${header}</tr></thead><tbody>${body}</tbody></table>
+    <table><thead><tr>${header}</tr></thead><tbody>${body}</tbody>${footer}</table>
   </body></html>`;
+}
+
+function getReportDateRange(rows, metadata = {}) {
+  const dateFrom = metadata.dateFrom || metadata.date_from;
+  const dateTo = metadata.dateTo || metadata.date_to;
+  if (dateFrom || dateTo) {
+    return formatDateRange(dateFrom, dateTo);
+  }
+
+  const dateKeys = ['date', 'period', 'purchase_date', 'created_at', 'issued_at'];
+  const dates = rows
+    .flatMap((row) => dateKeys.map((key) => row[key]))
+    .filter((value) => value !== null && value !== undefined && value !== '')
+    .map((value) => String(value).slice(0, 10))
+    .filter((value) => /^\d{4}-\d{2}-\d{2}$/.test(value))
+    .sort();
+
+  return dates.length > 0
+    ? formatDateRange(dates[0], dates[dates.length - 1])
+    : 'Not specified';
+}
+
+function formatDateRange(dateFrom, dateTo) {
+  if (dateFrom && dateTo && dateFrom === dateTo) return dateFrom;
+  if (dateFrom && dateTo) return `${dateFrom} to ${dateTo}`;
+  return dateFrom || dateTo || 'Not specified';
 }
 
 function escapeHtml(value) {

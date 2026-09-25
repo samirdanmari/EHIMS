@@ -5,11 +5,57 @@ export type UserRole =
   | 'cashier'
   | 'waiter';
 
+export const APP_PERMISSIONS = [
+  {
+    key: 'inventory',
+    label: 'Inventory',
+    description: 'View and manage inventory and stock.',
+  },
+  {
+    key: 'pos',
+    label: 'Point of Sale',
+    description: 'Access order entry and POS tools.',
+  },
+  {
+    key: 'suppliers',
+    label: 'Suppliers',
+    description: 'View and manage suppliers and purchases.',
+  },
+  {
+    key: 'reports',
+    label: 'Reports',
+    description: 'View business and operational reports.',
+  },
+  {
+    key: 'eod',
+    label: 'EOD & Shifts',
+    description: 'View shifts and end-of-day reports.',
+  },
+  {
+    key: 'customers',
+    label: 'Customers',
+    description: 'View and manage customer accounts.',
+  },
+  {
+    key: 'users',
+    label: 'Users',
+    description: 'Manage user accounts and access.',
+  },
+  {
+    key: 'settings',
+    label: 'Settings',
+    description: 'Change application settings.',
+  },
+] as const;
+
+export type AppPermission = (typeof APP_PERMISSIONS)[number]['key'];
+
 export interface User {
   id: number;
   username: string;
   display_name: string;
   role: UserRole;
+  permissions?: AppPermission[];
   is_active: number;
   created_at: string;
   updated_at?: string;
@@ -33,6 +79,7 @@ export interface UserInput {
   display_name: string;
   password: string;
   role: UserRole;
+  permissions?: AppPermission[];
 }
 
 export interface UserCreateInput {
@@ -40,12 +87,14 @@ export interface UserCreateInput {
   display_name: string;
   password: string;
   role: UserRole;
+  permissions?: AppPermission[];
 }
 
 export interface UserUpdateInput {
   display_name?: string;
   role?: UserRole;
   is_active?: boolean;
+  permissions?: AppPermission[];
 }
 
 export interface ChangePasswordInput {

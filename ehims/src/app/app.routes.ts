@@ -37,14 +37,20 @@ export const routes: Routes = [
             (m) => m.INVENTORY_ROUTES,
           ),
         canActivate: [roleGuard],
-        data: { roles: ['admin', 'manager', 'storekeeper'] },
+        data: {
+          roles: ['admin', 'manager', 'storekeeper'],
+          permission: 'inventory',
+        },
       },
       {
         path: 'pos',
         loadChildren: () =>
           import('./features/pos/pos.routes').then((m) => m.POS_ROUTES),
         canActivate: [roleGuard],
-        data: { roles: ['admin', 'manager', 'cashier', 'waiter'] },
+        data: {
+          roles: ['admin', 'manager', 'cashier', 'waiter'],
+          permission: 'pos',
+        },
       },
       {
         path: 'suppliers',
@@ -53,14 +59,17 @@ export const routes: Routes = [
             (m) => m.SUPPLIER_ROUTES,
           ),
         canActivate: [roleGuard],
-        data: { roles: ['admin', 'manager', 'storekeeper'] },
+        data: {
+          roles: ['admin', 'manager', 'storekeeper'],
+          permission: 'suppliers',
+        },
       },
       {
         path: 'eod',
         loadChildren: () =>
           import('./features/eod/eod.routes').then((m) => m.EOD_ROUTES),
         canActivate: [roleGuard],
-        data: { roles: ['admin', 'manager'] },
+        data: { roles: ['admin', 'manager'], permission: 'eod' },
       },
       {
         path: 'reports',
@@ -71,6 +80,7 @@ export const routes: Routes = [
         canActivate: [roleGuard],
         data: {
           roles: ['admin', 'manager', 'storekeeper', 'cashier', 'waiter'],
+          permission: 'reports',
         },
       },
       {
@@ -78,7 +88,7 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/users/users.routes').then((m) => m.USERS_ROUTES),
         canActivate: [roleGuard],
-        data: { roles: ['admin', 'manager'] },
+        data: { roles: ['admin', 'manager'], permission: 'users' },
       },
       {
         path: 'customers',
@@ -87,7 +97,10 @@ export const routes: Routes = [
             (m) => m.CUSTOMER_ROUTES,
           ),
         canActivate: [roleGuard],
-        data: { roles: ['admin', 'manager', 'cashier'] },
+        data: {
+          roles: ['admin', 'manager', 'cashier'],
+          permission: 'customers',
+        },
       },
       {
         path: 'settings',
@@ -96,7 +109,7 @@ export const routes: Routes = [
             (m) => m.SETTINGS_ROUTES,
           ),
         canActivate: [roleGuard],
-        data: { roles: ['admin'] },
+        data: { roles: ['admin'], permission: 'settings' },
       },
       {
         path: '',

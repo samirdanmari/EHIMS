@@ -12,6 +12,10 @@ function verifyPassword(password, storedHash) {
 }
 
 function registerAuthIPC(db) {
+    const getUserPermissions = (userId) => db.prepare(
+        'SELECT permission FROM user_permissions WHERE user_id = ? ORDER BY permission'
+    ).all(userId).map(row => row.permission);
+
     ipcMain.handle('auth:login', async (event, { username, password }) => {
         try {
             const user = db.prepare('SELECT * FROM users WHERE username = ? AND is_active = 1').get(username);
@@ -35,6 +39,7 @@ function registerAuthIPC(db) {
             const info = db.prepare('INSERT INTO sessions (user_id) VALUES (?)').run(user.id);
 
             const { password_hash, ...userWithoutPassword } = user;
+            userWithoutPassword.permissions = getUserPermissions(user.id);
 
             return {
                 success: true,
@@ -66,6 +71,7 @@ function registerAuthIPC(db) {
         }
         
         const { password_hash, ...userWithoutPassword } = user;
+        userWithoutPassword.permissions = getUserPermissions(user.id);
         return userWithoutPassword;
     });
 
@@ -74,6 +80,7 @@ function registerAuthIPC(db) {
         
         if (users.length > 0) {
             const { password_hash, ...userWithoutPassword } = users[0];
+            userWithoutPassword.permissions = getUserPermissions(users[0].id);
             return { valid: true, user: userWithoutPassword };
         }
         

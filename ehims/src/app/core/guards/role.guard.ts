@@ -2,7 +2,7 @@ import { inject } from '@angular/core';
 import { Router, type CanActivateFn } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { NotificationService } from '../services/notification.service';
-import { UserRole } from '../models/user.model';
+import { AppPermission, UserRole } from '../models/user.model';
 
 export const roleGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
@@ -10,15 +10,19 @@ export const roleGuard: CanActivateFn = (route, state) => {
   const notificationService = inject(NotificationService);
 
   const allowedRoles = route.data['roles'] as UserRole[] | undefined;
+  const permission = route.data['permission'] as AppPermission | undefined;
 
-  if (!allowedRoles || allowedRoles.length === 0) {
+  if ((!allowedRoles || allowedRoles.length === 0) && !permission) {
     return true;
   }
 
-  if (authService.hasRole(allowedRoles)) {
+  if (authService.canAccess(allowedRoles || [], permission)) {
     return true;
   }
 
-  notificationService.error('Unauthorized', 'You do not have permission to access this page.');
+  notificationService.error(
+    'Unauthorized',
+    'You do not have permission to access this page.',
+  );
   return router.createUrlTree(['/dashboard']);
 };

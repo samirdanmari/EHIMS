@@ -7,19 +7,19 @@
   box-sizing: border-box;
 }
 
-.login-page {
-  width: 100vw;
-  height: 100vh;
-  @include flex-center();
-  background: $bg-primary;
-  overflow: hidden;
-  position: relative;
-  min-height: 100dvh;
-  height: auto;
-  padding: $space-6;
-  overflow-x: hidden;
-  overflow-y: auto;
-}
+// .login-page {
+//   width: 100vw;
+//   height: 100vh;
+//   @include flex-center();
+//   background: $bg-primary;
+//   overflow: hidden;
+//   position: relative;
+//   min-height: 100dvh;
+//   height: auto;
+//   padding: $space-6;
+//   overflow-x: hidden;
+//   overflow-y: auto;
+// }
 
 // Animated background blobs
 .bg-blob {
@@ -63,14 +63,14 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 440px;
+  max-width: 900px;
   padding: $space-8;
   @include glass(rgba(22, 25, 35, 0.85), 20px);
   border-radius: $radius-2xl;
   box-shadow:
     $shadow-xl,
     0 0 60px rgba(59, 130, 246, 0.08);
-  width: min(100%, 440px);
+  width: min(100%, 900px);
   max-height: calc(100dvh - #{$space-8});
   overflow-y: auto;
 }
@@ -241,13 +241,20 @@
 
 // Footer
 .login-footer {
-  @include flex-center();
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
   gap: $space-2;
   margin-top: $space-6;
+  padding-top: $space-4;
+  border-top: 1px solid $glass-border;
   font-size: $font-size-xs;
+  line-height: 1.5;
   color: $text-muted;
 
   .separator {
+    display: inline-block;
     opacity: 0.4;
   }
 }

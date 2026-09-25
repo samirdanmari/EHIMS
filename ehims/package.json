@@ -1,7 +1,7 @@
 {
-  "name": "ehims",
-  "version": "1.0.0",
-  "description": "Enterprise Hospitality & Inventory Management System",
+  "name": "Depot",
+  "version": "2.1.0",
+  "description": "sales & Inventory Management System",
   "main": "electron/main.js",
   "scripts": {
     "ng": "ng",
@@ -11,16 +11,68 @@
     "test": "ng test",
     "postinstall": "electron-rebuild -f -w better-sqlite3",
     "electron:dev": "concurrently \"ng serve\" \"wait-on http://localhost:4200 && electron .\"",
-    "electron:build": "ng build --base-href ./ && electron-builder"
+    "electron:build": "ng build --base-href ./ && electron-builder",
+    "electron:build:mac": "ng build --base-href ./ && electron-builder --mac dmg",
+    "electron:build:mac:arm64": "ng build --base-href ./ && electron-builder --mac dmg --arm64",
+    "electron:build:mac:x64": "ng build --base-href ./ && electron-builder --mac dmg --x64",
+    "electron:build:win": "ng build --base-href ./ && electron-builder --win nsis",
+    "electron:build:win:portable": "ng build --base-href ./ && electron-builder --win portable",
+    "electron:build:linux": "ng build --base-href ./ && electron-builder --linux AppImage"
   },
   "build": {
     "appId": "com.ehims.app",
-    "productName": "EHIMS",
-    "directories": { "output": "release" },
-    "files": ["dist/**", "electron/**", "node_modules/**", "package.json"],
-    "mac": { "target": "dmg" },
-    "win": { "target": "nsis" },
-    "linux": { "target": "AppImage" }
+    "productName": "Desk-Depot",
+    "icon": "build/icon",
+    "directories": {
+      "output": "release"
+    },
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+    "files": [
+      "dist/**",
+      "electron/**",
+      "node_modules/**",
+      "package.json"
+    ],
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/better-sqlite3/**"
+    ],
+    "npmRebuild": true,
+    "mac": {
+      "category": "public.app-category.business",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ]
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "deleteAppDataOnUninstall": true
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    }
   },
   "private": true,
   "dependencies": {
@@ -31,6 +83,7 @@
     "@angular/platform-browser": "^19.2.0",
     "@angular/platform-browser-dynamic": "^19.2.0",
     "@angular/router": "^19.2.0",
+    "@angular/service-worker": "^19.2.25",
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^13.0.3",
     "rxjs": "~7.8.0",

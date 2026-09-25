@@ -14,6 +14,12 @@ function runMigrations(db) {
             synced INTEGER NOT NULL DEFAULT 0
         );
 
+        CREATE TABLE IF NOT EXISTS user_permissions (
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            permission TEXT NOT NULL,
+            PRIMARY KEY (user_id, permission)
+        );
+
         CREATE TABLE IF NOT EXISTS sessions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL REFERENCES users(id),
@@ -350,7 +356,7 @@ function runMigrations(db) {
         );
     `);
 
-    
+
 
     // -------------------------------------------------------------------------
     // ALTER TABLE guards — orders new columns

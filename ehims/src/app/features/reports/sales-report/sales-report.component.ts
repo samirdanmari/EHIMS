@@ -128,6 +128,10 @@ export class SalesReportComponent implements OnInit {
         { key: 'transfer_collected', label: 'Transfer' },
       ],
       this.salesMetrics() as unknown as Array<Record<string, unknown>>,
+      {
+        dateFrom: this.form.get('dateFrom')?.value || undefined,
+        dateTo: this.form.get('dateTo')?.value || undefined,
+      },
     );
     this.notifyPrintResult(result);
   }
@@ -161,6 +165,10 @@ export class SalesReportComponent implements OnInit {
         { key: 'transfer_collected', label: 'Transfer' },
       ],
       this.salesMetrics() as unknown as Array<Record<string, unknown>>,
+      {
+        dateFrom: this.form.get('dateFrom')?.value || undefined,
+        dateTo: this.form.get('dateTo')?.value || undefined,
+      },
     );
     if (result.success)
       this.notificationService.success(

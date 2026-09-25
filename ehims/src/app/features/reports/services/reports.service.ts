@@ -19,6 +19,11 @@ interface ReportResponse<T> {
   error?: string;
 }
 
+export interface ReportMetadata {
+  dateFrom?: string;
+  dateTo?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ReportsService {
   private electronService = inject(ElectronService);
@@ -27,11 +32,13 @@ export class ReportsService {
     title: string,
     columns: Array<{ key: string; label: string }>,
     rows: Array<Record<string, unknown>>,
+    metadata?: ReportMetadata,
   ): Promise<{ success: boolean; message?: string; error?: string }> {
     return this.electronService.invoke('reports:print', {
       title,
       columns,
       rows,
+      metadata,
     });
   }
 
@@ -39,6 +46,7 @@ export class ReportsService {
     title: string,
     columns: Array<{ key: string; label: string }>,
     rows: Array<Record<string, unknown>>,
+    metadata?: ReportMetadata,
   ): Promise<{
     success: boolean;
     path?: string;
@@ -50,6 +58,7 @@ export class ReportsService {
       title,
       columns,
       rows,
+      metadata,
     });
   }
 

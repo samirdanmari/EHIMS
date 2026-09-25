@@ -9,11 +9,11 @@ import { HeaderComponent } from '../../shared/components/header/header.component
   standalone: true,
   imports: [CommonModule, RouterOutlet, SidebarComponent, HeaderComponent],
   templateUrl: './main-layout.component.html',
-  styleUrls: ['./main-layout.component.scss']
+  styleUrls: ['./main-layout.component.scss'],
 })
 export class MainLayoutComponent {
   @ViewChild(SidebarComponent) sidebar!: SidebarComponent;
-  
+
   // Example dummy title
-  title = 'EHIMS Dashboard';
+  title = 'Depot-Desk Dashboard';
 }

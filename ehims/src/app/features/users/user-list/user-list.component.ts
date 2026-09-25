@@ -9,7 +9,11 @@ import {
 import { UsersService } from '../services/users.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
-import { User } from '../../../core/models/user.model';
+import {
+  APP_PERMISSIONS,
+  AppPermission,
+  User,
+} from '../../../core/models/user.model';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 
 interface UserRole {
@@ -37,6 +41,8 @@ export class UserListComponent implements OnInit {
   users = signal<User[]>([]);
   filteredUsers = signal<User[]>([]);
   roles = signal<UserRole[]>([]);
+  permissionOptions = APP_PERMISSIONS;
+  selectedPermissions = signal<AppPermission[]>([]);
 
   searchTerm = signal('');
   isModalOpen = signal(false);
@@ -131,6 +137,7 @@ export class UserListComponent implements OnInit {
 
   openCreateModal() {
     this.editingUser.set(null);
+    this.selectedPermissions.set([]);
     this.form.reset({
       username: '',
       display_name: '',
@@ -146,6 +153,7 @@ export class UserListComponent implements OnInit {
 
   openEditModal(user: User) {
     this.editingUser.set(user);
+    this.selectedPermissions.set(user.permissions || []);
     this.form.reset({
       username: user.username,
       display_name: user.display_name,
@@ -164,6 +172,14 @@ export class UserListComponent implements OnInit {
     this.form.get('username')?.enable();
   }
 
+  togglePermission(permission: AppPermission, checked: boolean) {
+    this.selectedPermissions.update((permissions) =>
+      checked
+        ? [...new Set([...permissions, permission])]
+        : permissions.filter((item) => item !== permission),
+    );
+  }
+
   async onSubmit() {
     if (this.form.invalid || this.isSaving()) return;
     this.isSaving.set(true);
@@ -175,8 +191,19 @@ export class UserListComponent implements OnInit {
         const res = await this.usersService.updateUser(editing.id, {
           display_name: value.display_name,
           role: value.role as any,
+          permissions: this.selectedPermissions(),
         });
         if (res.success) {
+          this.authService.currentUser.update((currentUser) =>
+            currentUser?.id === editing.id
+              ? {
+                  ...currentUser,
+                  display_name: value.display_name,
+                  role: value.role as User['role'],
+                  permissions: this.selectedPermissions(),
+                }
+              : currentUser,
+          );
           this.notificationService.success(
             'User updated',
             `${value.display_name} has been updated.`,
@@ -203,6 +230,7 @@ export class UserListComponent implements OnInit {
           display_name: value.display_name,
           password: value.password,
           role: value.role as any,
+          permissions: this.selectedPermissions(),
         });
         if (res.success) {
           this.notificationService.success(
