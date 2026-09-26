@@ -17,6 +17,11 @@ export const APP_PERMISSIONS = [
     description: 'Access order entry and POS tools.',
   },
   {
+    key: 'menu_management',
+    label: 'Menu Management',
+    description: 'Add, edit, and deactivate menu items and categories.',
+  },
+  {
     key: 'suppliers',
     label: 'Suppliers',
     description: 'View and manage suppliers and purchases.',

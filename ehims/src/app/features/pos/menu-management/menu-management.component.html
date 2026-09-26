@@ -5,6 +5,7 @@
       <p class="page-subtitle">Create and manage menu items with pricing and inventory links.</p>
     </div>
     <div class="page-actions">
+      @if (canManageMenu()) {
       <button class="btn btn-primary" (click)="openCreateModal()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="12" y1="5" x2="12" y2="19" />
@@ -12,6 +13,7 @@
         </svg>
         New Item
       </button>
+      }
     </div>
   </div>
 
@@ -44,8 +46,11 @@
             </svg>
           </div>
           <div class="empty-title">No menu items found</div>
-          <div class="empty-message">Add your first menu item to get started.</div>
+          <div class="empty-message">
+            {{ canManageMenu() ? 'Add your first menu item to get started.' : 'No menu items found.' }}</div>
+          @if (canManageMenu()) {
           <button class="btn btn-primary" (click)="openCreateModal()">New Item</button>
+          }
         </div>
         } @else {
         <table class="data-table">
@@ -57,7 +62,7 @@
               <th>Linked Inventory</th>
               <th>Stock</th>
               <th>Status</th>
-              <th></th>
+              @if (canManageMenu()) { <th></th> }
             </tr>
           </thead>
           <tbody>
@@ -91,6 +96,7 @@
                   {{ item.is_available === 1 ? 'Available' : 'Inactive' }}
                 </span>
               </td>
+              @if (canManageMenu()) {
               <td class="actions-cell">
                 <button class="btn-icon" data-tooltip="Edit" (click)="openEditModal(item)">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -106,6 +112,7 @@
                   </svg>
                 </button>
               </td>
+              }
             </tr>
             }
           </tbody>
@@ -121,7 +128,7 @@
 </div>
 
 <!-- Create / Edit Modal -->
-@if (isModalOpen()) {
+@if (isModalOpen() && canManageMenu()) {
 <div class="modal-overlay" (click)="closeModal()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">

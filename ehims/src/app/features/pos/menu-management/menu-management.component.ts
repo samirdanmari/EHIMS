@@ -9,6 +9,7 @@ import {
 import { PosService } from '../../../core/services/pos.service';
 import { InventoryService } from '../../../core/services/inventory.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { MenuItem } from '../../../core/models/order.model';
 import { InventoryItem } from '../../../core/models/inventory.model';
 import { CurrencyPipe } from '../../../shared/pipes/currency.pipe';
@@ -32,6 +33,7 @@ export class MenuManagementComponent implements OnInit {
   private posService = inject(PosService);
   private inventoryService = inject(InventoryService);
   private notificationService = inject(NotificationService);
+  private authService = inject(AuthService);
 
   @ViewChild(ConfirmDialogComponent) confirmDialog!: ConfirmDialogComponent;
 
@@ -65,6 +67,10 @@ export class MenuManagementComponent implements OnInit {
 
   // Multi-select inventory items tracking
   selectedInventoryItemIds = signal<Set<number>>(new Set());
+
+  canManageMenu(): boolean {
+    return this.authService.canAccess(['admin', 'manager'], 'menu_management');
+  }
 
   async ngOnInit() {
     await Promise.all([
@@ -123,6 +129,7 @@ export class MenuManagementComponent implements OnInit {
   }
 
   async createNewCategory() {
+    if (!this.canManageMenu()) return;
     const name = this.newCategoryName().trim();
     if (!name) {
       this.notificationService.error(
@@ -166,6 +173,7 @@ export class MenuManagementComponent implements OnInit {
   }
 
   openCreateModal() {
+    if (!this.canManageMenu()) return;
     this.editingItem.set(null);
     this.selectedInventoryItemIds.set(new Set());
     this.form.reset({
@@ -179,6 +187,7 @@ export class MenuManagementComponent implements OnInit {
   }
 
   openEditModal(item: MenuItem) {
+    if (!this.canManageMenu()) return;
     this.editingItem.set(item);
     this.selectedInventoryItemIds.set(new Set());
     this.form.reset({
@@ -196,6 +205,7 @@ export class MenuManagementComponent implements OnInit {
   }
 
   async onSubmit() {
+    if (!this.canManageMenu()) return;
     if (this.form.invalid || this.isSaving()) return;
     this.isSaving.set(true);
     try {
@@ -256,6 +266,7 @@ export class MenuManagementComponent implements OnInit {
   }
 
   async onDeactivate(item: MenuItem) {
+    if (!this.canManageMenu()) return;
     const confirmed = await this.confirmDialog.open({
       title: 'Deactivate item?',
       message: `"${item.name}" will be hidden from the menu but its order history will be preserved.`,

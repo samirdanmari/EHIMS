@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-pos-tabs',
@@ -8,4 +9,6 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
   templateUrl: './pos-tabs.component.html',
   styleUrl: './pos-tabs.component.scss',
 })
-export class PosTabsComponent {}
+export class PosTabsComponent {
+  authService = inject(AuthService);
+}
