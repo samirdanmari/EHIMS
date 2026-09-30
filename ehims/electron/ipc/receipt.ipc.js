@@ -14,6 +14,15 @@ function registerReceiptIPC(db) {
   }) => {
     try {
       const settings = db.prepare('SELECT * FROM printer_settings LIMIT 1').get();
+      const orderDetails = orderId ? db.prepare(`
+        SELECT u.display_name AS cashier_name, rc.full_name AS customer_name
+        FROM orders o
+        LEFT JOIN users u ON u.id = o.cashier_id
+        LEFT JOIN regular_customers rc ON rc.id = o.customer_id
+        WHERE o.id = ?
+      `).get(orderId) : null;
+      const receiptCustomerName = orderDetails?.customer_name || customerName || 'Walk-in';
+      const receiptCashierName = orderDetails?.cashier_name || '';
       const printerName = settings?.default_printer || null;
       const paperWidthMicrons = settings?.paper_width === '58mm' ? 58000 : 80000;
 
@@ -40,7 +49,8 @@ function registerReceiptIPC(db) {
       // so the thermal printer fires only ONE auto-cut at the very end.
       const html = buildMergedReceiptHtml({
         orderNumber, items, subtotal, discount, tax, total,
-        paymentMethod, customerName, tableNumber, notes,
+        paymentMethod, customerName: receiptCustomerName, cashierName: receiptCashierName,
+        tableNumber, notes,
         logo: settings?.logo_on_receipt ? logoBase64 : '',
         company, paperWidthMicrons, settings, reprint, isCredit, splitPayment
       });
@@ -205,7 +215,7 @@ async function getRenderedHeight(printWindow) {
 // ---------------------------------------------------------
 function buildMergedReceiptHtml({
   orderNumber, items, subtotal, discount, tax, total,
-  paymentMethod, customerName, tableNumber, notes,
+  paymentMethod, customerName, cashierName, tableNumber, notes,
   logo, company = {}, paperWidthMicrons = 80000,
   settings = {}, reprint = false, isCredit = false, splitPayment
 }) {
@@ -213,13 +223,13 @@ function buildMergedReceiptHtml({
 
   const customerCopy = buildReceiptBlock({
     orderNumber, items, subtotal, discount, tax, total,
-    paymentMethod, customerName, tableNumber, notes,
+    paymentMethod, customerName, cashierName, tableNumber, notes,
     logo, company, settings, copyLabel: 'Customer Copy', reprint, isCredit, splitPayment
   });
 
   const merchantCopy = buildReceiptBlock({
     orderNumber, items, subtotal, discount, tax, total,
-    paymentMethod, customerName, tableNumber, notes,
+    paymentMethod, customerName, cashierName, tableNumber, notes,
     logo, company, settings, copyLabel: 'Merchant Copy', reprint, isCredit, splitPayment
   });
 
@@ -390,7 +400,7 @@ function buildMergedReceiptHtml({
 // ---------------------------------------------------------
 function buildReceiptBlock({
   orderNumber, items, subtotal, discount, tax, total,
-  paymentMethod, customerName, tableNumber, notes,
+  paymentMethod, customerName, cashierName, tableNumber, notes,
   logo, company = {}, settings = {}, copyLabel, reprint, isCredit, splitPayment
 }) {
   const logoHtml = logo
@@ -443,7 +453,8 @@ function buildReceiptBlock({
     <p class="receipt-meta">${dateStr}</p>
 
     <div class="order-info">
-      ${customerName ? `<p><strong>Customer:</strong> ${esc(customerName)}</p>` : ''}
+      <p><strong>Customer:</strong> ${esc(customerName || 'Walk-in')}</p>
+      ${cashierName ? `<p><strong>Cashier:</strong> ${esc(cashierName)}</p>` : ''}
       ${tableNumber ? `<p><strong>Table:</strong> ${esc(tableNumber)}</p>` : ''}
     </div>
 

@@ -357,9 +357,8 @@ export class OrderTerminalComponent implements OnInit {
 
   private async printReceipt(orderRes: any) {
     try {
-      const currentUser = this.authService.currentUser();
       const receiptData = {
-        orderId: orderRes.id,
+        orderId: orderRes.orderId,
         orderNumber: orderRes.orderNumber,
         items: this.cart().map((item) => ({
           name: item.menu_item_name,
@@ -380,7 +379,7 @@ export class OrderTerminalComponent implements OnInit {
           card: this.splitCardAmount(),
           transfer: this.splitTransferAmount(),
         },
-        customerName: currentUser?.display_name,
+        customerName: this.selectedCustomer()?.full_name || 'Walk-in',
         tableNumber: this.form.controls.table_number.value || undefined,
       };
 

@@ -104,7 +104,8 @@
 
         <div class="form-group">
           <label class="form-label">Payment Method</label>
-          <select class="form-select" [(ngModel)]="paymentMethod" [ngModelOptions]="{ updateOn: 'blur' }">
+          <select class="form-select" [ngModel]="paymentMethod()" (ngModelChange)="paymentMethod.set($event)"
+            [ngModelOptions]="{ standalone: true }">
             <option value="cash">Cash</option>
             <option value="card">Card</option>
             <option value="transfer">Bank Transfer</option>
