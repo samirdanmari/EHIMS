@@ -1,6 +1,5 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
-const { resetDatabaseForNewInstallation } = require('./database/installation');
 const { getDatabase } = require('./database/connection');
 const { runMigrations } = require('./database/migrations');
 const { seedDatabase, seedSampleOrders } = require('./database/seed');
@@ -43,8 +42,6 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
-    resetDatabaseForNewInstallation();
-
     // Initialize Database
     const db = getDatabase();
     runMigrations(db);

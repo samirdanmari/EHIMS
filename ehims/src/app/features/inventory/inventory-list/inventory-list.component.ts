@@ -44,6 +44,8 @@ export class InventoryListComponent implements OnInit {
 
   isModalOpen = signal(false);
   editingItem = signal<InventoryItem | null>(null);
+  isCreatingCategory = signal(false);
+  newCategoryName = signal('');
 
   form = new FormGroup({
     name: new FormControl('', {
@@ -136,6 +138,8 @@ export class InventoryListComponent implements OnInit {
 
   openCreateModal() {
     this.editingItem.set(null);
+    this.isCreatingCategory.set(false);
+    this.newCategoryName.set('');
     this.form.reset({
       name: '',
       category_id: null,
@@ -149,6 +153,8 @@ export class InventoryListComponent implements OnInit {
 
   openEditModal(item: InventoryItem) {
     this.editingItem.set(item);
+    this.isCreatingCategory.set(false);
+    this.newCategoryName.set('');
     this.form.reset({
       name: item.name,
       category_id: item.category_id,
@@ -162,6 +168,33 @@ export class InventoryListComponent implements OnInit {
 
   closeModal() {
     this.isModalOpen.set(false);
+  }
+
+  async createNewCategory() {
+    const name = this.newCategoryName().trim();
+    if (!name || this.isSaving()) return;
+
+    this.isSaving.set(true);
+    try {
+      const res = await this.inventoryService.createCategory(name);
+      if (res.success && res.category) {
+        await this.loadCategories();
+        this.form.controls.category_id.setValue(res.category.id);
+        this.newCategoryName.set('');
+        this.isCreatingCategory.set(false);
+        this.notificationService.success(
+          'Category created',
+          `${res.category.name} has been added.`,
+        );
+      } else {
+        this.notificationService.error(
+          'Category creation failed',
+          res.error || 'Could not create category',
+        );
+      }
+    } finally {
+      this.isSaving.set(false);
+    }
   }
 
   async onSubmit() {

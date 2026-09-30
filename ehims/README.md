@@ -60,11 +60,10 @@ Developer ID certificate, and sign the Windows installer with an Authenticode
 certificate. Unsigned builds are suitable for internal testing but will show
 platform security warnings.
 
-On the first launch of a new packaged build, the SQLite database and its WAL
-files are removed before migrations and default seeding run. This leaves the
-default seeded login (`admin` / `admin123`) and default application seed data.
-Development runs do not perform this reset. The Windows uninstaller also
-removes the app's user data, so a later reinstall starts clean.
+Packaged upgrades preserve the SQLite database in the app's user data folder;
+migrations run against the existing database, and default records are seeded
+only when needed. The Windows uninstaller also preserves app data. Back up the
+database before installing a release, especially before a major schema change.
 
 ## Running unit tests
 

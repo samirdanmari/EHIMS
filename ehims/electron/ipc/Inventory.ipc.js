@@ -16,6 +16,25 @@ function registerInventoryIPC(db) {
         }
     });
 
+    ipcMain.handle('inventory:create-category', async (_event, { name }) => {
+        try {
+            const categoryName = typeof name === 'string' ? name.trim() : '';
+            if (!categoryName) {
+                return { success: false, error: 'Category name is required' };
+            }
+
+            const info = db.prepare(
+                `INSERT INTO categories (name, type) VALUES (?, 'inventory')`
+            ).run(categoryName);
+            const category = db.prepare('SELECT * FROM categories WHERE id = ?')
+                .get(info.lastInsertRowid);
+            return { success: true, category };
+        } catch (err) {
+            console.error('[inventory:create-category] Error:', err.message);
+            return { success: false, error: err.message };
+        }
+    });
+
     // ---------------------------------------------------------
     // INVENTORY ITEMS
     // ---------------------------------------------------------

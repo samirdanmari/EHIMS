@@ -1,6 +1,6 @@
 {
   "name": "Depot",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "sales & Inventory Management System",
   "main": "electron/main.js",
   "scripts": {
@@ -16,6 +16,7 @@
     "electron:build:mac:arm64": "ng build --base-href ./ && electron-builder --mac dmg --arm64",
     "electron:build:mac:x64": "ng build --base-href ./ && electron-builder --mac dmg --x64",
     "electron:build:win": "ng build --base-href ./ && electron-builder --win nsis",
+    "electron:release:win": "ng build --base-href ./ && electron-builder --win nsis --publish always",
     "electron:build:win:portable": "ng build --base-href ./ && electron-builder --win portable",
     "electron:build:linux": "ng build --base-href ./ && electron-builder --linux AppImage"
   },
@@ -27,6 +28,11 @@
       "output": "release"
     },
     "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+    "publish": {
+      "provider": "github",
+      "owner": "samirdanmari",
+      "repo": "EHIMS"
+    },
     "files": [
       "dist/**",
       "electron/**",
@@ -61,7 +67,10 @@
       ]
     },
     "nsis": {
-      "deleteAppDataOnUninstall": true
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "deleteAppDataOnUninstall": false
     },
     "linux": {
       "target": [
@@ -101,6 +110,7 @@
     "concurrently": "^10.0.4",
     "electron": "^43.4.0",
     "electron-builder": "^26.15.3",
+    "electron-updater": "^6.6.2",
     "jasmine-core": "~5.6.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",

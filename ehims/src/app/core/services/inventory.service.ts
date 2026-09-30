@@ -18,6 +18,11 @@ interface ListCategoriesResponse {
   categories: Category[];
   error?: string;
 }
+interface CreateCategoryResponse {
+  success: boolean;
+  category?: Category;
+  error?: string;
+}
 interface ListItemsResponse {
   success: boolean;
   items: InventoryItem[];
@@ -84,6 +89,13 @@ export class InventoryService {
   listCategories(): Promise<ListCategoriesResponse> {
     return this.electronService.invoke<ListCategoriesResponse>(
       'inventory:list-categories',
+    );
+  }
+
+  createCategory(name: string): Promise<CreateCategoryResponse> {
+    return this.electronService.invoke<CreateCategoryResponse>(
+      'inventory:create-category',
+      { name },
     );
   }
 

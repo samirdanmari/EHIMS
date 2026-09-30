@@ -1,4 +1,5 @@
 const { ipcMain, shell, app } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const https = require('https');
 
 const GITHUB_OWNER = 'samirdanmari';
@@ -6,6 +7,13 @@ const GITHUB_REPO = 'EHIMS';
 const CHECK_INTERVAL_MS = 60 * 60 * 1000; // check every 1 hour
 
 let mainWindow = null;
+let updateDownloaded = false;
+
+function sendUpdateStatus(status, details = {}) {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('update:status', { status, ...details });
+    }
+}
 
 /**
  * Compares two semver strings. Returns true if v2 is newer than v1.
@@ -95,6 +103,21 @@ async function checkForUpdates() {
 
         console.log(`[UpdateIPC] New version available: v${latestVersion} (current: v${currentVersion})`);
 
+        const hasWindowsUpdateMetadata = (release.assets || []).some((asset) =>
+            asset.name === 'latest.yml'
+        );
+
+        if (app.isPackaged && process.platform === 'win32' && hasWindowsUpdateMetadata) {
+            try {
+                await autoUpdater.checkForUpdates();
+            } catch (err) {
+                console.error('[UpdateIPC] Automatic download unavailable:', err.message);
+                sendUpdateStatus('manual', { message: err.message });
+            }
+        } else {
+            sendUpdateStatus('manual');
+        }
+
         // Push event to renderer
         if (mainWindow && !mainWindow.isDestroyed()) {
             mainWindow.webContents.send('update:available', updateInfo);
@@ -114,6 +137,21 @@ async function checkForUpdates() {
 function registerUpdateIPC(window) {
     mainWindow = window;
 
+    if (app.isPackaged && process.platform === 'win32') {
+        autoUpdater.autoDownload = true;
+        autoUpdater.autoInstallOnAppQuit = false;
+        autoUpdater.on('download-progress', (progress) => {
+            sendUpdateStatus('downloading', { percent: Math.round(progress.percent) });
+        });
+        autoUpdater.on('update-downloaded', (info) => {
+            updateDownloaded = true;
+            sendUpdateStatus('downloaded', { version: info.version });
+        });
+        autoUpdater.on('error', (err) => {
+            sendUpdateStatus('error', { message: err.message });
+        });
+    }
+
     // On-demand update check triggered from renderer
     ipcMain.handle('update:check', async () => {
         return await checkForUpdates();
@@ -124,6 +162,12 @@ function registerUpdateIPC(window) {
         const targetUrl =
             url || `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest`;
         await shell.openExternal(targetUrl);
+        return true;
+    });
+
+    ipcMain.handle('update:install', async () => {
+        if (!updateDownloaded) return false;
+        autoUpdater.quitAndInstall(false, true);
         return true;
     });
 
