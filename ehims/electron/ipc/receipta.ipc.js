@@ -73,7 +73,7 @@ function registerReceiptIPC(db) {
         ...receiptData,
         copyLabel: 'CUSTOMER COPY'
       });
-
+      
       const result1 = await printHtml(customerHtml, printerName, paperWidthMicrons);
       if (!result1.success) {
         throw new Error(result1.failureReason || 'Customer copy print failed.');
@@ -88,7 +88,7 @@ function registerReceiptIPC(db) {
         ...receiptData,
         copyLabel: 'MERCHANT COPY'
       });
-
+      
       const result2 = await printHtml(merchantHtml, printerName, paperWidthMicrons);
       if (!result2.success) {
         throw new Error(result2.failureReason || 'Merchant copy print failed.');
@@ -159,7 +159,7 @@ function registerReceiptIPC(db) {
         ...testData,
         copyLabel: 'CUSTOMER COPY'
       });
-
+      
       const result1 = await printHtml(customerHtml, printer, paperWidthMicrons);
       if (!result1.success) {
         return { success: false, error: result1.failureReason || 'Customer test print failed.' };
@@ -174,7 +174,7 @@ function registerReceiptIPC(db) {
         ...testData,
         copyLabel: 'MERCHANT COPY'
       });
-
+      
       const result2 = await printHtml(merchantHtml, printer, paperWidthMicrons);
       if (!result2.success) {
         return { success: false, error: result2.failureReason || 'Merchant test print failed.' };
@@ -281,7 +281,7 @@ async function getRenderedHeight(printWindow) {
   // Add only 1mm buffer (no extra padding)
   const heightMm = (Number(heightPx) * 25.4 / 96) + 1;
   const heightMicrons = Math.ceil(heightMm * 1000);
-
+  
   // Minimum 20mm, maximum 100mm
   return Math.max(20000, Math.min(100000, heightMicrons));
 }
@@ -296,11 +296,14 @@ function buildSingleReceiptHtml({
   settings = {}, copyLabel, reprint, isCredit, splitPayment
 }) {
   const widthMm = paperWidthMicrons / 1000;
+  const is58mm = paperWidthMicrons === 58000;
+  const maxLogoWidth = is58mm ? '35px' : '40px';
 
   const receiptBlock = buildReceiptBlock({
     orderNumber, items, subtotal, discount, tax, total,
     paymentMethod, customerName, cashierName, tableNumber, notes,
-    logo, company, settings, copyLabel, reprint, isCredit, splitPayment
+    logo, company, settings, copyLabel, reprint, isCredit, splitPayment,
+    maxLogoWidth
   });
 
   return `<!DOCTYPE html>
@@ -334,6 +337,7 @@ function buildSingleReceiptHtml({
     /* ---- receipt block ---- */
     .receipt {
       width: 100%;
+      max-width: ${widthMm}mm;
       padding: 2px 3px;
       margin: 0;
     }
@@ -354,11 +358,16 @@ function buildSingleReceiptHtml({
       margin: 1px 0 0 0;
       padding: 0;
       line-height: 1;
+      display: flex;
+      justify-content: center;
+      width: 100%;
     }
     .logo-wrap img {
-      max-width: 40px;
-      max-height: 40px;
-      margin: 0;
+      max-width: ${maxLogoWidth};
+      max-height: ${maxLogoWidth};
+      width: auto;
+      height: auto;
+      margin: 0 auto;
       padding: 0;
       display: block;
     }
@@ -370,6 +379,7 @@ function buildSingleReceiptHtml({
       margin: 0;
       padding: 0;
       line-height: 1.1;
+      word-break: break-word;
     }
     .company-detail {
       text-align: center;
@@ -377,6 +387,7 @@ function buildSingleReceiptHtml({
       margin: 0;
       padding: 0;
       line-height: 1;
+      word-break: break-word;
     }
 
     .divider-dashed {
@@ -407,6 +418,7 @@ function buildSingleReceiptHtml({
       margin: 0;
       padding: 0;
       line-height: 1;
+      text-align: center;
     }
 
     .order-info {
@@ -418,6 +430,7 @@ function buildSingleReceiptHtml({
       margin: 0;
       padding: 0;
       line-height: 1;
+      word-break: break-word;
     }
 
     table {
@@ -441,6 +454,7 @@ function buildSingleReceiptHtml({
       margin: 0;
       vertical-align: top;
       line-height: 1;
+      word-break: break-word;
     }
 
     .summary {
@@ -454,6 +468,7 @@ function buildSingleReceiptHtml({
       margin: 0;
       padding: 0;
       line-height: 1;
+      gap: 2px;
     }
     .summary-row.total-row {
       font-size: var(--receipt-font-large);
@@ -465,6 +480,7 @@ function buildSingleReceiptHtml({
       margin: 0;
       padding: 0;
       line-height: 1;
+      word-break: break-word;
     }
     .credit-badge {
       display: inline-block;
@@ -479,6 +495,7 @@ function buildSingleReceiptHtml({
       margin: 0;
       padding: 0;
       line-height: 1;
+      word-break: break-word;
     }
 
     .footer {
@@ -508,7 +525,8 @@ function buildSingleReceiptHtml({
 function buildReceiptBlock({
   orderNumber, items, subtotal, discount, tax, total,
   paymentMethod, customerName, cashierName, tableNumber, notes,
-  logo, company = {}, settings = {}, copyLabel, reprint, isCredit, splitPayment
+  logo, company = {}, settings = {}, copyLabel, reprint, isCredit, splitPayment,
+  maxLogoWidth
 }) {
   const logoHtml = logo
     ? `<div class="logo-wrap"><img src="data:image/png;base64,${logo}" alt="Logo"></div>`
@@ -527,8 +545,8 @@ function buildReceiptBlock({
   const itemRows = items.map(item => `
     <tr>
       <td>${esc(item.name)}</td>
-      <td style="text-align:center;width:30px">${item.quantity}</td>
-      <td style="text-align:right;width:50px">&#8358;${Number(item.unitPrice).toLocaleString('en-NG')}</td>
+      <td style="text-align:center;width:25px">${item.quantity}</td>
+      <td style="text-align:right;width:45px">&#8358;${Number(item.unitPrice).toLocaleString('en-NG')}</td>
       <td style="text-align:right">&#8358;${Number(item.lineTotal).toFixed(2)}</td>
     </tr>`).join('');
 
@@ -566,8 +584,8 @@ function buildReceiptBlock({
       <thead>
         <tr>
           <th>Item</th>
-          <th style="text-align:center;width:30px">Qty</th>
-          <th style="text-align:right;width:50px">Price</th>
+          <th style="text-align:center;width:25px">Qty</th>
+          <th style="text-align:right;width:45px">Price</th>
           <th style="text-align:right">Total</th>
         </tr>
       </thead>
