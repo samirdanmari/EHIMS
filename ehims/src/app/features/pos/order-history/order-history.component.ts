@@ -9,7 +9,11 @@ import {
   ReceiptService,
   ReceiptPrintRequest,
 } from '../../../core/services/receipt.service';
-import { Order, OrderStatus } from '../../../core/models/order.model';
+import {
+  Order,
+  OrderItem,
+  OrderStatus,
+} from '../../../core/models/order.model';
 import { CurrencyPipe } from '../../../shared/pipes/currency.pipe';
 import { PosTabsComponent } from '../../../shared/components/pos/pos-tabs/pos-tabs.component';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
@@ -44,6 +48,7 @@ export class OrderHistoryComponent implements OnInit {
   selectedShiftId = signal<number | null>(null);
   selectedStatus = signal<OrderStatus | 'all'>('completed');
   expandedOrderId = signal<number | null>(null);
+  expandedOrderItems = signal<OrderItem[]>([]);
 
   form = new FormGroup({
     shift_id: new FormControl<number | null>(null),
@@ -89,16 +94,24 @@ export class OrderHistoryComponent implements OnInit {
   async toggleExpand(order: Order) {
     if (this.expandedOrderId() === order.id) {
       this.expandedOrderId.set(null);
+      this.expandedOrderItems.set([]);
       return;
     }
     const res = await this.posService.getOrderDetails(order.id);
-    if (res.success) {
+    if (res.success && res.items) {
+      this.expandedOrderItems.set(res.items);
       this.expandedOrderId.set(order.id);
     }
   }
 
   getOrderDetails(orderId: number) {
     return this.orders().find((o) => o.id === orderId);
+  }
+
+  getExpandedOrderItemNames(): string {
+    return this.expandedOrderItems()
+      .map((item) => item.menu_item_name || 'Item')
+      .join(', ');
   }
 
   statusColor(status: OrderStatus): string {

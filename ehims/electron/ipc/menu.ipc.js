@@ -1,6 +1,14 @@
 const { ipcMain } = require('electron');
 
 function registerMenuItemIPC(db) {
+    const canApplyDiscount = (userId) => {
+        const user = db.prepare('SELECT role FROM users WHERE id = ?').get(userId);
+        if (user?.role === 'admin') return true;
+        return !!db.prepare(
+            'SELECT 1 FROM user_permissions WHERE user_id = ? AND permission = ?'
+        ).get(userId, 'pos_discount');
+    };
+
     // ---------------------------------------------------------
     // CATEGORIES
     // ---------------------------------------------------------
@@ -94,10 +102,10 @@ function registerMenuItemIPC(db) {
                 ORDER BY ii.name ASC
             `).all(id);
 
-            return { 
-                success: true, 
-                item, 
-                inventoryItems: inventoryItems || [] 
+            return {
+                success: true,
+                item,
+                inventoryItems: inventoryItems || []
             };
         } catch (err) {
             console.error('[menu:get-item-details] Error:', err.message);
@@ -132,7 +140,7 @@ function registerMenuItemIPC(db) {
                         INSERT OR IGNORE INTO menu_item_inventory (menu_item_id, inventory_item_id, quantity)
                         VALUES (?, ?, 1)
                     `);
-                    
+
                     for (const invItemId of inventory_item_ids) {
                         insertStmt.run(info.lastInsertRowid, invItemId);
                     }
@@ -160,7 +168,7 @@ function registerMenuItemIPC(db) {
             const transaction = db.transaction(() => {
                 db.prepare(`
                     UPDATE menu_items
-                    SET name = ?, category_id = ?, selling_price = ?, inventory_item_id = ?, 
+                    SET name = ?, category_id = ?, selling_price = ?, inventory_item_id = ?,
                         description = ?, is_available = ?, updated_at = datetime('now','localtime')
                     WHERE id = ?
                 `).run(
@@ -177,14 +185,14 @@ function registerMenuItemIPC(db) {
                 if (inventory_item_ids && Array.isArray(inventory_item_ids)) {
                     // Delete existing associations
                     db.prepare('DELETE FROM menu_item_inventory WHERE menu_item_id = ?').run(id);
-                    
+
                     // Insert new associations
                     if (inventory_item_ids.length > 0) {
                         const insertStmt = db.prepare(`
                             INSERT INTO menu_item_inventory (menu_item_id, inventory_item_id, quantity)
                             VALUES (?, ?, 1)
                         `);
-                        
+
                         for (const invItemId of inventory_item_ids) {
                             insertStmt.run(id, invItemId);
                         }
@@ -241,6 +249,9 @@ function registerMenuItemIPC(db) {
             }
 
             const discountAmt = Number(discount_amount) || 0;
+            if (discountAmt > 0 && !canApplyDiscount(cashier_id)) {
+                return { success: false, error: 'You do not have permission to apply discounts' };
+            }
             const taxAmt = Number(tax_amount) || 0;
             const totalAmount = Math.max(0, subtotal - discountAmt) + taxAmt;
             const splitCashAmount = Number(split_cash_amount) || 0;
@@ -349,7 +360,7 @@ function registerMenuItemIPC(db) {
     ipcMain.handle('order:list', async (event, { limit = 50, shiftId = null, status = null, dateFrom = null, dateTo = null } = {}) => {
         try {
             let sql = `
-                SELECT o.*, s.shift_name, 
+                SELECT o.*, s.shift_name,
                        uc.display_name as cashier_name,
                        uw.display_name as waiter_name,
                        (SELECT COUNT(*) FROM order_items oi WHERE oi.order_id = o.id) as item_count
@@ -422,7 +433,7 @@ function registerMenuItemIPC(db) {
             const runTransaction = db.transaction(() => {
                 // Update order status
                 db.prepare(`
-                    UPDATE orders 
+                    UPDATE orders
                     SET status = 'voided', void_reason = ?, void_approved_by = ?, updated_at = datetime('now','localtime')
                     WHERE id = ?
                 `).run(void_reason || null, void_approved_by || null, order_id);
@@ -433,8 +444,8 @@ function registerMenuItemIPC(db) {
                     const menuItem = db.prepare('SELECT * FROM menu_items WHERE id = ?').get(oi.menu_item_id);
                     if (menuItem && menuItem.inventory_item_id) {
                         db.prepare(`
-                            UPDATE inventory_items 
-                            SET current_stock = current_stock + ? 
+                            UPDATE inventory_items
+                            SET current_stock = current_stock + ?
                             WHERE id = ?
                         `).run(oi.quantity, menuItem.inventory_item_id);
                     }
@@ -461,8 +472,8 @@ function registerMenuItemIPC(db) {
             const newTotalAmount = Math.max(0, order.subtotal - Number(discount_amount)) + order.tax_amount;
 
             db.prepare(`
-                UPDATE orders 
-                SET discount_amount = ?, discount_reason = ?, discount_approved_by = ?, 
+                UPDATE orders
+                SET discount_amount = ?, discount_reason = ?, discount_approved_by = ?,
                     total_amount = ?, updated_at = datetime('now','localtime')
                 WHERE id = ?
             `).run(

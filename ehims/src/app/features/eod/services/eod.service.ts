@@ -33,13 +33,15 @@ interface ListHandoversResponse {
   handovers: ShiftHandover[];
   error?: string;
 }
-interface Shift {
+export interface Shift {
   id: number;
   shift_name: string;
   user_id: number;
+  user_name?: string;
   start_time: string;
   status: string;
   opening_cash: number;
+  cash_collected: number;
   total_sales?: number;
 }
 interface OpenShiftResponse {

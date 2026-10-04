@@ -74,6 +74,9 @@ export class OrderTerminalComponent implements OnInit {
 
   cart = signal<CartItem[]>([]);
   discountAmount = signal(0);
+  canApplyDiscount = computed(() =>
+    this.authService.canAccess(['admin'], 'pos_discount'),
+  );
   taxPercentage = signal(0);
   paymentMethod = signal<PaymentMethod>('cash');
   splitCashAmount = signal(0);
@@ -320,7 +323,9 @@ export class OrderTerminalComponent implements OnInit {
           quantity: c.quantity,
           notes: c.notes,
         })),
-        discount_amount: this.discountAmount() || undefined,
+        discount_amount: this.canApplyDiscount()
+          ? this.discountAmount() || undefined
+          : undefined,
         tax_amount: this.taxAmount() || undefined,
         payment_method: this.paymentMethod(),
         customer_id: this.selectedCustomer()?.id,
@@ -510,7 +515,9 @@ export class OrderTerminalComponent implements OnInit {
           }
 
           this.cart.set(items);
-          this.discountAmount.set(order.discount || 0);
+          this.discountAmount.set(
+            this.canApplyDiscount() ? order.discount || 0 : 0,
+          );
 
           this.notificationService.success(
             'Order Restored',

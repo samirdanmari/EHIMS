@@ -91,8 +91,12 @@
         <div class="report-section">
           <h4>Cash Reconciliation</h4>
           <div class="metric">
+            <span class="label">Expected Cash</span>
+            <span class="value">{{ closeResult()?.expectedCash | appCurrency }}</span>
+          </div>
+          <div class="metric">
             <span class="label">Drawer Cash</span>
-            <span class="value">{{ closeResult()?.cashCollected | appCurrency }}</span>
+            <span class="value">{{ closeResult()?.drawerCash | appCurrency }}</span>
           </div>
           <div class="metric">
             <span class="label">Variance</span>
@@ -113,7 +117,7 @@
       <form [formGroup]="form" (ngSubmit)="onCloseShift()">
         <div class="form-group">
           <label class="form-label">Select Shift</label>
-          <select class="form-select" formControlName="shift_id">
+          <select class="form-select" formControlName="shift_id" (change)="updateExpectedCash()">
             <option [ngValue]="null" disabled>Select an active shift</option>
             @for (s of activeShifts(); track s.id) {
             <option [ngValue]="s.id">{{ s.shift_name }} — {{ s.user_name }}</option>

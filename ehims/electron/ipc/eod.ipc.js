@@ -41,7 +41,14 @@ function registerEODIPC(db) {
     ipcMain.handle('shift:list-active', async (event) => {
         try {
             const shifts = db.prepare(`
-                SELECT s.*, u.display_name as user_name
+                SELECT s.*, u.display_name as user_name,
+                    (SELECT COALESCE(SUM(CASE
+                        WHEN o.is_credit = 0 AND o.payment_method = 'cash' THEN o.total_amount
+                        WHEN o.is_credit = 0 AND o.payment_method = 'split' THEN o.split_cash_amount
+                        ELSE 0
+                    END), 0)
+                    FROM orders o
+                    WHERE o.shift_id = s.id AND o.status = 'completed') as cash_collected
                 FROM shifts s
                 LEFT JOIN users u ON s.user_id = u.id
                 WHERE s.status = 'active'
@@ -63,7 +70,7 @@ function registerEODIPC(db) {
             }
 
             db.prepare(`
-                UPDATE shifts 
+                UPDATE shifts
                 SET status = 'closed', closing_cash = ?, notes = ?, end_time = CURRENT_TIMESTAMP
                 WHERE id = ?
             `).run(closing_cash || 0, notes || '', shift_id);
@@ -86,7 +93,7 @@ function registerEODIPC(db) {
             }
 
             db.prepare(`
-                UPDATE shifts 
+                UPDATE shifts
                 SET status = 'closed', closing_cash = ?, notes = ?, end_time = CURRENT_TIMESTAMP
                 WHERE id = ?
             `).run(payload.drawer_cash ?? payload.closing_cash ?? 0, payload.notes || '', payload.shift_id);
@@ -130,6 +137,8 @@ function registerEODIPC(db) {
                     splitCollected: summary.split_collected,
                     totalCollected: summary.total_collected,
                     creditCollected: summary.credit_collected,
+                    drawerCash: payload.drawer_cash ?? payload.closing_cash ?? 0,
+                    expectedCash: payload.expected_cash ?? 0,
                     variance: (payload.drawer_cash ?? 0) - (payload.expected_cash ?? 0)
                 }
             };
@@ -198,7 +207,7 @@ function registerEODIPC(db) {
             `).all(shift_id);
 
             const summary = db.prepare(`
-                SELECT 
+                SELECT
                     COUNT(*) as total_orders,
                     COALESCE(SUM(total_amount), 0) as total_sales,
                     COALESCE(SUM(discount_amount), 0) as total_discounts,
@@ -316,7 +325,7 @@ function registerEODIPC(db) {
     ipcMain.handle('eod:list-closed-shifts', async (event, { limit = 50, dateFrom = null, dateTo = null, user_id = null } = {}) => {
         try {
             let sql = `
-                SELECT 
+                SELECT
                     s.id,
                     s.shift_name,
                     s.user_id,
@@ -375,7 +384,7 @@ function registerEODIPC(db) {
     ipcMain.handle('eod:get-shift-detail', async (event, { shift_id }) => {
         try {
             const shift = db.prepare(`
-                SELECT 
+                SELECT
                     s.*,
                     u.display_name as user_name
                 FROM shifts s
@@ -408,7 +417,7 @@ function registerEODIPC(db) {
 
             // Get summary
             const summary = db.prepare(`
-                SELECT 
+                SELECT
                     COUNT(*) as total_orders,
                     COALESCE(SUM(total_amount), 0) as total_sales,
                     COALESCE(SUM(discount_amount), 0) as total_discounts,

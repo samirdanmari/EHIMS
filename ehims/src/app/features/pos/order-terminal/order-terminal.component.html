@@ -252,6 +252,7 @@
           <span>{{ subtotal() | appCurrency }}</span>
         </div>
 
+        @if (canApplyDiscount()) {
         <div class="summary-row discount-row">
           <label>Discount</label>
           <div class="discount-input-group">
@@ -260,6 +261,7 @@
               (change)="discountAmount.set(+$any($event.target).value)" placeholder="0" />
           </div>
         </div>
+        }
 
         <div class="summary-row tax-row">
           <label>Tax %</label>
@@ -354,7 +356,7 @@
       <div class="empty-message">Create or open a shift to start taking orders.</div>
     </div>
     } @else {
-  
+
     <div class="menu-section">
       <div class="menu-controls">
         <div class="search-wrapper">
@@ -432,7 +434,8 @@
 
         <div class="form-group">
           <label class="form-label">Payment Method</label>
-          <select class="form-select" [(ngModel)]="paymentMethod" [ngModelOptions]="{ updateOn: 'blur' }">
+          <select class="form-select" [ngModel]="paymentMethod()"
+            (ngModelChange)="paymentMethod.set($event)" [ngModelOptions]="{ standalone: true }">
             <option value="cash">Cash</option>
             <option value="card">Card</option>
             <option value="transfer">Bank Transfer</option>
@@ -502,6 +505,7 @@
           <span>{{ subtotal() | appCurrency }}</span>
         </div>
 
+        @if (canApplyDiscount()) {
         <div class="summary-row discount-row">
           <label>Discount</label>
           <div class="discount-input-group">
@@ -510,6 +514,7 @@
               (change)="discountAmount.set(+$any($event.target).value)" placeholder="0" />
           </div>
         </div>
+        }
 
         <div class="summary-row tax-row">
           <label>Tax %</label>

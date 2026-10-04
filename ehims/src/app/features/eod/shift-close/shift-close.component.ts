@@ -6,11 +6,9 @@ import {
   FormControl,
   Validators,
 } from '@angular/forms';
-import { EODService } from '../services/eod.service';
-import { InventoryService } from '../../../core/services/inventory.service';
+import { EODService, Shift } from '../services/eod.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
-import { ActiveShift } from '../../../core/models/inventory.model';
 import { EODSummary } from '../../../core/models/eod.model';
 import { CurrencyPipe } from '../../../shared/pipes/currency.pipe';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
@@ -29,7 +27,6 @@ import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialo
 })
 export class ShiftCloseComponent implements OnInit {
   private eodService = inject(EODService);
-  private inventoryService = inject(InventoryService);
   private authService = inject(AuthService);
   private notificationService = inject(NotificationService);
 
@@ -37,7 +34,7 @@ export class ShiftCloseComponent implements OnInit {
 
   isLoading = signal(true);
   isProcessing = signal(false);
-  activeShifts = signal<ActiveShift[]>([]);
+  activeShifts = signal<Shift[]>([]);
   closeResult = signal<EODSummary | null>(null);
 
   form = new FormGroup({
@@ -59,9 +56,24 @@ export class ShiftCloseComponent implements OnInit {
   }
 
   async loadShifts() {
-    const res = await this.inventoryService.listActiveShifts();
+    const res = await this.eodService.listActiveShifts();
     if (res.success) {
       this.activeShifts.set(res.shifts);
+      if (res.shifts.length === 1) {
+        this.form.controls.shift_id.setValue(res.shifts[0].id);
+        this.updateExpectedCash();
+      }
+    }
+  }
+
+  updateExpectedCash() {
+    const shift = this.activeShifts().find(
+      (item) => item.id === this.form.controls.shift_id.value,
+    );
+    if (shift) {
+      this.form.controls.expected_cash.setValue(
+        (shift.opening_cash || 0) + (shift.cash_collected || 0),
+      );
     }
   }
 
@@ -93,7 +105,7 @@ export class ShiftCloseComponent implements OnInit {
       const res = await this.eodService.closeShift({
         shift_id: value.shift_id as number,
         drawer_cash: value.drawer_cash,
-        expected_cash: value.expected_cash || undefined,
+        expected_cash: value.expected_cash,
         stock_verified: value.stock_verified || undefined,
         notes: value.notes || undefined,
         outgoing_user: userId,

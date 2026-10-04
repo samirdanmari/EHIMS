@@ -64,4 +64,6 @@ export interface EODSummary {
   splitCollected: number;
   totalCollected: number;
   variance: number;
+  drawerCash: number;
+  expectedCash: number;
 }

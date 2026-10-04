@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
 const VALID_PERMISSIONS = new Set([
-    'inventory', 'pos', 'suppliers', 'reports', 'eod', 'customers', 'users', 'settings'
+    'inventory', 'pos', 'pos_discount', 'suppliers', 'reports', 'eod', 'customers', 'users', 'settings'
 ]);
 
 function normalizePermissions(permissions) {

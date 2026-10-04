@@ -1,7 +1,7 @@
 {
   "name": "Depot",
-  "version": "2.3.0",
-  "description": "sales & Inventory Management System",
+  "version": "2.5.0",
+  "description": "POS & Inventory Management System",
   "main": "electron/main.js",
   "scripts": {
     "ng": "ng",

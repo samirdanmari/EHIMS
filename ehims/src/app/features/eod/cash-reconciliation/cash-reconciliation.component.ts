@@ -62,7 +62,7 @@ export class CashReconciliationComponent implements OnInit {
   expectedCash = computed(() => {
     const shift = this.activeShift();
     if (!shift) return 0;
-    return (shift.opening_cash || 0) + (shift.total_sales || 0);
+    return (shift.opening_cash || 0) + (shift.cash_collected || 0);
   });
 
   discrepancy = computed(() => {

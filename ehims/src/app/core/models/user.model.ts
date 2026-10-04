@@ -17,6 +17,11 @@ export const APP_PERMISSIONS = [
     description: 'Access order entry and POS tools.',
   },
   {
+    key: 'pos_discount',
+    label: 'Apply POS Discounts',
+    description: 'Apply discounts to POS orders.',
+  },
+  {
     key: 'menu_management',
     label: 'Menu Management',
     description: 'Add, edit, and deactivate menu items and categories.',
