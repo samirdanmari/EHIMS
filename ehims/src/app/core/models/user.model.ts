@@ -22,9 +22,14 @@ export const APP_PERMISSIONS = [
     description: 'Apply discounts to POS orders.',
   },
   {
+    key: 'pos_void_printed',
+    label: 'Void Printed Orders',
+    description: 'Void orders after a receipt has been printed.',
+  },
+  {
     key: 'menu_management',
-    label: 'Menu Management',
-    description: 'Add, edit, and deactivate menu items and categories.',
+    label: 'Product Catalog',
+    description: 'Add, edit, and deactivate products and categories.',
   },
   {
     key: 'suppliers',

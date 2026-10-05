@@ -2,7 +2,7 @@
   <div class="page-header">
     <div>
       <h2 class="page-title">Stock Audit Report</h2>
-      <p class="page-subtitle">Opening, purchased, issued, and closing stock for a selected date range.</p>
+      <p class="page-subtitle">Opening and closing stock with purchases, issues, and partner deal movements.</p>
     </div>
     <button type="button" class="search-btn" (click)="printReport()">Print Report</button>
     <button type="button" class="search-btn" (click)="savePdf()">Save PDF</button>
@@ -50,7 +50,9 @@
             <th><button class="sort-button" (click)="sortBy('category_name')">Category</button></th>
             <th><button class="sort-button" (click)="sortBy('opening')">Opening</button></th>
             <th><button class="sort-button" (click)="sortBy('purchased')">Purchased</button></th>
+            <th><button class="sort-button" (click)="sortBy('deal_received')">Partner In</button></th>
             <th><button class="sort-button" (click)="sortBy('issued')">Issued</button></th>
+            <th><button class="sort-button" (click)="sortBy('deal_issued')">Partner Out</button></th>
             <th><button class="sort-button" (click)="sortBy('closing')">Closing</button></th>
           </tr>
         </thead>
@@ -60,7 +62,9 @@
             <td>{{ row.category_name || '—' }}</td>
             <td>{{ row.opening }} {{ row.unit }}</td>
             <td class="positive">+{{ row.purchased }} {{ row.unit }}</td>
+            <td class="positive">+{{ row.deal_received }} {{ row.unit }}</td>
             <td class="negative">-{{ row.issued }} {{ row.unit }}</td>
+            <td class="negative">-{{ row.deal_issued }} {{ row.unit }}</td>
             <td class="closing-value">{{ row.closing }} {{ row.unit }}</td>
           </tr>}</tbody>
       </table>} @else {<div class="empty-message">

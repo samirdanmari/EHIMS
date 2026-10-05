@@ -113,7 +113,9 @@ export class StockAuditReportComponent implements OnInit {
       { key: 'category_name', label: 'Category' },
       { key: 'opening', label: 'Opening' },
       { key: 'purchased', label: 'Purchased' },
+      { key: 'deal_received', label: 'Partner In' },
       { key: 'issued', label: 'Issued' },
+      { key: 'deal_issued', label: 'Partner Out' },
       { key: 'closing', label: 'Closing' },
     ];
   }
@@ -123,7 +125,9 @@ export class StockAuditReportComponent implements OnInit {
       ...row,
       opening: `${row.opening} ${row.unit}`,
       purchased: `${row.purchased} ${row.unit}`,
+      deal_received: `${row.deal_received} ${row.unit}`,
       issued: `${row.issued} ${row.unit}`,
+      deal_issued: `${row.deal_issued} ${row.unit}`,
       closing: `${row.closing} ${row.unit}`,
     }));
   }

@@ -79,6 +79,7 @@ export interface Order {
   void_reason?: string;
   void_approved_by?: number;
   item_count?: number; // joined aggregate
+  receipt_printed?: number;
   created_at: string;
   completed_at?: string;
   synced: number;

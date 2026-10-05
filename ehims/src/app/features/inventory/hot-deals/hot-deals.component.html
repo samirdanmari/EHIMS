@@ -1,0 +1,181 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Hot Deals</h2>
+      <p class="page-subtitle">Record discounted stock transactions directly with business partners.</p>
+    </div>
+  </div>
+
+  <app-inventory-tab></app-inventory-tab>
+
+  <div class="page-content">
+    <div class="deals-layout">
+      <section class="card deal-form-panel">
+        <h3 class="card-title">Record a partner deal</h3>
+        <form [formGroup]="form" (ngSubmit)="onSubmit()">
+          <div class="form-group">
+            <label class="form-label" for="partner-name">Business partner</label>
+            <input id="partner-name" class="form-input" formControlName="partner_name"
+              placeholder="Partner or business name" maxlength="120" />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Stock direction</label>
+              <div class="direction-control" role="group" aria-label="Stock direction">
+                <button type="button" [class.active]="form.controls.direction.value === 'out'"
+                  [attr.aria-pressed]="form.controls.direction.value === 'out'" (click)="setDirection('out')">
+                  Issue to partner
+                </button>
+                <button type="button" [class.active]="form.controls.direction.value === 'in'"
+                  [attr.aria-pressed]="form.controls.direction.value === 'in'" (click)="setDirection('in')">
+                  Receive from partner
+                </button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="payment-method">Payment method</label>
+              <select id="payment-method" class="form-select" formControlName="payment_method">
+                <option value="cash">Cash</option>
+                <option value="bank_transfer">Bank transfer</option>
+                <option value="credit">Credit</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="deal-editor-scroll">
+            <div class="line-heading">
+              <span>Item</span><span>Qty</span><span>Available</span><span>Regular rate</span><span>Deal
+                rate</span><span></span>
+            </div>
+            <div formArrayName="lines" class="deal-lines">
+              @for (line of lines.controls; track line; let i = $index) {
+              <div [formGroupName]="i" class="deal-line">
+                <select class="form-select" formControlName="item_id" (change)="onItemSelected(i)" aria-label="Item">
+                  <option [ngValue]="null" disabled>Select item</option>
+                  @for (item of items(); track item.id) {
+                  <option [ngValue]="item.id">{{ item.name }} ({{ item.unit }})</option>
+                  }
+                </select>
+                <input class="form-input" type="number" min="0.01" step="0.01" formControlName="quantity"
+                  aria-label="Quantity" />
+                <span class="stock-value">{{ availableStock(line.controls.item_id.value) }}</span>
+                <input class="form-input" type="number" min="0" step="0.01" formControlName="regular_unit_rate"
+                  aria-label="Regular unit rate" />
+                <input class="form-input" type="number" min="0" step="0.01" formControlName="deal_unit_rate"
+                  aria-label="Deal unit rate" />
+                <button type="button" class="btn-icon" (click)="removeLine(i)" [disabled]="lines.length === 1"
+                  [attr.aria-label]="'Remove item ' + (i + 1)" title="Remove item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+                @if (line.controls.deal_unit_rate.value > line.controls.regular_unit_rate.value) {
+                <span class="rate-error">Deal rate must not exceed regular rate.</span>
+                }
+              </div>
+              }
+            </div>
+          </div>
+
+          @if (!outgoingStockIsAvailable()) {
+          <p class="stock-error">Requested quantity exceeds available stock.</p>
+          }
+
+          <button type="button" class="btn btn-secondary btn-sm add-line-btn" (click)="addLine()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Add item
+          </button>
+
+          <div class="form-group notes-group">
+            <label class="form-label" for="deal-notes">Notes</label>
+            <textarea id="deal-notes" class="form-textarea" formControlName="notes"
+              placeholder="Optional reference or terms"></textarea>
+          </div>
+
+          <div class="deal-totals">
+            <span>Discount <strong>{{ totalDiscount() | appCurrency }}</strong></span>
+            <span>Deal total <strong>{{ totalAmount() | appCurrency }}</strong></span>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary"
+              [disabled]="form.invalid || !ratesAreValid() || !outgoingStockIsAvailable() || isSaving() || isLoading() || items().length === 0">
+              {{ isSaving() ? 'Recording...' : 'Record deal' }}
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section class="table-container">
+        <div class="table-header">
+          <span class="section-label">Recent partner deals</span>
+          <span class="record-count">{{ deals().length }}</span>
+        </div>
+        <div class="table-body">
+          @if (isLoading()) {
+          <div class="empty-state">
+            <div class="empty-message">Loading partner deals...</div>
+          </div>
+          } @else if (deals().length === 0) {
+          <div class="empty-state">
+            <div class="empty-title">No partner deals yet</div>
+            <div class="empty-message">Recorded stock deals will appear here.</div>
+          </div>
+          } @else {
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Partner</th>
+                  <th>Movement</th>
+                  <th>Items</th>
+                  <th>Discount</th>
+                  <th>Total</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (deal of deals(); track deal.id) {
+                <tr class="clickable-row" (click)="toggleExpand(deal)">
+                  <td>{{ deal.partner_name }}</td>
+                  <td><span class="movement-tag" [class.received]="deal.direction === 'in'">
+                      {{ deal.direction === 'in' ? 'Received' : 'Issued' }}
+                    </span></td>
+                  <td>{{ deal.item_count }}</td>
+                  <td>{{ deal.discount_amount | appCurrency }}</td>
+                  <td>{{ deal.total_amount | appCurrency }}</td>
+                  <td>{{ formatDate(deal.created_at) }}</td>
+                </tr>
+                @if (expandedDealId() === deal.id) {
+                <tr class="expanded-row">
+                  <td colspan="6">
+                    <div class="expanded-items">
+                      @for (item of expandedItems(); track item.id) {
+                      <div class="expanded-item-row">
+                        <span>{{ item.item_name }} · {{ item.quantity }} {{ item.item_unit }}</span>
+                        <span>{{ item.regular_unit_rate | appCurrency }} →
+                          {{ item.deal_unit_rate | appCurrency }}</span>
+                        <strong>{{ item.total_amount | appCurrency }}</strong>
+                      </div>
+                      }
+                    </div>
+                    <div class="deal-meta">Recorded by {{ deal.recorded_by_name || '—' }} ·
+                      {{ deal.payment_method.replace('_', ' ') }}</div>
+                    @if (deal.notes) { <p class="deal-notes">{{ deal.notes }}</p> }
+                  </td>
+                </tr>
+                }
+                }
+              </tbody>
+            </table>
+          </div>
+          }
+        </div>
+      </section>
+    </div>
+  </div>
+</div>

@@ -363,6 +363,132 @@ function registerInventoryIPC(db) {
     });
 
     // ---------------------------------------------------------
+    // BUSINESS PARTNER HOT DEALS
+    // ---------------------------------------------------------
+    ipcMain.handle('inventory:create-hot-deal', async (event, {
+        partner_name, direction, payment_method, recorded_by, notes, items
+    }) => {
+        try {
+            const partnerName = typeof partner_name === 'string' ? partner_name.trim() : '';
+            if (!partnerName || !recorded_by) {
+                return { success: false, error: 'Partner name and recording user are required' };
+            }
+            if (!['in', 'out'].includes(direction)) {
+                return { success: false, error: 'Choose whether items are received or issued' };
+            }
+            if (!['cash', 'bank_transfer', 'credit'].includes(payment_method)) {
+                return { success: false, error: 'Invalid payment method' };
+            }
+            if (!Array.isArray(items) || items.length === 0) {
+                return { success: false, error: 'At least one item is required' };
+            }
+
+            const getItem = db.prepare(
+                'SELECT * FROM inventory_items WHERE id = ? AND is_active = 1'
+            );
+            const insertDeal = db.prepare(`
+                INSERT INTO hot_deals (partner_name, direction, payment_method, recorded_by, notes)
+                VALUES (?, ?, ?, ?, ?)
+            `);
+            const insertDealItem = db.prepare(`
+                INSERT INTO hot_deal_items
+                    (deal_id, item_id, quantity, regular_unit_rate, deal_unit_rate, discount_amount, total_amount)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            `);
+            const adjustStock = db.prepare(`
+                UPDATE inventory_items
+                SET current_stock = current_stock + ?, updated_at = datetime('now','localtime')
+                WHERE id = ?
+            `);
+
+            const runTransaction = db.transaction((dealItems) => {
+                const quantitiesByItem = new Map();
+                const validatedItems = dealItems.map((it) => {
+                    const item = getItem.get(it.item_id);
+                    const quantity = Number(it.quantity);
+                    const regularRate = Number(it.regular_unit_rate);
+                    const dealRate = Number(it.deal_unit_rate);
+                    if (!item || !(quantity > 0) || !Number.isFinite(quantity) ||
+                        !(regularRate >= 0) || !Number.isFinite(regularRate) ||
+                        !(dealRate >= 0) || !Number.isFinite(dealRate) || dealRate > regularRate) {
+                        throw new Error('Check each item, quantity, and discounted rate');
+                    }
+                    quantitiesByItem.set(item.id, (quantitiesByItem.get(item.id) || 0) + quantity);
+                    return { item, quantity, regularRate, dealRate };
+                });
+
+                if (direction === 'out') {
+                    for (const [itemId, quantity] of quantitiesByItem) {
+                        const item = getItem.get(itemId);
+                        if (quantity > item.current_stock) {
+                            throw new Error(`Insufficient stock for ${item.name}: available ${item.current_stock}, requested ${quantity}`);
+                        }
+                    }
+                }
+
+                const dealId = insertDeal.run(
+                    partnerName, direction, payment_method, recorded_by, notes || null
+                ).lastInsertRowid;
+                let totalAmount = 0;
+                for (const line of validatedItems) {
+                    const discountAmount = line.quantity * (line.regularRate - line.dealRate);
+                    const lineTotal = line.quantity * line.dealRate;
+                    insertDealItem.run(
+                        dealId, line.item.id, line.quantity, line.regularRate,
+                        line.dealRate, discountAmount, lineTotal
+                    );
+                    adjustStock.run(direction === 'in' ? line.quantity : -line.quantity, line.item.id);
+                    totalAmount += lineTotal;
+                }
+                return { dealId, totalAmount };
+            });
+
+            return { success: true, ...runTransaction(items) };
+        } catch (err) {
+            console.error('[inventory:create-hot-deal] Error:', err.message);
+            return { success: false, error: err.message };
+        }
+    });
+
+    ipcMain.handle('inventory:list-hot-deals', async (_event, { limit = 50 } = {}) => {
+        try {
+            const rows = db.prepare(`
+                SELECT d.*,
+                    u.display_name as recorded_by_name,
+                    COUNT(di.id) as item_count,
+                    COALESCE(SUM(di.total_amount), 0) as total_amount,
+                    COALESCE(SUM(di.discount_amount), 0) as discount_amount
+                FROM hot_deals d
+                LEFT JOIN hot_deal_items di ON di.deal_id = d.id
+                LEFT JOIN users u ON u.id = d.recorded_by
+                GROUP BY d.id
+                ORDER BY d.created_at DESC, d.id DESC
+                LIMIT ?
+            `).all(limit);
+            return { success: true, deals: rows };
+        } catch (err) {
+            console.error('[inventory:list-hot-deals] Error:', err.message);
+            return { success: false, error: err.message, deals: [] };
+        }
+    });
+
+    ipcMain.handle('inventory:get-hot-deal-items', async (_event, { deal_id }) => {
+        try {
+            const rows = db.prepare(`
+                SELECT di.*, i.name as item_name, i.unit as item_unit
+                FROM hot_deal_items di
+                LEFT JOIN inventory_items i ON i.id = di.item_id
+                WHERE di.deal_id = ?
+                ORDER BY di.id ASC
+            `).all(deal_id);
+            return { success: true, items: rows };
+        } catch (err) {
+            console.error('[inventory:get-hot-deal-items] Error:', err.message);
+            return { success: false, error: err.message, items: [] };
+        }
+    });
+
+    // ---------------------------------------------------------
     // STOCK AUDIT
     // ---------------------------------------------------------
     // Note: EHIMS does not store daily stock snapshots, so "opening" and
@@ -397,12 +523,38 @@ function registerInventoryIPC(db) {
                 JOIN stock_issuances si ON sii.issuance_id = si.id
                 WHERE sii.item_id = ? AND date(si.issued_at) >= date(?) AND date(si.issued_at) <= date(?)
             `);
+            const soldStmt = db.prepare(`
+                SELECT COALESCE(SUM(oi.quantity),0) as qty
+                FROM order_items oi
+                JOIN orders o ON oi.order_id = o.id
+                JOIN menu_items m ON oi.menu_item_id = m.id
+                WHERE m.inventory_item_id = ? AND o.status != 'voided'
+                    AND date(o.created_at) >= date(?) AND date(o.created_at) <= date(?)
+            `);
+            const dealReceivedStmt = db.prepare(`
+                SELECT COALESCE(SUM(di.quantity),0) as qty
+                FROM hot_deal_items di
+                JOIN hot_deals d ON di.deal_id = d.id
+                WHERE di.item_id = ? AND d.direction = 'in'
+                    AND date(d.created_at) >= date(?) AND date(d.created_at) <= date(?)
+            `);
+            const dealIssuedStmt = db.prepare(`
+                SELECT COALESCE(SUM(di.quantity),0) as qty
+                FROM hot_deal_items di
+                JOIN hot_deals d ON di.deal_id = d.id
+                WHERE di.item_id = ? AND d.direction = 'out'
+                    AND date(d.created_at) >= date(?) AND date(d.created_at) <= date(?)
+            `);
 
             const report = items.map(item => {
                 const purchased = purchasedStmt.get(item.id, dateFrom, dateTo).qty;
-                const issued = issuedStmt.get(item.id, dateFrom, dateTo).qty;
+                const issued =
+                    issuedStmt.get(item.id, dateFrom, dateTo).qty +
+                    soldStmt.get(item.id, dateFrom, dateTo).qty;
+                const deal_received = dealReceivedStmt.get(item.id, dateFrom, dateTo).qty;
+                const deal_issued = dealIssuedStmt.get(item.id, dateFrom, dateTo).qty;
                 const closing = item.current_stock;
-                const opening = closing - purchased + issued;
+                const opening = closing - purchased - deal_received + issued + deal_issued;
                 return {
                     item_id: item.id,
                     name: item.name,
@@ -412,6 +564,8 @@ function registerInventoryIPC(db) {
                     opening,
                     purchased,
                     issued,
+                    deal_received,
+                    deal_issued,
                     closing
                 };
             });

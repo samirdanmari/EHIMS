@@ -272,7 +272,7 @@ function registerUsersIPC(db) {
                 { name: 'manager', label: 'Manager', description: 'Manage inventory, suppliers, EOD, users' },
                 { name: 'storekeeper', label: 'Store Keeper', description: 'Manage inventory, purchases, stock' },
                 { name: 'cashier', label: 'Cashier', description: 'Place orders, process payments' },
-                { name: 'waiter', label: 'Waiter', description: 'View menu, place orders' }
+                { name: 'waiter', label: 'Waiter', description: 'View products, place orders' }
             ];
             return { success: true, roles };
         } catch (err) {

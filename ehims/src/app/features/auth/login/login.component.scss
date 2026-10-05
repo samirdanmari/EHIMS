@@ -257,6 +257,11 @@
     display: inline-block;
     opacity: 0.4;
   }
+
+  .footer-update {
+    color: $success;
+    font-weight: $font-weight-semibold;
+  }
 }
 
 @media (max-width: 600px) {

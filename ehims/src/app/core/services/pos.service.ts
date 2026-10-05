@@ -156,7 +156,6 @@ export class PosService {
   voidOrder(payload: {
     order_id: number;
     void_reason?: string;
-    void_approved_by?: number;
   }): Promise<VoidOrderResponse> {
     return this.electronService.invoke<VoidOrderResponse>(
       'order:void',

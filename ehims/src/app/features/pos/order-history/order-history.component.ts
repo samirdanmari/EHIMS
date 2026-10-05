@@ -127,31 +127,30 @@ export class OrderHistoryComponent implements OnInit {
     }
   }
 
+  canVoidOrder(order: Order): boolean {
+    if (order.status === 'voided') return false;
+    if (!order.receipt_printed) return true;
+    return (
+      this.authService.currentUser()?.role === 'admin' ||
+      this.authService.hasPermission('pos_void_printed')
+    );
+  }
+
   async onVoidOrder(order: Order) {
     const confirmed = await this.confirmDialog.open({
-      title: 'Void order?',
+      title: 'Cancel order?',
       message: `Order #${order.order_number} will be voided and inventory will be restored.`,
-      confirmText: 'Void Order',
+      confirmText: 'Cancel Order',
       type: 'danger',
     });
 
     if (!confirmed) return;
-
-    const userId = this.authService.currentUser()?.id;
-    if (!userId) {
-      this.notificationService.error(
-        'Not signed in',
-        'Could not identify the current user.',
-      );
-      return;
-    }
 
     this.isProcessing.set(true);
     try {
       const res = await this.posService.voidOrder({
         order_id: order.id,
         void_reason: 'Voided by user',
-        void_approved_by: userId,
       });
 
       if (res.success) {

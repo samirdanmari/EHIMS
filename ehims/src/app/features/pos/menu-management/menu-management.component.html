@@ -1,8 +1,8 @@
 <div class="page">
   <div class="page-header">
     <div>
-      <h2 class="page-title">Menu Management</h2>
-      <p class="page-subtitle">Create and manage menu items with pricing and inventory links.</p>
+      <h2 class="page-title">Product Catalog</h2>
+      <p class="page-subtitle">Create and manage products, prices, and inventory links.</p>
     </div>
     <div class="page-actions">
       @if (canManageMenu()) {
@@ -27,7 +27,7 @@
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
-          <input class="search-input" type="text" placeholder="Search menu items..." [value]="searchTerm()"
+          <input class="search-input" type="text" placeholder="Search products..." [value]="searchTerm()"
             (input)="onSearchChange($any($event.target).value)" />
         </div>
       </div>
@@ -35,7 +35,7 @@
       <div class="table-body">
         @if (isLoading()) {
         <div class="empty-state">
-          <p class="empty-message">Loading menu items...</p>
+          <p class="empty-message">Loading products...</p>
         </div>
         } @else if (filteredItems().length === 0) {
         <div class="empty-state">
@@ -45,9 +45,9 @@
               <polyline points="9 22 9 12 15 12 15 22" />
             </svg>
           </div>
-          <div class="empty-title">No menu items found</div>
+          <div class="empty-title">No products found</div>
           <div class="empty-message">
-            {{ canManageMenu() ? 'Add your first menu item to get started.' : 'No menu items found.' }}</div>
+            {{ canManageMenu() ? 'Add your first product to get started.' : 'No products found.' }}</div>
           @if (canManageMenu()) {
           <button class="btn btn-primary" (click)="openCreateModal()">New Item</button>
           }
@@ -132,7 +132,7 @@
 <div class="modal-overlay" (click)="closeModal()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h3>{{ editingItem() ? 'Edit Menu Item' : 'New Menu Item' }}</h3>
+      <h3>{{ editingItem() ? 'Edit Product' : 'New Product' }}</h3>
       <button class="btn-icon" (click)="closeModal()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="18" y1="6" x2="6" y2="18" />
@@ -144,7 +144,7 @@
       <div class="modal-body">
         <div class="form-group">
           <label class="form-label">Item Name</label>
-          <input class="form-input" type="text" formControlName="name" placeholder="e.g. Grilled Chicken Breast" />
+          <input class="form-input" type="text" formControlName="name" placeholder="e.g. Product name" />
           @if (form.controls.name.invalid && form.controls.name.touched) {
           <span class="form-error">Item name is required</span>
           }
@@ -168,7 +168,7 @@
 
           @if (isCreatingCategory()) {
           <div class="new-category-form">
-            <input class="form-input" type="text" placeholder="e.g. Appetizers" [value]="newCategoryName()"
+            <input class="form-input" type="text" placeholder="e.g. Accessories" [value]="newCategoryName()"
               (input)="newCategoryName.set($any($event.target).value)" />
             <button type="button" class="btn btn-sm btn-primary" (click)="createNewCategory()"
               [disabled]="!newCategoryName().trim() || isSaving()">
@@ -185,11 +185,27 @@
           }
         </div>
 
-        <!-- Multi-inventory item selection -->
         <div class="form-group">
-          <label class="form-label">Link to Inventory Items</label>
-          <p class="form-hint">Select one or more inventory items that this menu item uses. Stock will be deducted when
-            orders are completed.</p>
+          <label class="form-label">Inventory tracking</label>
+          <select class="form-select" [value]="inventoryLinkMode()"
+            (change)="setInventoryLinkMode($any($event.target).value)">
+            <option value="recipe">Recipe ingredients</option>
+            <option value="direct">Sell a linked inventory item</option>
+          </select>
+          @if (inventoryLinkMode() === 'direct') {
+          <p class="form-hint">Each POS quantity sold deducts one unit of the selected inventory item.</p>
+          @if (inventoryItems().length === 0) {
+          <p class="form-hint">No inventory items available. Add inventory items first.</p>
+          } @else {
+          <select class="form-select" formControlName="inventory_item_id">
+            <option [ngValue]="null">Select an inventory item</option>
+            @for (inv of inventoryItems(); track inv.id) {
+            <option [ngValue]="inv.id">{{ inv.name }} · {{ inv.current_stock }} {{ inv.unit }} in stock</option>
+            }
+          </select>
+          }
+          } @else {
+          <p class="form-hint">Link components or ingredients used to prepare or assemble this product.</p>
           @if (inventoryItems().length === 0) {
           <p class="form-hint">No inventory items available. Add inventory items first.</p>
           } @else {
@@ -206,6 +222,7 @@
           @if (selectedInventoryItemIds().size > 0) {
           <p class="form-hint selected-hint">✓ {{ selectedInventoryItemIds().size }} item(s) linked:
             {{ getSelectedInventoryNames() }}</p>
+          }
           }
           }
         </div>

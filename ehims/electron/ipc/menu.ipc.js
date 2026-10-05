@@ -1,4 +1,5 @@
 const { ipcMain } = require('electron');
+const { getSessionForSender } = require('../session-context');
 
 function registerMenuItemIPC(db) {
     const canApplyDiscount = (userId) => {
@@ -175,7 +176,7 @@ function registerMenuItemIPC(db) {
                     name?.trim() || existing.name,
                     category_id ?? existing.category_id,
                     Number(selling_price ?? existing.selling_price),
-                    inventory_item_id ?? existing.inventory_item_id,
+                    inventory_item_id !== undefined ? inventory_item_id : existing.inventory_item_id,
                     description ?? existing.description,
                     is_available !== undefined ? (is_available ? 1 : 0) : existing.is_available,
                     id
@@ -363,7 +364,11 @@ function registerMenuItemIPC(db) {
                 SELECT o.*, s.shift_name,
                        uc.display_name as cashier_name,
                        uw.display_name as waiter_name,
-                       (SELECT COUNT(*) FROM order_items oi WHERE oi.order_id = o.id) as item_count
+                       (SELECT COUNT(*) FROM order_items oi WHERE oi.order_id = o.id) as item_count,
+                       EXISTS(
+                           SELECT 1 FROM print_log pl
+                           WHERE pl.order_id = o.id AND pl.status = 'success'
+                       ) as receipt_printed
                 FROM orders o
                 LEFT JOIN shifts s ON o.shift_id = s.id
                 LEFT JOIN users uc ON o.cashier_id = uc.id
@@ -420,7 +425,7 @@ function registerMenuItemIPC(db) {
         }
     });
 
-    ipcMain.handle('order:void', async (event, { order_id, void_reason, void_approved_by }) => {
+    ipcMain.handle('order:void', async (event, { order_id, void_reason }) => {
         try {
             const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(order_id);
             if (!order) {
@@ -430,13 +435,43 @@ function registerMenuItemIPC(db) {
                 return { success: false, error: 'Order is already voided' };
             }
 
+            const sessionId = getSessionForSender(event.sender.id);
+            if (!sessionId) {
+                return { success: false, error: 'Your session is invalid or has expired. Please sign in again.' };
+            }
+            const actor = db.prepare(`
+                SELECT u.id, u.role,
+                       EXISTS(
+                           SELECT 1 FROM user_permissions up
+                           WHERE up.user_id = u.id AND up.permission = 'pos_void_printed'
+                       ) as can_void_printed
+                FROM sessions s
+                JOIN users u ON u.id = s.user_id
+                WHERE s.id = ? AND s.logout_at IS NULL AND u.is_active = 1
+            `).get(sessionId);
+            if (!actor) {
+                return { success: false, error: 'Your session is invalid or has expired. Please sign in again.' };
+            }
+
+            const receiptPrinted = db.prepare(`
+                SELECT EXISTS(
+                    SELECT 1 FROM print_log WHERE order_id = ? AND status = 'success'
+                ) as printed
+            `).get(order_id).printed;
+            if (receiptPrinted && actor.role !== 'admin' && !actor.can_void_printed) {
+                return {
+                    success: false,
+                    error: 'Only an admin or a user with the Void Printed Orders permission can void an order after its receipt has been printed.',
+                };
+            }
+
             const runTransaction = db.transaction(() => {
                 // Update order status
                 db.prepare(`
                     UPDATE orders
-                    SET status = 'voided', void_reason = ?, void_approved_by = ?, updated_at = datetime('now','localtime')
+                    SET status = 'voided', void_reason = ?, void_approved_by = ?
                     WHERE id = ?
-                `).run(void_reason || null, void_approved_by || null, order_id);
+                `).run(void_reason || null, actor.id, order_id);
 
                 // Reverse inventory deductions
                 const orderItems = db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(order_id);

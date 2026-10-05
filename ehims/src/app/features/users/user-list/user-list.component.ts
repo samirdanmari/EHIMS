@@ -113,7 +113,7 @@ export class UserListComponent implements OnInit {
         {
           name: 'waiter',
           label: 'Waiter',
-          description: 'View menu and place orders',
+          description: 'View products and place orders',
         },
       ]);
     }

@@ -94,6 +94,10 @@
     <!-- Footer -->
     <div class="login-footer" aria-label="Application information">
       <span class="footer-version">v2.0.0</span>
+      @if (updateService.updateAvailable() && updateService.updateInfo(); as update) {
+      <span class="separator" aria-hidden="true">·</span>
+      <span class="footer-update">Update v{{ update.latestVersion }} available</span>
+      }
       <span class="separator" aria-hidden="true">·</span>
       <span class="footer-credit">Powered by Samir Tech Solutions</span>
       <span class="separator" aria-hidden="true">·</span>

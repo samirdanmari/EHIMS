@@ -23,6 +23,13 @@ export const INVENTORY_ROUTES: Routes = [
       ),
   },
   {
+    path: 'hot-deals',
+    loadComponent: () =>
+      import('./hot-deals/hot-deals.component').then(
+        (m) => m.HotDealsComponent,
+      ),
+  },
+  {
     path: 'audit',
     loadComponent: () =>
       import('../audit/stock-audit/stock-audit.component').then(

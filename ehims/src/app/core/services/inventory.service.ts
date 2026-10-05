@@ -3,6 +3,10 @@ import { ElectronService } from '../services/electron.service';
 import {
   ActiveShift,
   Category,
+  HotDeal,
+  HotDealItem,
+  HotDealLineInput,
+  HotDealPaymentMethod,
   InventoryItem,
   IssuanceLineInput,
   PurchaseEntry,
@@ -76,6 +80,22 @@ interface IssuanceItemsResponse {
 interface StockAuditResponse {
   success: boolean;
   report: StockAuditRow[];
+  error?: string;
+}
+interface HotDealResponse {
+  success: boolean;
+  dealId?: number;
+  totalAmount?: number;
+  error?: string;
+}
+interface ListHotDealsResponse {
+  success: boolean;
+  deals: HotDeal[];
+  error?: string;
+}
+interface HotDealItemsResponse {
+  success: boolean;
+  items: HotDealItem[];
   error?: string;
 }
 
@@ -223,6 +243,35 @@ export class InventoryService {
     return this.electronService.invoke<IssuanceItemsResponse>(
       'inventory:get-issuance-items',
       { issuance_id: issuanceId },
+    );
+  }
+
+  // ---------------- Business Partner Hot Deals ----------------
+  createHotDeal(payload: {
+    partner_name: string;
+    direction: 'in' | 'out';
+    payment_method: HotDealPaymentMethod;
+    recorded_by: number;
+    notes?: string;
+    items: HotDealLineInput[];
+  }): Promise<HotDealResponse> {
+    return this.electronService.invoke<HotDealResponse>(
+      'inventory:create-hot-deal',
+      payload,
+    );
+  }
+
+  listHotDeals(limit = 50): Promise<ListHotDealsResponse> {
+    return this.electronService.invoke<ListHotDealsResponse>(
+      'inventory:list-hot-deals',
+      { limit },
+    );
+  }
+
+  getHotDealItems(dealId: number): Promise<HotDealItemsResponse> {
+    return this.electronService.invoke<HotDealItemsResponse>(
+      'inventory:get-hot-deal-items',
+      { deal_id: dealId },
     );
   }
 

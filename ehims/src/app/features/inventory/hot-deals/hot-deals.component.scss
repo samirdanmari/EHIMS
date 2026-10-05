@@ -1,0 +1,220 @@
+@use "../../../styles/variables" as *;
+@use "../../../styles/mixins" as *;
+
+.deals-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: $space-5;
+  align-items: start;
+
+  @include respond-to("lg") {
+    grid-template-columns: minmax(420px, 0.9fr) minmax(0, 1.2fr);
+  }
+}
+
+.card-title {
+  margin: 0 0 $space-5;
+  color: $text-primary;
+  font-family: $font-family-heading;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(150px, 0.8fr);
+  gap: $space-4;
+  margin-top: $space-4;
+}
+
+.direction-control {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 40px;
+  padding: 3px;
+  background: $bg-tertiary;
+  border: 1px solid $glass-border;
+  border-radius: $radius-md;
+
+  button {
+    padding: $space-2;
+    border: 0;
+    border-radius: $radius-sm;
+    background: transparent;
+    color: $text-secondary;
+    font: inherit;
+    font-size: $font-size-xs;
+    cursor: pointer;
+
+    &.active {
+      background: $primary;
+      color: $text-primary;
+    }
+  }
+}
+
+.line-heading,
+.deal-line {
+  min-width: 610px;
+  display: grid;
+  grid-template-columns:
+    minmax(150px, 2fr) 72px 65px minmax(90px, 1fr) minmax(90px, 1fr)
+    32px;
+  gap: $space-2;
+  align-items: center;
+}
+
+.line-heading {
+  margin: $space-5 0 $space-2;
+  color: $text-tertiary;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+}
+
+.deal-editor-scroll {
+  overflow-x: auto;
+}
+
+.deal-lines {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+}
+
+.deal-line {
+  min-width: 610px;
+
+  .stock-value {
+    color: $text-secondary;
+    font-size: $font-size-sm;
+    text-align: center;
+  }
+}
+
+.rate-error {
+  grid-column: 1 / -1;
+  color: $danger;
+  font-size: $font-size-xs;
+}
+
+.stock-error {
+  margin: $space-2 0 0;
+  color: $danger;
+  font-size: $font-size-xs;
+}
+
+.add-line-btn {
+  margin-top: $space-3;
+}
+
+.notes-group {
+  margin-top: $space-4;
+}
+
+.deal-totals {
+  display: flex;
+  justify-content: space-between;
+  gap: $space-3;
+  margin: $space-4 0;
+  padding: $space-3 0;
+  border-top: 1px solid $glass-border;
+  color: $text-secondary;
+  font-size: $font-size-sm;
+
+  strong {
+    display: block;
+    margin-top: $space-1;
+    color: $text-primary;
+    font-size: $font-size-lg;
+  }
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.table-container {
+  min-width: 0;
+}
+
+.table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-label {
+  color: $text-primary;
+  font-weight: $font-weight-semibold;
+}
+
+.record-count {
+  color: $text-tertiary;
+  font-size: $font-size-sm;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.clickable-row {
+  cursor: pointer;
+
+  &:hover {
+    background: $bg-hover;
+  }
+}
+
+.movement-tag {
+  display: inline-block;
+  padding: 2px $space-2;
+  border-radius: $radius-sm;
+  background: $danger-light;
+  color: $danger;
+  font-size: $font-size-xs;
+
+  &.received {
+    background: $success-light;
+    color: $success;
+  }
+}
+
+.expanded-row td {
+  background: $bg-tertiary;
+}
+
+.expanded-items {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.expanded-item-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: $space-3;
+  color: $text-secondary;
+  font-size: $font-size-sm;
+}
+
+.deal-meta,
+.deal-notes {
+  margin: $space-3 0 0;
+  color: $text-tertiary;
+  font-size: $font-size-xs;
+}
+
+@media (max-width: 720px) {
+  .form-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .expanded-item-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+
+    strong {
+      grid-column: 2;
+    }
+  }
+}

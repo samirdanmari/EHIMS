@@ -2,7 +2,8 @@
   <div class="page-header">
     <div>
       <h2 class="page-title">Stock Audit</h2>
-      <p class="page-subtitle">Opening, purchased, issued, and closing quantities for a date range.</p>
+      <p class="page-subtitle">Opening and closing quantities with purchases, stock issues, POS sales, and partner deal
+        movements.</p>
     </div>
   </div>
 
@@ -31,7 +32,8 @@
     </div>
 
     <p class="audit-hint">
-      Closing balances reflect current stock. Opening balances are derived by reversing purchases and issuances
+      Closing balances reflect current stock. Opening balances are derived by reversing purchases, issuances, and
+      partner deals
       that occurred within the selected range — exact when "To" includes today, approximate for fully historical ranges.
     </p>
 
@@ -69,7 +71,9 @@
               <th>Category</th>
               <th>Opening</th>
               <th>Purchased</th>
-              <th>Issued</th>
+              <th>Partner In</th>
+              <th>Issued / Sold</th>
+              <th>Partner Out</th>
               <th>Closing</th>
             </tr>
           </thead>
@@ -80,7 +84,9 @@
               <td>{{ row.category_name || '—' }}</td>
               <td>{{ row.opening }} {{ row.unit }}</td>
               <td class="positive">+{{ row.purchased }} {{ row.unit }}</td>
+              <td class="positive">+{{ row.deal_received }} {{ row.unit }}</td>
               <td class="negative">−{{ row.issued }} {{ row.unit }}</td>
+              <td class="negative">−{{ row.deal_issued }} {{ row.unit }}</td>
               <td class="closing-value">{{ row.closing }} {{ row.unit }}</td>
             </tr>
             }

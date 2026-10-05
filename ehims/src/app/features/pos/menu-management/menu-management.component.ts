@@ -48,6 +48,7 @@ export class MenuManagementComponent implements OnInit {
   editingItem = signal<MenuItem | null>(null);
   isCreatingCategory = signal(false);
   newCategoryName = signal('');
+  inventoryLinkMode = signal<'recipe' | 'direct'>('recipe');
 
   form = new FormGroup({
     name: new FormControl('', {
@@ -93,6 +94,14 @@ export class MenuManagementComponent implements OnInit {
       selected.add(id);
     }
     this.selectedInventoryItemIds.set(selected);
+  }
+
+  setInventoryLinkMode(mode: 'recipe' | 'direct') {
+    this.inventoryLinkMode.set(mode);
+    this.selectedInventoryItemIds.set(new Set());
+    if (mode === 'recipe') {
+      this.form.controls.inventory_item_id.setValue(null);
+    }
   }
 
   getSelectedInventoryNames(): string {
@@ -176,6 +185,7 @@ export class MenuManagementComponent implements OnInit {
     if (!this.canManageMenu()) return;
     this.editingItem.set(null);
     this.selectedInventoryItemIds.set(new Set());
+    this.inventoryLinkMode.set('recipe');
     this.form.reset({
       name: '',
       category_id: null,
@@ -190,6 +200,7 @@ export class MenuManagementComponent implements OnInit {
     if (!this.canManageMenu()) return;
     this.editingItem.set(item);
     this.selectedInventoryItemIds.set(new Set());
+    this.inventoryLinkMode.set(item.inventory_item_id ? 'direct' : 'recipe');
     this.form.reset({
       name: item.name,
       category_id: item.category_id,
@@ -210,7 +221,18 @@ export class MenuManagementComponent implements OnInit {
     this.isSaving.set(true);
     try {
       const value = this.form.getRawValue();
-      const inventoryItemIds = Array.from(this.selectedInventoryItemIds());
+      const isDirectSale = this.inventoryLinkMode() === 'direct';
+      if (isDirectSale && !value.inventory_item_id) {
+        this.notificationService.error(
+          'Inventory item required',
+          'Select the inventory item that will be deducted for each sale.',
+        );
+        return;
+      }
+      const inventoryItemIds = isDirectSale
+        ? []
+        : Array.from(this.selectedInventoryItemIds());
+      const inventoryItemId = isDirectSale ? value.inventory_item_id : null;
       const editing = this.editingItem();
 
       if (editing) {
@@ -219,7 +241,7 @@ export class MenuManagementComponent implements OnInit {
           name: value.name,
           category_id: value.category_id,
           selling_price: value.selling_price,
-          inventory_item_id: value.inventory_item_id,
+          inventory_item_id: inventoryItemId,
           inventory_item_ids: inventoryItemIds,
           description: value.description || undefined,
           is_available: true,
@@ -242,7 +264,7 @@ export class MenuManagementComponent implements OnInit {
           name: value.name,
           category_id: value.category_id,
           selling_price: value.selling_price,
-          inventory_item_id: value.inventory_item_id,
+          inventory_item_id: inventoryItemId,
           inventory_item_ids: inventoryItemIds,
           description: value.description || undefined,
         });

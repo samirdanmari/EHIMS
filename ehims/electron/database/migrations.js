@@ -132,6 +132,29 @@ function runMigrations(db) {
             synced INTEGER NOT NULL DEFAULT 0
         );
 
+        CREATE TABLE IF NOT EXISTS hot_deals (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            partner_name TEXT NOT NULL,
+            direction TEXT NOT NULL CHECK(direction IN ('in','out')),
+            payment_method TEXT NOT NULL CHECK(payment_method IN ('cash','bank_transfer','credit')),
+            recorded_by INTEGER NOT NULL REFERENCES users(id),
+            created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+            notes TEXT,
+            synced INTEGER NOT NULL DEFAULT 0
+        );
+
+        CREATE TABLE IF NOT EXISTS hot_deal_items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            deal_id INTEGER NOT NULL REFERENCES hot_deals(id) ON DELETE CASCADE,
+            item_id INTEGER NOT NULL REFERENCES inventory_items(id),
+            quantity REAL NOT NULL,
+            regular_unit_rate REAL NOT NULL,
+            deal_unit_rate REAL NOT NULL,
+            discount_amount REAL NOT NULL DEFAULT 0,
+            total_amount REAL NOT NULL,
+            synced INTEGER NOT NULL DEFAULT 0
+        );
+
           -- POS
         CREATE TABLE IF NOT EXISTS menu_items (
             id INTEGER PRIMARY KEY AUTOINCREMENT,

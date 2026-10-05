@@ -68,7 +68,7 @@ export class PrinterConfigComponent implements OnInit {
   }
 
   updatePreview() {
-    const companyName = 'My Restaurant';
+    const companyName = 'My Business';
     const settings = this.printerForm.value;
     this.previewContent.set(
       this.printerService.getReceiptTemplate(companyName, settings),

@@ -95,7 +95,46 @@ export interface StockAuditRow {
   opening: number;
   purchased: number;
   issued: number;
+  deal_received: number;
+  deal_issued: number;
   closing: number;
+}
+
+export type HotDealDirection = 'in' | 'out';
+export type HotDealPaymentMethod = 'cash' | 'bank_transfer' | 'credit';
+
+export interface HotDeal {
+  id: number;
+  partner_name: string;
+  direction: HotDealDirection;
+  payment_method: HotDealPaymentMethod;
+  recorded_by: number;
+  recorded_by_name?: string;
+  created_at: string;
+  notes?: string;
+  item_count: number;
+  total_amount: number;
+  discount_amount: number;
+}
+
+export interface HotDealItem {
+  id: number;
+  deal_id: number;
+  item_id: number;
+  item_name?: string;
+  item_unit?: string;
+  quantity: number;
+  regular_unit_rate: number;
+  deal_unit_rate: number;
+  discount_amount: number;
+  total_amount: number;
+}
+
+export interface HotDealLineInput {
+  item_id: number;
+  quantity: number;
+  regular_unit_rate: number;
+  deal_unit_rate: number;
 }
 
 export interface ActiveShift {

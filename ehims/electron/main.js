@@ -2,7 +2,7 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const { getDatabase } = require('./database/connection');
 const { runMigrations } = require('./database/migrations');
-const { seedDatabase, seedSampleOrders } = require('./database/seed');
+const { seedDatabase } = require('./database/seed');
 const { registerAuthIPC } = require('./ipc/auth.ipc');
 const { registerInventoryIPC } = require('./ipc/Inventory.ipc');
 const { registerSupplierIPC } = require('./ipc/Supplier.ipc');
@@ -46,9 +46,6 @@ app.whenReady().then(() => {
     const db = getDatabase();
     runMigrations(db);
     seedDatabase(db);
-    if (!app.isPackaged) {
-        seedSampleOrders(db);
-    }
     // Register IPC Handlers
     registerAuthIPC(db);
     registerInventoryIPC(db);
