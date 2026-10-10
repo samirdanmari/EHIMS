@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { roleGuard } from '../../core/guards/role.guard';
 
 export const REPORTS_ROUTES: Routes = [
   {
@@ -21,6 +22,22 @@ export const REPORTS_ROUTES: Routes = [
           import('./sales-report/sales-report.component').then(
             (m) => m.SalesReportComponent,
           ),
+      },
+      {
+        path: 'profit-loss',
+        loadComponent: () =>
+          import('./profit-loss/profit-loss.component').then(
+            (m) => m.ProfitLossComponent,
+          ),
+      },
+      {
+        path: 'expenses',
+        loadComponent: () =>
+          import('./expenses/expenses.component').then(
+            (m) => m.ExpensesComponent,
+          ),
+        canActivate: [roleGuard],
+        data: { roles: ['admin', 'manager'], permission: 'reports' },
       },
       {
         path: 'inventory',

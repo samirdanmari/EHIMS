@@ -1,0 +1,136 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Operational Expenses</h2>
+      <p class="page-subtitle">Record day-to-day costs and review their impact on profit.</p>
+    </div>
+  </div>
+
+  <div class="page-content expense-page">
+    <section class="expense-entry" aria-labelledby="expense-entry-heading">
+      <div class="section-heading">
+        <div>
+          <h3 id="expense-entry-heading">Record expense</h3>
+          <p>Expenses are included in profit reports by expense date.</p>
+        </div>
+      </div>
+
+      <form [formGroup]="expenseForm" (ngSubmit)="recordExpense()">
+        <div class="entry-grid">
+          <div class="form-group">
+            <label class="form-label" for="expense-date">Date</label>
+            <input id="expense-date" class="form-input" type="date" formControlName="expense_date" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="expense-category">Category</label>
+            <select id="expense-category" class="form-select" formControlName="category">
+              <option value="">Select category</option>
+              @for (category of categories; track category) {
+              <option [value]="category">{{ category }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-group description-field">
+            <label class="form-label" for="expense-description">Description</label>
+            <input id="expense-description" class="form-input" type="text" formControlName="description"
+              placeholder="What was this expense for?" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="expense-amount">Amount</label>
+            <input id="expense-amount" class="form-input" type="number" min="0.01" step="0.01"
+              formControlName="amount" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="expense-method">Payment method</label>
+            <select id="expense-method" class="form-select" formControlName="payment_method">
+              @for (method of paymentMethods; track method) {
+              <option [value]="method">{{ method | titlecase }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="expense-reference">Reference</label>
+            <input id="expense-reference" class="form-input" type="text" formControlName="reference"
+              placeholder="Optional receipt or transaction ID" />
+          </div>
+          <div class="form-group notes-field">
+            <label class="form-label" for="expense-notes">Notes</label>
+            <input id="expense-notes" class="form-input" type="text" formControlName="notes"
+              placeholder="Optional details" />
+          </div>
+        </div>
+        <div class="form-footer">
+          <button class="search-btn" type="submit" [disabled]="isSaving()">
+            {{ isSaving() ? 'Recording...' : 'Record expense' }}
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section class="expense-ledger" aria-labelledby="expense-ledger-heading">
+      <div class="ledger-header">
+        <div>
+          <h3 id="expense-ledger-heading">Expense ledger</h3>
+          <p>{{ expenses().length }} entries in the selected period</p>
+        </div>
+        <div class="ledger-total">
+          <span>Period total</span>
+          <strong>{{ totalExpenses() | appCurrency }}</strong>
+        </div>
+      </div>
+
+      <form class="date-filters" (submit)="$event.preventDefault(); loadExpenses()">
+        <div class="form-group">
+          <label class="form-label" for="expenses-from">From</label>
+          <input id="expenses-from" class="form-input" type="date" [value]="dateFrom()"
+            (change)="dateFrom.set($any($event.target).value)" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="expenses-to">To</label>
+          <input id="expenses-to" class="form-input" type="date" [value]="dateTo()"
+            (change)="dateTo.set($any($event.target).value)" />
+        </div>
+        <button class="search-btn" type="submit" [disabled]="isLoading()">Apply</button>
+      </form>
+
+      @if (isLoading()) {
+      <div class="empty-state">
+        <p>Loading expenses...</p>
+      </div>
+      } @else if (expenses().length === 0) {
+      <div class="empty-state">
+        <p>No expenses recorded for this period.</p>
+      </div>
+      } @else {
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Category</th>
+              <th>Description</th>
+              <th>Method</th>
+              <th>Reference</th>
+              <th>Recorded by</th>
+              <th class="numeric">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (expense of expenses(); track expense.id) {
+            <tr>
+              <td>{{ expense.expense_date | date: 'mediumDate' }}</td>
+              <td>{{ expense.category }}</td>
+              <td>{{ expense.description }}</td>
+              <td>{{ expense.payment_method | titlecase }}</td>
+              <td>{{ expense.reference || '—' }}</td>
+              <td>{{ expense.recorded_by_name || '—' }}</td>
+              <td class="numeric amount">{{ expense.amount | appCurrency }}</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      }
+    </section>
+  </div>
+</div>

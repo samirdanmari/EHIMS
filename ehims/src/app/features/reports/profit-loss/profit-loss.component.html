@@ -1,0 +1,129 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Profit &amp; Loss</h2>
+      <p class="page-subtitle">Sales performance and inventory costs for {{ statement()?.period }}.</p>
+    </div>
+    <button class="search-btn" type="button" (click)="downloadPdf()"
+      [disabled]="!statement() || isLoading() || isSavingPdf()">
+      {{ isSavingPdf() ? 'Preparing PDF...' : 'Download PDF' }}
+    </button>
+  </div>
+
+  <div class="page-content">
+    <div class="filters-card">
+      <div class="filters-row">
+        <div class="form-group">
+          <label class="form-label" for="profit-loss-from">From</label>
+          <input id="profit-loss-from" class="form-input" type="date" [value]="dateFrom()"
+            (change)="dateFrom.set($any($event.target).value)" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="profit-loss-to">To</label>
+          <input id="profit-loss-to" class="form-input" type="date" [value]="dateTo()"
+            (change)="dateTo.set($any($event.target).value)" />
+        </div>
+        <button class="search-btn" type="button" (click)="loadReport()" [disabled]="isLoading()">
+          {{ isLoading() ? 'Loading...' : 'Run report' }}
+        </button>
+      </div>
+    </div>
+
+    @if (isLoading()) {
+    <div class="empty-state">
+      <p class="empty-message">Generating profit and loss report...</p>
+    </div>
+    } @else {
+    @if (statement(); as report) {
+    <div class="pl-metrics">
+      <div class="metric-card">
+        <span class="metric-label">Net Sales</span>
+        <strong class="metric-value">{{ report.net_sales | appCurrency }}</strong>
+        <span class="metric-note">Excludes discounts, voids, and tax collected</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">Cost of Goods Sold</span>
+        <strong class="metric-value">{{ report.total_cogs | appCurrency }}</strong>
+        <span class="metric-note">Inventory consumed by sold products</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">Gross Profit</span>
+        <strong class="metric-value" [class.negative]="report.gross_profit < 0">
+          {{ report.gross_profit | appCurrency }}
+        </strong>
+        <span class="metric-note">Net sales less sold inventory cost</span>
+      </div>
+      <div class="metric-card result-card">
+        <span class="metric-label">Profit / (Loss)</span>
+        <strong class="metric-value" [class.negative]="report.net_profit < 0">
+          {{ report.net_profit | appCurrency }}
+        </strong>
+        <span class="metric-note">After stock issues and operating expenses</span>
+      </div>
+    </div>
+
+    <section class="statement-section" aria-labelledby="statement-heading">
+      <h3 id="statement-heading">Income statement</h3>
+      <div class="statement-row"><span>Gross sales ({{ report.total_orders }}
+          orders)</span><strong>{{ report.gross_sales | appCurrency }}</strong></div>
+      <div class="statement-row deduction">
+        <span>Discounts</span><strong>−{{ report.total_discounts | appCurrency }}</strong></div>
+      <div class="statement-row total"><span>Net sales</span><strong>{{ report.net_sales | appCurrency }}</strong></div>
+      <div class="statement-row"><span>Tax collected</span><strong>{{ report.tax_collected | appCurrency }}</strong>
+      </div>
+      <div class="statement-row deduction"><span>Cost of goods
+          sold</span><strong>−{{ report.total_cogs | appCurrency }}</strong></div>
+      <div class="statement-row total"><span>Gross profit</span><strong>{{ report.gross_profit | appCurrency }}</strong>
+      </div>
+      <div class="statement-row deduction"><span>Non-sale stock
+          issues</span><strong>−{{ report.total_issued_cost | appCurrency }}</strong></div>
+      <div class="statement-row deduction"><span>Operating expenses</span>
+        <strong>−{{ report.total_operating_expenses | appCurrency }}</strong></div>
+      <div class="statement-row final-total"><span>Profit /
+          (Loss)</span><strong>{{ report.net_profit | appCurrency }}</strong></div>
+      <div class="statement-row context-row"><span>Purchases (inventory spend, not expensed until
+          sold)</span><strong>{{ report.total_purchases | appCurrency }}</strong></div>
+      <p class="report-note">Profit margin after recorded operating expenses: {{ report.profit_margin }}%.</p>
+    </section>
+
+    <section class="table-container movement-table" aria-labelledby="movement-heading">
+      <div class="table-header">
+        <h3 id="movement-heading">Inventory movement comparison</h3>
+      </div>
+      @if (report.items.length === 0) {
+      <p class="empty-message">No purchases, sales, or stock issues in this period.</p>
+      } @else {
+      <div class="table-body">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Inventory item</th>
+              <th>Purchased</th>
+              <th>Purchase cost</th>
+              <th>Sold usage</th>
+              <th>Sold cost</th>
+              <th>Issued qty</th>
+              <th>Issued cost</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of report.items; track item.item_id) {
+            <tr>
+              <td>{{ item.name }}</td>
+              <td>{{ item.purchased_quantity }} {{ item.unit }}</td>
+              <td>{{ item.purchase_cost | appCurrency }}</td>
+              <td>{{ item.sold_quantity }} {{ item.unit }}</td>
+              <td>{{ item.sold_cost | appCurrency }}</td>
+              <td>{{ item.issued_quantity }} {{ item.unit }}</td>
+              <td>{{ item.issued_cost | appCurrency }}</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      }
+    </section>
+    }
+    }
+  </div>
+</div>

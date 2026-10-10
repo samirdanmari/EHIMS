@@ -18,6 +18,7 @@ import {
 import { CurrencyPipe } from '../../../shared/pipes/currency.pipe';
 import { CustomerFormComponent } from '../customer-form/customer-form.component';
 import { ReportsService } from '../../reports/services/reports.service';
+import { ReceiptService } from '../../../core/services/receipt.service';
 
 @Component({
   selector: 'app-customer-detail',
@@ -39,6 +40,7 @@ export class CustomerDetailComponent implements OnInit {
   private authService = inject(AuthService);
   private notificationService = inject(NotificationService);
   private reportsService = inject(ReportsService);
+  private receiptService = inject(ReceiptService);
 
   customer = signal<RegularCustomer | null>(null);
   purchases = signal<CustomerPurchase[]>([]);
@@ -122,6 +124,43 @@ export class CustomerDetailComponent implements OnInit {
           'Payment Recorded',
           `₦${val.amount?.toLocaleString()} recorded successfully.`,
         );
+
+        try {
+          const order = this.purchases().find(
+            (purchase) => purchase.id === val.order_id,
+          );
+          const printResult = await this.receiptService.printPaymentReceipt({
+            paymentId: Number(res.data?.paymentId),
+            customerName: cust.full_name,
+            amount: val.amount!,
+            paymentMethod: val.payment_method!,
+            remainingBalance:
+              res.data?.customer.outstanding_balance ??
+              cust.outstanding_balance - val.amount!,
+            orderNumber: order?.order_number,
+            reference: val.reference || undefined,
+            notes: val.notes || undefined,
+          });
+
+          if (printResult.success) {
+            this.notificationService.success(
+              'Receipt Printed',
+              printResult.message || 'Debt payment receipt sent to printer.',
+            );
+          } else {
+            this.notificationService.error(
+              'Receipt Print Failed',
+              printResult.error ||
+                'Payment was recorded, but the receipt could not be printed.',
+            );
+          }
+        } catch (error) {
+          this.notificationService.error(
+            'Receipt Print Failed',
+            `Payment was recorded, but the receipt could not be printed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          );
+        }
+
         this.showPaymentForm.set(false);
         this.paymentForm.reset({ payment_method: 'cash', amount: 0 });
         await this.loadCustomer(cust.id);

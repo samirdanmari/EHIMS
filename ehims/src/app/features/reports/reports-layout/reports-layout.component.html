@@ -1,10 +1,14 @@
-<nav class="report-tabs" aria-label="Reports">
-  <a routerLink="." [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="active">Dashboard</a>
-  <a routerLink="sales" routerLinkActive="active">Sales</a>
-  <a routerLink="inventory" routerLinkActive="active">Inventory</a>
-  <a routerLink="purchases" routerLinkActive="active">Purchases</a>
-  <a routerLink="stock-issuance" routerLinkActive="active">Stock Issuance</a>
-  <a routerLink="stock-audit" routerLinkActive="active">Stock Audit</a>
-</nav>
+<div class="reports-layout-content">
+  <nav class="report-tabs" aria-label="Reports">
+    <a routerLink="." [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="active">Dashboard</a>
+    <a routerLink="sales" routerLinkActive="active">Sales</a>
+    <a routerLink="profit-loss" routerLinkActive="active">Profit &amp; Loss</a>
+    <a routerLink="expenses" routerLinkActive="active">Expenses</a>
+    <a routerLink="inventory" routerLinkActive="active">Inventory</a>
+    <a routerLink="purchases" routerLinkActive="active">Purchases</a>
+    <a routerLink="stock-issuance" routerLinkActive="active">Stock Issuance</a>
+    <a routerLink="stock-audit" routerLinkActive="active">Stock Audit</a>
+  </nav>
 
-<router-outlet></router-outlet>
+  <router-outlet></router-outlet>
+</div>

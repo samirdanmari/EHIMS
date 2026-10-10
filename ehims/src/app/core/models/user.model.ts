@@ -23,8 +23,8 @@ export const APP_PERMISSIONS = [
   },
   {
     key: 'pos_void_printed',
-    label: 'Void Printed Orders',
-    description: 'Void orders after a receipt has been printed.',
+    label: 'Void Orders',
+    description: 'Void POS orders, whether or not a receipt has been printed.',
   },
   {
     key: 'menu_management',

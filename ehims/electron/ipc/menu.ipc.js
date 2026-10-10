@@ -283,13 +283,31 @@ function registerMenuItemIPC(db) {
                 VALUES (?, ?, ?, ?, ?, ?)
             `);
 
+            const getDirectInventoryItem = db.prepare(`
+                SELECT id, name, current_stock, cost_price
+                FROM inventory_items WHERE id = ?
+            `);
+            const getRecipeInventoryItems = db.prepare(`
+                SELECT ii.id, ii.name, ii.current_stock, ii.cost_price, mii.quantity
+                FROM menu_item_inventory mii
+                JOIN inventory_items ii ON ii.id = mii.inventory_item_id
+                WHERE mii.menu_item_id = ?
+            `);
+            const insertOrderItemInventory = db.prepare(`
+                INSERT INTO order_item_inventory
+                    (order_item_id, inventory_item_id, quantity, unit_cost, total_cost)
+                VALUES (?, ?, ?, ?, ?)
+            `);
+
             const updateStockIssuance = db.prepare(`
                 INSERT INTO stock_issuance_items (issuance_id, item_id, quantity, unit_cost, total_cost)
                 VALUES (?, ?, ?, ?, ?)
             `);
 
             const decrementInventory = db.prepare(`
-                UPDATE inventory_items SET current_stock = current_stock - ? WHERE id = ?
+                UPDATE inventory_items
+                SET current_stock = current_stock - ?, updated_at = datetime('now','localtime')
+                WHERE id = ?
             `);
 
             const runTransaction = db.transaction((orderItems) => {
@@ -319,7 +337,7 @@ function registerMenuItemIPC(db) {
                 for (const it of orderItems) {
                     const menuItem = getItem.get(it.menu_item_id);
                     const qty = Number(it.quantity);
-                    insertOrderItem.run(
+                    const orderItemInfo = insertOrderItem.run(
                         orderId,
                         it.menu_item_id,
                         qty,
@@ -328,13 +346,28 @@ function registerMenuItemIPC(db) {
                         it.notes || null
                     );
 
-                    // If tied to inventory, deduct stock
-                    if (menuItem.inventory_item_id) {
-                        const inventory = db.prepare('SELECT * FROM inventory_items WHERE id = ?').get(menuItem.inventory_item_id);
-                        if (inventory && inventory.current_stock < qty) {
-                            throw new Error(`Insufficient stock for ${menuItem.name}: have ${inventory.current_stock}, need ${qty}`);
+                    const inventoryComponents = menuItem.inventory_item_id
+                        ? [{ ...getDirectInventoryItem.get(menuItem.inventory_item_id), quantity: 1 }]
+                        : getRecipeInventoryItems.all(menuItem.id);
+
+                    for (const component of inventoryComponents) {
+                        if (!component.id) {
+                            throw new Error(`Inventory item linked to ${menuItem.name} was not found`);
                         }
-                        decrementInventory.run(qty, menuItem.inventory_item_id);
+                        const consumedQuantity = qty * Number(component.quantity);
+                        if (component.current_stock < consumedQuantity) {
+                            throw new Error(`Insufficient stock for ${component.name}: have ${component.current_stock}, need ${consumedQuantity}`);
+                        }
+
+                        const unitCost = Number(component.cost_price) || 0;
+                        insertOrderItemInventory.run(
+                            orderItemInfo.lastInsertRowid,
+                            component.id,
+                            consumedQuantity,
+                            unitCost,
+                            consumedQuantity * unitCost
+                        );
+                        decrementInventory.run(consumedQuantity, component.id);
                     }
                 }
 
@@ -440,11 +473,11 @@ function registerMenuItemIPC(db) {
                 return { success: false, error: 'Your session is invalid or has expired. Please sign in again.' };
             }
             const actor = db.prepare(`
-                SELECT u.id, u.role,
+                  SELECT u.id,
                        EXISTS(
                            SELECT 1 FROM user_permissions up
                            WHERE up.user_id = u.id AND up.permission = 'pos_void_printed'
-                       ) as can_void_printed
+                      ) as can_void_orders
                 FROM sessions s
                 JOIN users u ON u.id = s.user_id
                 WHERE s.id = ? AND s.logout_at IS NULL AND u.is_active = 1
@@ -452,17 +485,8 @@ function registerMenuItemIPC(db) {
             if (!actor) {
                 return { success: false, error: 'Your session is invalid or has expired. Please sign in again.' };
             }
-
-            const receiptPrinted = db.prepare(`
-                SELECT EXISTS(
-                    SELECT 1 FROM print_log WHERE order_id = ? AND status = 'success'
-                ) as printed
-            `).get(order_id).printed;
-            if (receiptPrinted && actor.role !== 'admin' && !actor.can_void_printed) {
-                return {
-                    success: false,
-                    error: 'Only an admin or a user with the Void Printed Orders permission can void an order after its receipt has been printed.',
-                };
+            if (!actor.can_void_orders) {
+                return { success: false, error: 'You do not have permission to void orders.' };
             }
 
             const runTransaction = db.transaction(() => {
@@ -477,10 +501,22 @@ function registerMenuItemIPC(db) {
                 const orderItems = db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(order_id);
                 for (const oi of orderItems) {
                     const menuItem = db.prepare('SELECT * FROM menu_items WHERE id = ?').get(oi.menu_item_id);
-                    if (menuItem && menuItem.inventory_item_id) {
+                    const consumedItems = db.prepare(`
+                        SELECT inventory_item_id, quantity
+                        FROM order_item_inventory WHERE order_item_id = ?
+                    `).all(oi.id);
+                    if (consumedItems.length > 0) {
+                        for (const consumed of consumedItems) {
+                            db.prepare(`
+                                UPDATE inventory_items
+                                SET current_stock = current_stock + ?, updated_at = datetime('now','localtime')
+                                WHERE id = ?
+                            `).run(consumed.quantity, consumed.inventory_item_id);
+                        }
+                    } else if (menuItem && menuItem.inventory_item_id) {
                         db.prepare(`
                             UPDATE inventory_items
-                            SET current_stock = current_stock + ?
+                            SET current_stock = current_stock + ?, updated_at = datetime('now','localtime')
                             WHERE id = ?
                         `).run(oi.quantity, menuItem.inventory_item_id);
                     }

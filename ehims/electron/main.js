@@ -10,6 +10,7 @@ const { registerMenuItemIPC } = require('./ipc/menu.ipc');
 const { registerEODIPC } = require('./ipc/eod.ipc');
 const { registerUsersIPC } = require('./ipc/users.ipc');
 const { registerReportsIPC } = require('./ipc/reports.ipc');
+const { registerExpensesIPC } = require('./ipc/expenses.ipc');
 const { registerSettingsIPC } = require('./ipc/settings.ipc');
 const { registerPrinterIPC } = require('./ipc/printer.ipc');
 const { registerReceiptIPC } = require('./ipc/receipt.ipc');
@@ -54,6 +55,7 @@ app.whenReady().then(() => {
     registerEODIPC(db);
     registerUsersIPC(db);
     registerReportsIPC(db);
+    registerExpensesIPC(db);
     registerSettingsIPC(db);
     registerPrinterIPC(db);
     registerReceiptIPC(db);

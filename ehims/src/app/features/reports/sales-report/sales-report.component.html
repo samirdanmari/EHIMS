@@ -88,6 +88,7 @@
             <th><button class="sort-button" (click)="sortBy('cash_collected')">Cash</button></th>
             <th><button class="sort-button" (click)="sortBy('card_collected')">Card</button></th>
             <th><button class="sort-button" (click)="sortBy('transfer_collected')">Transfer</button></th>
+            <th><button class="sort-button" (click)="sortBy('debt_clear')">Debt Clear</button></th>
           </tr>
         </thead>
         <tbody>
@@ -102,6 +103,7 @@
             <td class="amount">{{ metric.cash_collected | appCurrency }}</td>
             <td class="amount">{{ metric.card_collected | appCurrency }}</td>
             <td class="amount">{{ metric.transfer_collected | appCurrency }}</td>
+            <td class="amount">{{ metric.debt_clear | appCurrency }}</td>
           </tr>
           }
         </tbody>

@@ -26,6 +26,17 @@ export interface ReceiptPrintRequest {
   notes?: string;
 }
 
+export interface PaymentReceiptPrintRequest {
+  paymentId: number;
+  customerName: string;
+  amount: number;
+  paymentMethod: string;
+  remainingBalance: number;
+  orderNumber?: string;
+  reference?: string;
+  notes?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ReceiptService {
   private electronService = inject(ElectronService);
@@ -43,6 +54,12 @@ export class ReceiptService {
       ...data,
       reprint: true,
     });
+  }
+
+  async printPaymentReceipt(
+    data: PaymentReceiptPrintRequest,
+  ): Promise<{ success: boolean; message?: string; error?: string }> {
+    return this.electronService.invoke('receipt:payment-print', data);
   }
 
   async testPrint(

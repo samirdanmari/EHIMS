@@ -48,8 +48,9 @@
       <div class="kpi-card">
         <div class="kpi-label">Quick Access</div>
         <div class="quick-links">
-          <a href="#sales">Sales Report</a>
-          <a href="#inventory">Inventory Report</a>
+          <a [routerLink]="['/reports/sales']">Sales Report</a>
+          <a [routerLink]="['/reports/inventory']">Inventory Report</a>
+          <a [routerLink]="['/reports/profit-loss']">Profit &amp; Loss</a>
         </div>
       </div>
     </div>
@@ -117,6 +118,13 @@
               <polyline points="9 22 9 12 15 12 15 22" />
             </svg>
             Inventory Report
+          </a>
+          <a [routerLink]="['/reports/profit-loss']" class="action-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 3v18h18" />
+              <path d="m19 9-5 5-4-4-3 3" />
+            </svg>
+            Profit &amp; Loss
           </a>
           <a [routerLink]="['/reports/purchases']" class="action-btn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

@@ -110,6 +110,58 @@ function registerReceiptIPC(db) {
     }
   });
 
+  ipcMain.handle('receipt:payment-print', async (event, {
+    paymentId, customerName, amount, paymentMethod, remainingBalance,
+    orderNumber, reference, notes
+  }) => {
+    try {
+      const settings = db.prepare('SELECT * FROM printer_settings LIMIT 1').get();
+      const printerName = settings?.default_printer;
+      const paperWidthMicrons = settings?.paper_width === '58mm' ? 58000 : 80000;
+
+      if (!printerName) {
+        return { success: false, error: 'No printer configured. Go to Settings → Printer Configuration.' };
+      }
+
+      if (event.sender.isDestroyed()) {
+        return { success: false, error: 'Cannot access printer. Please try again.' };
+      }
+
+      const printers = await event.sender.getPrintersAsync();
+      if (!printers.some(printer => printer.name === printerName)) {
+        return { success: false, error: `Printer "${printerName}" is not available.` };
+      }
+
+      const company = db.prepare('SELECT * FROM company_settings LIMIT 1').get() || {};
+      const logo = settings?.logo_on_receipt && company.company_logo
+        ? Buffer.from(company.company_logo).toString('base64')
+        : '';
+      const html = buildPaymentReceiptHtml({
+        paymentId,
+        customerName,
+        amount,
+        paymentMethod,
+        remainingBalance,
+        orderNumber,
+        reference,
+        notes,
+        company,
+        logo,
+        settings,
+        paperWidthMicrons
+      });
+      const result = await printHtml(html, printerName, paperWidthMicrons);
+      if (!result.success) {
+        return { success: false, error: result.failureReason || 'Payment receipt print failed.' };
+      }
+
+      return { success: true, message: 'Debt payment receipt sent to printer.' };
+    } catch (err) {
+      console.error('[receipt:payment-print] Error:', err.message);
+      return { success: false, error: `Payment receipt print failed: ${err.message}` };
+    }
+  });
+
   // ---------------------------------------------------------
   // TEST PRINT - TWO SEPARATE JOBS
   // ---------------------------------------------------------
@@ -497,6 +549,64 @@ function buildSingleReceiptHtml({
 <body>
   <div class="receipt">
     ${receiptBlock}
+  </div>
+</body>
+</html>`;
+}
+
+function buildPaymentReceiptHtml({
+  paymentId, customerName, amount, paymentMethod, remainingBalance,
+  orderNumber, reference, notes, company = {}, logo, settings = {}, paperWidthMicrons
+}) {
+  const widthMm = paperWidthMicrons / 1000;
+  const fontSize = Number(settings.font_size_normal) || 12;
+  const smallFontSize = Number(settings.font_size_small) || 10;
+  const largeFontSize = Number(settings.font_size_large) || 14;
+  const companyDetails = [company.address, company.phone, company.email].filter(Boolean);
+  const row = (label, value, bold = false) => `
+    <div class="row${bold ? ' bold' : ''}"><span>${esc(label)}</span><span>${esc(value)}</span></div>`;
+  const money = value => `₦${Number(value || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @page { size: ${widthMm}mm auto; margin: 0; }
+    * { box-sizing: border-box; }
+    html, body { width: ${widthMm}mm; margin: 0; padding: 0; background: #fff; color: #000; font-family: 'Courier New', monospace; line-height: 1.25; font-size: ${fontSize}px; }
+    .receipt { width: 100%; padding: 4px 5px; }
+    .center { text-align: center; }
+    .company { font-size: ${largeFontSize}px; font-weight: bold; }
+    .small { font-size: ${smallFontSize}px; }
+    .title { margin: 5px 0; font-size: ${largeFontSize}px; font-weight: bold; }
+    .divider { border: 0; border-top: 1px dashed #000; margin: 5px 0; }
+    .row { display: flex; justify-content: space-between; gap: 8px; margin: 3px 0; }
+    .row span:last-child { text-align: right; }
+    .bold { font-weight: bold; font-size: ${largeFontSize}px; }
+    .logo { max-width: 40px; max-height: 40px; }
+    .footer { margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="receipt">
+    ${logo ? `<p class="center"><img class="logo" src="data:image/png;base64,${logo}" alt="Logo"></p>` : ''}
+    <div class="center company">${esc(company.company_name || 'Your Company')}</div>
+    ${companyDetails.map(detail => `<div class="center small">${esc(detail)}</div>`).join('')}
+    <hr class="divider">
+    <div class="center title">DEBT PAYMENT RECEIPT</div>
+    <div class="row"><span>Receipt #</span><span>${esc(paymentId)}</span></div>
+    <div class="row"><span>Date</span><span>${esc(new Date().toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short' }))}</span></div>
+    <div class="row"><span>Customer</span><span>${esc(customerName)}</span></div>
+    ${orderNumber ? `<div class="row"><span>Order #</span><span>${esc(orderNumber)}</span></div>` : ''}
+    <hr class="divider">
+    ${row('Amount Paid', money(amount), true)}
+    ${row('Method', String(paymentMethod || '').toUpperCase())}
+    ${row('Balance Due', money(remainingBalance), true)}
+    ${reference ? `<div class="row"><span>Reference</span><span>${esc(reference)}</span></div>` : ''}
+    ${notes ? `<div class="row"><span>Notes</span><span>${esc(notes)}</span></div>` : ''}
+    <hr class="divider">
+    <div class="center footer">Payment received. Thank you.</div>
   </div>
 </body>
 </html>`;

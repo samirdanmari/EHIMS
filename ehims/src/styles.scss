@@ -78,3 +78,13 @@ app-root {
   height: 100%;
   overflow: hidden;
 }
+
+.reports-layout-content .page-header {
+  .page-title {
+    color: $text-inverse;
+  }
+
+  .page-subtitle {
+    color: rgba($text-inverse, 0.72);
+  }
+}

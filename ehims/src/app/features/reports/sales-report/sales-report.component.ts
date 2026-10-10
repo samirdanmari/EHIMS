@@ -126,6 +126,7 @@ export class SalesReportComponent implements OnInit {
         { key: 'cash_collected', label: 'Cash' },
         { key: 'card_collected', label: 'Card' },
         { key: 'transfer_collected', label: 'Transfer' },
+        { key: 'debt_clear', label: 'Debt Clear' },
       ],
       this.salesMetrics() as unknown as Array<Record<string, unknown>>,
       {
@@ -163,6 +164,7 @@ export class SalesReportComponent implements OnInit {
         { key: 'cash_collected', label: 'Cash' },
         { key: 'card_collected', label: 'Card' },
         { key: 'transfer_collected', label: 'Transfer' },
+        { key: 'debt_clear', label: 'Debt Clear' },
       ],
       this.salesMetrics() as unknown as Array<Record<string, unknown>>,
       {

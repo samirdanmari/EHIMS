@@ -1,22 +1,39 @@
 @use "../../../styles/variables" as *;
 @use "../../../styles/mixins" as *;
 
-.terminal-layout {
+.page {
   display: grid;
-  grid-template-columns: 1.4fr 0.6fr;
-  gap: $space-6;
-  align-items: start;
-  height: calc(100vh - 300px);
-  max-height: 100%;
+  grid-template-columns: minmax(0, 1.15fr) minmax(380px, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
+  column-gap: $space-6;
+  height: calc(100vh - 112px);
+  min-height: 0;
 
-  @include respond-to("lg") {
-    grid-template-columns: 1.3fr 0.7fr;
+  @media (max-width: 1023px) {
+    display: block;
+    height: auto;
   }
+}
 
-  @include respond-to("md") {
+.page-header {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+app-pos-tabs {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.terminal-layout {
+  display: contents;
+
+  @media (max-width: 1023px) {
+    display: grid;
     grid-template-columns: 1fr;
     gap: $space-4;
     height: auto;
+    min-height: 0;
   }
 }
 
@@ -62,7 +79,7 @@
   gap: 4px;
   padding: 12px;
   text-align: left;
-  color: inherit;
+  color: #1f2937;
   background: #f7f8fa;
   border: 1px solid #dfe3e8;
   border-radius: 6px;
@@ -74,6 +91,10 @@
   border-color: #3b82f6;
 }
 
+.suspended-order-total {
+  font-weight: $font-weight-bold;
+}
+
 // ========================================
 // MENU SECTION
 // ========================================
@@ -81,9 +102,14 @@
   display: flex;
   flex-direction: column;
   gap: $space-4;
+  grid-column: 1;
+  grid-row: 3;
   height: 100%;
+  min-height: 0;
 
-  @include respond-to("md") {
+  @media (max-width: 1023px) {
+    grid-column: auto;
+    grid-row: auto;
     height: auto;
   }
 }
@@ -138,6 +164,7 @@
 .menu-grid {
   flex: 1;
   overflow-y: auto;
+  min-height: 0;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: $space-3;
@@ -162,6 +189,10 @@
   flex-direction: column;
   gap: $space-2;
   padding: $space-2;
+  min-height: 164px;
+  text-align: left;
+  font: inherit;
+  color: inherit;
   background: $bg-secondary;
   border: 1px solid $glass-border;
   border-radius: $radius-md;
@@ -171,13 +202,16 @@
   &:hover {
     border-color: $primary;
     background: $bg-tertiary;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba($primary, 0.1);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary;
+    outline-offset: 2px;
   }
 
   .item-image {
     width: 100%;
-    height: 100px;
+    height: 88px;
     background: $bg-hover;
     border-radius: $radius-sm;
     overflow: hidden;
@@ -213,6 +247,10 @@
     color: $text-primary;
     font-size: $font-size-sm;
     line-height: 1.3;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
   }
 
   .item-price {
@@ -236,18 +274,25 @@
 // CART SECTION
 // ========================================
 .cart-section {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
   gap: $space-4;
+  grid-column: 2;
+  grid-row: 1 / 4;
   height: 100%;
+  min-height: 0;
+  min-width: 380px;
   background: $bg-secondary;
   border: 1px solid $glass-border;
   border-radius: $radius-lg;
   padding: $space-4;
   overflow: hidden;
 
-  @include respond-to("md") {
+  @media (max-width: 1023px) {
+    grid-column: auto;
+    grid-row: auto;
     height: auto;
+    min-width: 0;
   }
 }
 
@@ -281,6 +326,20 @@
   display: flex;
   flex-direction: column;
   gap: $space-3;
+  flex: 0 0 auto;
+}
+
+.cart-body {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+  min-height: 0;
+  overflow-y: auto;
+  @include custom-scrollbar();
+
+  @media (max-width: 1023px) {
+    max-height: 60vh;
+  }
 
   .form-group {
     display: flex;
@@ -319,14 +378,10 @@
 }
 
 .cart-items {
-  flex: 1;
-  overflow-y: auto;
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
   gap: $space-2;
-  padding-right: $space-2;
-
-  @include custom-scrollbar();
 
   .empty-cart {
     flex: 1;

@@ -229,6 +229,16 @@ function runMigrations(db) {
             synced INTEGER NOT NULL DEFAULT 0
         );
 
+        CREATE TABLE IF NOT EXISTS order_item_inventory (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_item_id INTEGER NOT NULL REFERENCES order_items(id),
+            inventory_item_id INTEGER NOT NULL REFERENCES inventory_items(id),
+            quantity REAL NOT NULL,
+            unit_cost REAL NOT NULL DEFAULT 0,
+            total_cost REAL NOT NULL DEFAULT 0,
+            synced INTEGER NOT NULL DEFAULT 0
+        );
+
         CREATE TABLE IF NOT EXISTS supplier_payments (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             supplier_id INTEGER NOT NULL REFERENCES suppliers(id),
@@ -376,6 +386,19 @@ function runMigrations(db) {
             recorded_by INTEGER NOT NULL REFERENCES users(id),
             payment_date TEXT NOT NULL DEFAULT (datetime('now','localtime')),
             notes TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS operational_expenses (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            expense_date TEXT NOT NULL,
+            category TEXT NOT NULL,
+            description TEXT NOT NULL,
+            amount REAL NOT NULL CHECK(amount > 0),
+            payment_method TEXT NOT NULL CHECK(payment_method IN ('cash','card','transfer')),
+            reference TEXT,
+            notes TEXT,
+            recorded_by INTEGER NOT NULL REFERENCES users(id),
+            created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
         );
     `);
 

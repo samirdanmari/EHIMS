@@ -548,6 +548,17 @@ export class OrderTerminalComponent implements OnInit {
     });
   }
 
+  suspendedOrderTotal(order: {
+    subtotal?: number | null;
+    discount_amount?: number | null;
+    tax_amount?: number | null;
+  }): number {
+    return (
+      Math.max(0, (order.subtotal || 0) - (order.discount_amount || 0)) +
+      (order.tax_amount || 0)
+    );
+  }
+
   selectSuspendedOrder(id: number) {
     this.isSuspendedOrdersDialogOpen.set(false);
     this.suspendedOrdersDialogResolve?.(id);

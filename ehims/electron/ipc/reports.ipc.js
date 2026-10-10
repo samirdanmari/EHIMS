@@ -223,18 +223,21 @@ function registerReportsIPC(db) {
   ipcMain.handle('reports:sales-metrics', async (event, { date_from, date_to } = {}) => {
     try {
       let sql = `
-        SELECT
-          DATE(created_at) as date,
-          COUNT(*) as total_orders,
-          COALESCE(SUM(total_amount), 0) as total_sales,
-          COALESCE(SUM(discount_amount), 0) as total_discounts,
-          COALESCE(SUM(CASE WHEN status = 'voided' THEN total_amount ELSE 0 END), 0) as total_voids,
-          COALESCE(SUM(total_amount), 0) - COALESCE(SUM(discount_amount), 0) as net_sales,
-          COALESCE(SUM(CASE WHEN status != 'voided' AND is_credit = 0 THEN CASE WHEN payment_method = 'split' THEN split_cash_amount WHEN payment_method = 'cash' THEN total_amount ELSE 0 END ELSE 0 END), 0) as cash_collected,
-          COALESCE(SUM(CASE WHEN status != 'voided' AND is_credit = 0 THEN CASE WHEN payment_method = 'split' THEN split_card_amount WHEN payment_method = 'card' THEN total_amount ELSE 0 END ELSE 0 END), 0) as card_collected,
-          COALESCE(SUM(CASE WHEN status != 'voided' AND is_credit = 0 THEN CASE WHEN payment_method = 'split' THEN split_transfer_amount WHEN payment_method = 'transfer' THEN total_amount ELSE 0 END ELSE 0 END), 0) as transfer_collected
-        FROM orders
-        WHERE 1=1
+        WITH order_metrics AS (
+          SELECT
+            DATE(created_at) as date,
+            COUNT(*) as total_orders,
+            COALESCE(SUM(total_amount), 0) as total_sales,
+            COALESCE(SUM(discount_amount), 0) as total_discounts,
+            COALESCE(SUM(CASE WHEN status = 'voided' THEN total_amount ELSE 0 END), 0) as total_voids,
+            COALESCE(SUM(total_amount), 0)
+              - COALESCE(SUM(discount_amount), 0)
+              - COALESCE(SUM(CASE WHEN status = 'voided' THEN total_amount ELSE 0 END), 0) as net_sales,
+            COALESCE(SUM(CASE WHEN status != 'voided' AND is_credit = 0 THEN CASE WHEN payment_method = 'split' THEN split_cash_amount WHEN payment_method = 'cash' THEN total_amount ELSE 0 END ELSE 0 END), 0) as cash_collected,
+            COALESCE(SUM(CASE WHEN status != 'voided' AND is_credit = 0 THEN CASE WHEN payment_method = 'split' THEN split_card_amount WHEN payment_method = 'card' THEN total_amount ELSE 0 END ELSE 0 END), 0) as card_collected,
+            COALESCE(SUM(CASE WHEN status != 'voided' AND is_credit = 0 THEN CASE WHEN payment_method = 'split' THEN split_transfer_amount WHEN payment_method = 'transfer' THEN total_amount ELSE 0 END ELSE 0 END), 0) as transfer_collected
+          FROM orders
+          WHERE 1=1
       `;
       const params = [];
 
@@ -248,7 +251,48 @@ function registerReportsIPC(db) {
         params.push(date_to);
       }
 
-      sql += ` GROUP BY DATE(created_at) ORDER BY date DESC LIMIT 100`;
+      sql += `
+          GROUP BY DATE(created_at)
+        ), debt_payments AS (
+          SELECT DATE(payment_date) as date, COALESCE(SUM(amount), 0) as debt_clear
+          FROM customer_payments
+          WHERE 1=1
+      `;
+
+      if (date_from) {
+        sql += ` AND DATE(payment_date) >= ?`;
+        params.push(date_from);
+      }
+
+      if (date_to) {
+        sql += ` AND DATE(payment_date) <= ?`;
+        params.push(date_to);
+      }
+
+      sql += `
+          GROUP BY DATE(payment_date)
+        ), report_dates AS (
+          SELECT date FROM order_metrics
+          UNION
+          SELECT date FROM debt_payments
+        )
+        SELECT
+          report_dates.date,
+          COALESCE(order_metrics.total_orders, 0) as total_orders,
+          COALESCE(order_metrics.total_sales, 0) as total_sales,
+          COALESCE(order_metrics.total_discounts, 0) as total_discounts,
+          COALESCE(order_metrics.total_voids, 0) as total_voids,
+          COALESCE(order_metrics.net_sales, 0) as net_sales,
+          COALESCE(order_metrics.cash_collected, 0) as cash_collected,
+          COALESCE(order_metrics.card_collected, 0) as card_collected,
+          COALESCE(order_metrics.transfer_collected, 0) as transfer_collected,
+          COALESCE(debt_payments.debt_clear, 0) as debt_clear
+        FROM report_dates
+        LEFT JOIN order_metrics ON order_metrics.date = report_dates.date
+        LEFT JOIN debt_payments ON debt_payments.date = report_dates.date
+        ORDER BY report_dates.date DESC
+        LIMIT 100
+      `;
 
       const rows = db.prepare(sql).all(...params);
 
@@ -708,51 +752,140 @@ function registerReportsIPC(db) {
     const from = date_from || today;
     const to = date_to || today;
 
-    // Revenue = sum of order totals
-    const revenue = db.prepare(`
-      SELECT COALESCE(SUM(total_amount), 0) as total
+    const sales = db.prepare(`
+      SELECT
+        COALESCE(SUM(subtotal), 0) as gross_sales,
+        COALESCE(SUM(discount_amount), 0) as total_discounts,
+        COALESCE(SUM(tax_amount), 0) as tax_collected,
+        COUNT(*) as total_orders
       FROM orders
       WHERE DATE(created_at) >= ?
         AND DATE(created_at) <= ?
         AND status != 'voided'
     `).get(from, to);
 
-    // COGS = sum of stock issuance costs
-    const cogs = db.prepare(`
-      SELECT COALESCE(SUM(total_cost), 0) as total
+    const soldInventory = db.prepare(`
+      SELECT inventory_item_id as item_id,
+             SUM(quantity) as quantity,
+             SUM(total_cost) as total_cost
+      FROM (
+        SELECT oii.inventory_item_id, oii.quantity, oii.total_cost
+        FROM order_item_inventory oii
+        JOIN order_items oi ON oi.id = oii.order_item_id
+        JOIN orders o ON o.id = oi.order_id
+        WHERE DATE(o.created_at) >= ? AND DATE(o.created_at) <= ?
+          AND o.status != 'voided'
+
+        UNION ALL
+
+        SELECT m.inventory_item_id, oi.quantity,
+               oi.quantity * COALESCE(i.cost_price, 0)
+        FROM order_items oi
+        JOIN orders o ON o.id = oi.order_id
+        JOIN menu_items m ON m.id = oi.menu_item_id
+        LEFT JOIN inventory_items i ON i.id = m.inventory_item_id
+        WHERE DATE(o.created_at) >= ? AND DATE(o.created_at) <= ?
+          AND o.status != 'voided'
+          AND m.inventory_item_id IS NOT NULL
+          AND NOT EXISTS (
+            SELECT 1 FROM order_item_inventory oii WHERE oii.order_item_id = oi.id
+          )
+
+        UNION ALL
+
+        SELECT mii.inventory_item_id,
+               oi.quantity * mii.quantity,
+               oi.quantity * mii.quantity * COALESCE(i.cost_price, 0)
+        FROM order_items oi
+        JOIN orders o ON o.id = oi.order_id
+        JOIN menu_items m ON m.id = oi.menu_item_id
+        JOIN menu_item_inventory mii ON mii.menu_item_id = m.id
+        LEFT JOIN inventory_items i ON i.id = mii.inventory_item_id
+        WHERE DATE(o.created_at) >= ? AND DATE(o.created_at) <= ?
+          AND o.status != 'voided'
+          AND m.inventory_item_id IS NULL
+          AND NOT EXISTS (
+            SELECT 1 FROM order_item_inventory oii WHERE oii.order_item_id = oi.id
+          )
+      )
+      GROUP BY inventory_item_id
+    `).all(from, to, from, to, from, to);
+
+    const purchases = db.prepare(`
+      SELECT item_id, SUM(quantity) as quantity, SUM(total_cost) as total_cost
+      FROM purchase_entries
+      WHERE DATE(purchase_date) >= ? AND DATE(purchase_date) <= ?
+      GROUP BY item_id
+    `).all(from, to);
+
+    const stockIssues = db.prepare(`
+      SELECT sii.item_id, SUM(sii.quantity) as quantity, SUM(sii.total_cost) as total_cost
       FROM stock_issuance_items sii
-      JOIN stock_issuances si ON sii.issuance_id = si.id
-      WHERE DATE(si.issued_at) >= ?
-        AND DATE(si.issued_at) <= ?
+      JOIN stock_issuances si ON si.id = sii.issuance_id
+      WHERE DATE(si.issued_at) >= ? AND DATE(si.issued_at) <= ?
+      GROUP BY sii.item_id
+    `).all(from, to);
+
+    const operatingExpenses = db.prepare(`
+      SELECT COALESCE(SUM(amount), 0) as total
+      FROM operational_expenses
+      WHERE DATE(expense_date) >= ? AND DATE(expense_date) <= ?
     `).get(from, to);
 
-    // Discounts
-    const discounts = db.prepare(`
-      SELECT COALESCE(SUM(discount_amount), 0) as total
-      FROM orders
-      WHERE DATE(created_at) >= ?
-        AND DATE(created_at) <= ?
-        AND status != 'voided'
-    `).get(from, to);
+    const inventoryItems = db.prepare(`
+      SELECT id, name, unit FROM inventory_items ORDER BY name ASC
+    `).all();
+    const purchasesByItem = new Map(purchases.map((row) => [row.item_id, row]));
+    const soldByItem = new Map(soldInventory.map((row) => [row.item_id, row]));
+    const issuesByItem = new Map(stockIssues.map((row) => [row.item_id, row]));
+    const items = inventoryItems.map((item) => {
+      const purchased = purchasesByItem.get(item.id) || {};
+      const sold = soldByItem.get(item.id) || {};
+      const issued = issuesByItem.get(item.id) || {};
+      return {
+        item_id: item.id,
+        name: item.name,
+        unit: item.unit,
+        purchased_quantity: purchased.quantity || 0,
+        purchase_cost: purchased.total_cost || 0,
+        sold_quantity: sold.quantity || 0,
+        sold_cost: sold.total_cost || 0,
+        issued_quantity: issued.quantity || 0,
+        issued_cost: issued.total_cost || 0,
+      };
+    }).filter((item) =>
+      item.purchased_quantity || item.sold_quantity || item.issued_quantity
+    );
 
-    const totalRevenue = revenue.total || 0;
-    const totalCogs = cogs.total || 0;
-    const totalDiscounts = discounts.total || 0;
-
-    const grossProfit = totalRevenue - totalCogs;
-    const netProfit = grossProfit - totalDiscounts;
-    const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue * 100) : 0;
+    const grossSales = sales.gross_sales || 0;
+    const totalDiscounts = sales.total_discounts || 0;
+    const netSales = grossSales - totalDiscounts;
+    const totalCogs = soldInventory.reduce((total, item) => total + (item.total_cost || 0), 0);
+    const totalPurchases = purchases.reduce((total, item) => total + (item.total_cost || 0), 0);
+    const totalIssuedCost = stockIssues.reduce((total, item) => total + (item.total_cost || 0), 0);
+    const totalOperatingExpenses = operatingExpenses.total || 0;
+    const grossProfit = netSales - totalCogs;
+    const netProfit = grossProfit - totalIssuedCost - totalOperatingExpenses;
+    const profitMargin = netSales > 0 ? (netProfit / netSales * 100) : 0;
 
     return {
       success: true,
       data: {
         period: `${from} to ${to}`,
-        total_revenue: totalRevenue,
+        total_revenue: grossSales,
+        gross_sales: grossSales,
+        net_sales: netSales,
+        tax_collected: sales.tax_collected || 0,
+        total_orders: sales.total_orders || 0,
         total_cogs: totalCogs,
         gross_profit: grossProfit,
         total_discounts: totalDiscounts,
+        total_purchases: totalPurchases,
+        total_issued_cost: totalIssuedCost,
+        total_operating_expenses: totalOperatingExpenses,
         net_profit: netProfit,
-        profit_margin: Math.round(profitMargin)
+        profit_margin: Math.round(profitMargin),
+        items,
       }
     };
   } catch (err) {

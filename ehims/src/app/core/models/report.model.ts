@@ -8,6 +8,7 @@ export interface SalesMetrics {
   cash_collected: number;
   card_collected: number;
   transfer_collected: number;
+  debt_clear: number;
 }
 
 export interface SalesTrend {
@@ -68,11 +69,31 @@ export interface StaffMetrics {
 export interface ProfitLossStatement {
   period: string;
   total_revenue: number;
+  gross_sales: number;
+  net_sales: number;
+  tax_collected: number;
+  total_orders: number;
   total_cogs: number;
   gross_profit: number;
   total_discounts: number;
+  total_purchases: number;
+  total_issued_cost: number;
+  total_operating_expenses: number;
   net_profit: number;
   profit_margin: number;
+  items: ProfitLossInventoryItem[];
+}
+
+export interface ProfitLossInventoryItem {
+  item_id: number;
+  name: string;
+  unit: string;
+  purchased_quantity: number;
+  purchase_cost: number;
+  sold_quantity: number;
+  sold_cost: number;
+  issued_quantity: number;
+  issued_cost: number;
 }
 
 export interface DashboardSummary {

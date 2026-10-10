@@ -129,11 +129,7 @@ export class OrderHistoryComponent implements OnInit {
 
   canVoidOrder(order: Order): boolean {
     if (order.status === 'voided') return false;
-    if (!order.receipt_printed) return true;
-    return (
-      this.authService.currentUser()?.role === 'admin' ||
-      this.authService.hasPermission('pos_void_printed')
-    );
+    return this.authService.hasPermission('pos_void_printed');
   }
 
   async onVoidOrder(order: Order) {

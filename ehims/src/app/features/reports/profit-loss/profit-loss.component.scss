@@ -1,0 +1,201 @@
+@use "../../../styles/variables" as *;
+
+.filters-card {
+  margin-bottom: $space-6;
+  padding: $space-6;
+  border: 1px solid $glass-border;
+  border-radius: $radius-lg;
+  background: $bg-secondary;
+}
+
+.filters-row {
+  display: flex;
+  align-items: flex-end;
+  gap: $space-4;
+  flex-wrap: wrap;
+}
+
+.filters-row .form-group {
+  min-width: 180px;
+  margin: 0;
+
+  .form-label {
+    color: $text-secondary;
+  }
+
+  .form-input {
+    border-color: $glass-border;
+    background: $bg-primary;
+    color: $text-primary;
+    color-scheme: dark;
+  }
+}
+
+.search-btn {
+  min-height: 40px;
+  padding: $space-2 $space-4;
+  border: 1px solid $primary;
+  border-radius: $radius-md;
+  background: $primary;
+  color: #fff;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.6;
+  }
+}
+
+.pl-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: $space-4;
+  margin: $space-5 0;
+}
+
+.metric-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: $space-2;
+  padding: $space-4;
+  border: 1px solid $glass-border;
+  border-radius: $radius-md;
+  background: linear-gradient(135deg, $bg-secondary, rgba(59, 130, 246, 0.06));
+}
+
+.metric-label,
+.metric-note {
+  color: $text-secondary;
+  font-size: $font-size-xs;
+}
+
+.metric-value {
+  overflow-wrap: anywhere;
+  color: $primary;
+  font-size: 1.2rem;
+}
+
+.metric-value.negative {
+  color: $danger;
+}
+
+.result-card {
+  border-color: $success;
+}
+
+.statement-section {
+  max-width: 760px;
+  margin: $space-6 0;
+  padding: $space-4;
+  border: 1px solid $glass-border;
+  border-radius: $radius-md;
+  background: $bg-secondary;
+  color: $text-primary;
+}
+
+.statement-section h3,
+.table-header h3 {
+  margin: 0 0 $space-3;
+  font-size: 1rem;
+  color: $text-primary;
+}
+
+.statement-row {
+  display: flex;
+  justify-content: space-between;
+  gap: $space-4;
+  padding: $space-2 0;
+  border-bottom: 1px solid $glass-border;
+  color: $text-secondary;
+}
+
+.statement-row strong {
+  flex-shrink: 0;
+  text-align: right;
+  color: $text-primary;
+}
+
+.statement-row.deduction strong {
+  color: $danger;
+}
+
+.statement-row.total {
+  font-weight: 600;
+}
+
+.statement-row.final-total {
+  margin-top: $space-1;
+  border-top: 2px solid $text-secondary;
+  border-bottom: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+
+  span,
+  strong {
+    color: $text-primary;
+  }
+}
+
+.statement-row.context-row {
+  margin-top: $space-3;
+  border-top: 1px dashed $glass-border;
+  border-bottom: 0;
+  color: $text-secondary;
+}
+
+.report-note {
+  margin: $space-3 0 0;
+  color: $text-secondary;
+  font-size: $font-size-xs;
+}
+
+.movement-table {
+  margin-top: 1.5rem;
+  border: 1px solid $glass-border;
+  border-radius: $radius-lg;
+  background: $bg-secondary;
+  color: $text-primary;
+
+  .table-header {
+    background: $bg-primary;
+  }
+
+  .data-table {
+    color: $text-primary;
+
+    th {
+      background: $bg-hover;
+      color: $text-primary;
+    }
+
+    td {
+      color: $text-secondary;
+      border-color: $glass-border;
+    }
+
+    tbody tr:hover {
+      background: $bg-hover;
+    }
+  }
+}
+
+@media (max-width: 900px) {
+  .pl-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .pl-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .statement-row {
+    font-size: $font-size-sm;
+  }
+
+  .table-container {
+    overflow-x: auto;
+  }
+}
