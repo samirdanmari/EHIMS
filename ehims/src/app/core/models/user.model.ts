@@ -42,6 +42,11 @@ export const APP_PERMISSIONS = [
     description: 'View business and operational reports.',
   },
   {
+    key: 'expenses',
+    label: 'Expenses',
+    description: 'View the expense ledger and record operational expenses.',
+  },
+  {
     key: 'eod',
     label: 'EOD & Shifts',
     description: 'View shifts and end-of-day reports.',

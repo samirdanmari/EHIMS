@@ -146,17 +146,11 @@ function registerReportsIPC(db) {
     return { success: false, error: err.message };
   }
 });
-
   // ipcMain.handle('reports:dashboard-summary', async (event) => {
-  //   try {
-  //     const today = new Date().toISOString().slice(0, 10);
   //     const weekStart = new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
   //     const monthStart = new Date(Date.now() - 29 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
   //     const todaySales = db.prepare(`
-  //       SELECT COALESCE(SUM(total_amount), 0) as total, COUNT(*) as count
-  //       FROM orders WHERE DATE(created_at) = ? AND status != 'voided'
-  //     `).get(today);
 
   //     const weekSales = db.prepare(`
   //       SELECT COALESCE(SUM(total_amount), 0) as total
@@ -1056,6 +1050,80 @@ function registerReportsIPC(db) {
       return { success: true, data: rows };
     } catch (err) {
       console.error('[reports:purchase-report] Error:', err.message);
+      return { success: false, error: err.message, data: [] };
+    }
+  });
+
+  // ---------------------------------------------------------
+  // SUPPLIER CREDIT CLEARANCE REPORT
+  // ---------------------------------------------------------
+  ipcMain.handle('reports:credit-clearance', async (event, payload = {}) => {
+    try {
+      const date_from = payload.date_from ?? payload.dateFrom;
+      const date_to = payload.date_to ?? payload.dateTo;
+      let sql = `
+        SELECT
+          cp.id,
+          cp.customer_id,
+          c.full_name as customer_name,
+          cp.order_id,
+          o.order_number,
+          cp.amount as amount_paid,
+          DATE(cp.payment_date) as payment_date,
+          cp.payment_method,
+          cp.reference,
+          COALESCE(
+            (SELECT DATE(linked_order.created_at)
+             FROM orders linked_order
+             WHERE linked_order.id = cp.order_id),
+            (SELECT GROUP_CONCAT(DISTINCT DATE(purchase.created_at))
+             FROM orders purchase
+             WHERE purchase.customer_id = cp.customer_id
+               AND purchase.is_credit = 1
+               AND purchase.status != 'voided'
+               AND datetime(purchase.created_at) <= datetime(cp.payment_date))
+          ) as purchase_dates,
+          MAX(0,
+            COALESCE((
+              SELECT SUM(purchase.total_amount)
+              FROM orders purchase
+              WHERE purchase.customer_id = cp.customer_id
+                AND purchase.is_credit = 1
+                AND purchase.status != 'voided'
+                AND datetime(purchase.created_at) <= datetime(cp.payment_date)
+            ), 0) - COALESCE((
+              SELECT SUM(previous.amount)
+              FROM customer_payments previous
+              WHERE previous.customer_id = cp.customer_id
+                AND (
+                  datetime(previous.payment_date) < datetime(cp.payment_date)
+                  OR (
+                    datetime(previous.payment_date) = datetime(cp.payment_date)
+                    AND previous.id <= cp.id
+                  )
+                )
+            ), 0)
+          ) as remaining_balance
+        FROM customer_payments cp
+        JOIN regular_customers c ON c.id = cp.customer_id
+        LEFT JOIN orders o ON o.id = cp.order_id
+        WHERE 1=1
+      `;
+      const params = [];
+
+      if (date_from) {
+        sql += ' AND DATE(cp.payment_date) >= ?';
+        params.push(date_from);
+      }
+      if (date_to) {
+        sql += ' AND DATE(cp.payment_date) <= ?';
+        params.push(date_to);
+      }
+
+      sql += ' ORDER BY cp.payment_date DESC, cp.id DESC';
+      return { success: true, data: db.prepare(sql).all(...params) };
+    } catch (err) {
+      console.error('[reports:credit-clearance] Error:', err.message);
       return { success: false, error: err.message, data: [] };
     }
   });

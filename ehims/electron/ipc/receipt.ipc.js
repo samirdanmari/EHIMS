@@ -410,7 +410,7 @@ function buildSingleReceiptHtml({
     .logo-wrap img {
       max-width: 40px;
       max-height: 40px;
-      margin: 0;
+      margin: 0 auto;
       padding: 0;
       display: block;
     }

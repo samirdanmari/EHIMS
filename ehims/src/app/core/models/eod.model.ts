@@ -57,6 +57,7 @@ export interface EODSummary {
   netProfit: number;
   totalOrders: number;
   totalPurchases: number;
+  customerCreditClearance: number;
   cashCollected: number;
   cardCollected: number;
   transferCollected: number;

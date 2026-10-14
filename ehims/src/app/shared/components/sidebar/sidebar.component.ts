@@ -62,8 +62,8 @@ export class SidebarComponent {
       icon: 'M12 2v20 M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6',
       label: 'Expenses',
       route: '/reports/expenses',
-      requiredRoles: ['admin', 'manager'],
-      permission: 'reports',
+      requiredRoles: ['admin'],
+      permission: 'expenses',
     },
     {
       icon: 'M12 20V10 M18 20V4 M6 20v-4',

@@ -71,7 +71,7 @@ function registerEODIPC(db) {
 
             db.prepare(`
                 UPDATE shifts
-                SET status = 'closed', closing_cash = ?, notes = ?, end_time = CURRENT_TIMESTAMP
+                SET status = 'closed', closing_cash = ?, notes = ?, end_time = datetime('now','localtime')
                 WHERE id = ?
             `).run(closing_cash || 0, notes || '', shift_id);
 
@@ -94,7 +94,7 @@ function registerEODIPC(db) {
 
             db.prepare(`
                 UPDATE shifts
-                SET status = 'closed', closing_cash = ?, notes = ?, end_time = CURRENT_TIMESTAMP
+                SET status = 'closed', closing_cash = ?, notes = ?, end_time = datetime('now','localtime')
                 WHERE id = ?
             `).run(payload.drawer_cash ?? payload.closing_cash ?? 0, payload.notes || '', payload.shift_id);
 
@@ -118,6 +118,11 @@ function registerEODIPC(db) {
                 FROM purchase_entries
                 WHERE purchase_date >= ? AND purchase_date <= ?
             `).get(updated.start_time, updated.end_time);
+            const customerCreditClearance = db.prepare(`
+                SELECT COALESCE(SUM(amount), 0) as total
+                FROM customer_payments
+                WHERE payment_date >= ? AND payment_date <= ?
+            `).get(updated.start_time, updated.end_time);
             return {
                 success: true,
                 shift: updated,
@@ -131,6 +136,7 @@ function registerEODIPC(db) {
                     netProfit: summary.total_sales,
                     totalOrders: summary.total_orders,
                     totalPurchases: purchases.total,
+                    customerCreditClearance: customerCreditClearance.total,
                     cashCollected: summary.cash_collected,
                     cardCollected: summary.card_collected,
                     transferCollected: summary.transfer_collected,
@@ -216,11 +222,18 @@ function registerEODIPC(db) {
                 WHERE shift_id = ? AND status = 'completed'
             `).get(shift_id);
 
-            // Get supplier payments
-            const supplier_payments = db.prepare(`
-                SELECT sp.* FROM supplier_payments sp
-                WHERE DATE(sp.payment_date) = DATE(?)
-            `).all(shift.end_time);
+            const customer_credit_payments = db.prepare(`
+                SELECT cp.*, c.full_name as customer_name, o.order_number
+                FROM customer_payments cp
+                LEFT JOIN regular_customers c ON c.id = cp.customer_id
+                LEFT JOIN orders o ON o.id = cp.order_id
+                WHERE cp.payment_date >= ? AND cp.payment_date <= COALESCE(?, datetime('now','localtime'))
+                ORDER BY cp.payment_date
+            `).all(shift.start_time, shift.end_time);
+            const customer_credit_clearance = customer_credit_payments.reduce(
+                (total, payment) => total + Number(payment.amount || 0),
+                0
+            );
 
             return {
                 success: true,
@@ -228,7 +241,8 @@ function registerEODIPC(db) {
                     shift,
                     orders,
                     summary,
-                    supplier_payments
+                    customer_credit_payments,
+                    customer_credit_clearance
                 }
             };
         } catch (err) {
@@ -347,7 +361,7 @@ function registerEODIPC(db) {
                     (SELECT COALESCE(SUM(CASE WHEN is_credit = 0 THEN total_amount ELSE 0 END), 0) FROM orders WHERE shift_id = s.id AND status = 'completed') as total_collected,
                     (SELECT COALESCE(SUM(CASE WHEN is_credit = 1 THEN total_amount ELSE 0 END), 0) FROM orders WHERE shift_id = s.id AND status = 'completed') as credit_collected,
                     (SELECT COALESCE(SUM(total_cost), 0) FROM purchase_entries WHERE purchase_date >= s.start_time AND purchase_date <= COALESCE(s.end_time, datetime('now','localtime'))) as total_purchases,
-                    (SELECT COALESCE(SUM(amount), 0) FROM supplier_payments WHERE CAST(payment_date as date) = CAST(s.end_time as date)) as supplier_payments
+                    (SELECT COALESCE(SUM(amount), 0) FROM customer_payments WHERE payment_date >= s.start_time AND payment_date <= COALESCE(s.end_time, datetime('now','localtime'))) as customer_credit_clearance
                 FROM shifts s
                 LEFT JOIN users u ON s.user_id = u.id
                 WHERE s.status = 'closed'
@@ -443,6 +457,11 @@ function registerEODIPC(db) {
                 FROM purchase_entries
                 WHERE purchase_date >= ? AND purchase_date <= COALESCE(?, datetime('now','localtime'))
             `).get(shift.start_time, shift.end_time);
+            const customerCreditClearance = db.prepare(`
+                SELECT COALESCE(SUM(amount), 0) as total
+                FROM customer_payments
+                WHERE payment_date >= ? AND payment_date <= COALESCE(?, datetime('now','localtime'))
+            `).get(shift.start_time, shift.end_time);
 
             return {
                 success: true,
@@ -452,7 +471,8 @@ function registerEODIPC(db) {
                     summary: {
                         ...summary,
                         payment_summary: paymentSummary,
-                        total_purchases: purchases.total
+                        total_purchases: purchases.total,
+                        customer_credit_clearance: customerCreditClearance.total
                     }
                 }
             };

@@ -60,6 +60,10 @@
       <div class="card-label">Average per Shift</div>
       <div class="card-value">{{ getAverageSalePerShift() | appCurrency }}</div>
     </div>
+    <div class="card">
+      <div class="card-label">Customer Credit Clearance</div>
+      <div class="card-value">{{ getTotalClearanceForPeriod() | appCurrency }}</div>
+    </div>
   </div>
   }
 
@@ -95,6 +99,10 @@
             <div class="metric">
               <span class="label">Purchases:</span>
               <span class="value">{{ shift.total_purchases | appCurrency }}</span>
+            </div>
+            <div class="metric">
+              <span class="label">Customer Credit Clearance:</span>
+              <span class="value">{{ shift.customer_credit_clearance | appCurrency }}</span>
             </div>
             <div class="metric">
               <span class="label">Time:</span>
@@ -163,6 +171,8 @@
                   class="value">{{ selectedShiftDetail().summary.payment_summary.credit | appCurrency }}</span></div>
               <div class="detail-item"><span class="label">Total Purchases:</span><span
                   class="value">{{ selectedShiftDetail().summary.total_purchases | appCurrency }}</span></div>
+              <div class="detail-item"><span class="label">Customer Credit Clearance:</span><span
+                  class="value">{{ selectedShiftDetail().summary.customer_credit_clearance | appCurrency }}</span></div>
             </div>
           </div>
 

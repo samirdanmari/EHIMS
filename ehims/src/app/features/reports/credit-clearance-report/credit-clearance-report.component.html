@@ -1,0 +1,70 @@
+<div class="page credit-clearance-report">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Credit Clearance</h2>
+      <p class="page-subtitle">Customer credit payments and remaining balances.</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="search-btn" (click)="printReport()">Print Report</button>
+      <button type="button" class="search-btn" (click)="savePdf()">Save PDF</button>
+    </div>
+  </div>
+
+  <div class="filter-section">
+    <form [formGroup]="form" class="filter-form" (ngSubmit)="applyFilters()">
+      <div class="form-group">
+        <label for="clearance-from">Payment Date From</label>
+        <input id="clearance-from" class="form-input" type="date" formControlName="dateFrom" />
+      </div>
+      <div class="form-group">
+        <label for="clearance-to">Payment Date To</label>
+        <input id="clearance-to" class="form-input" type="date" formControlName="dateTo" />
+      </div>
+      <button type="submit" class="search-btn">Apply Filters</button>
+    </form>
+  </div>
+
+  @if (isLoading()) {
+  <div class="loading-state">Loading credit clearance...</div>
+  } @else {
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-label">Amount Paid</div>
+      <div class="metric-value">{{ totalPaid() | appCurrency }}</div>
+    </div>
+  </div>
+
+  <div class="table-container">
+    @if (rows().length > 0) {
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Customer</th>
+          <th>Order #</th>
+          <th>Purchase Date(s)</th>
+          <th class="amount">Amount Paid</th>
+          <th>Payment Date</th>
+          <th>Payment Method</th>
+          <th class="amount">Balance After Payment</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.id) {
+        <tr>
+          <td>{{ row.customer_name }}</td>
+          <td>{{ row.order_number || 'General payment' }}</td>
+          <td>{{ formatPurchaseDates(row.purchase_dates) }}</td>
+          <td class="amount">{{ row.amount_paid | appCurrency }}</td>
+          <td>{{ row.payment_date | date: 'mediumDate' }}</td>
+          <td>{{ row.payment_method | titlecase }}</td>
+          <td class="amount">{{ row.remaining_balance | appCurrency }}</td>
+        </tr>
+        }
+      </tbody>
+    </table>
+    } @else {
+    <div class="empty-message">No credit clearance payments found for the selected dates.</div>
+    }
+  </div>
+  }
+</div>

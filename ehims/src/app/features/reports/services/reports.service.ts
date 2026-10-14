@@ -163,6 +163,16 @@ export class ReportsService {
     });
   }
 
+  getCreditClearanceReport(
+    dateFrom?: string,
+    dateTo?: string,
+  ): Promise<ReportResponse<any[]>> {
+    return this.electronService.invoke('reports:credit-clearance', {
+      date_from: dateFrom,
+      date_to: dateTo,
+    });
+  }
+
   // Stock Issuance Report
   getStockIssuanceReport(
     shiftId?: number,

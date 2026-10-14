@@ -86,6 +86,10 @@
             <span class="label">Total Purchases</span>
             <span class="value">{{ closeResult()?.totalPurchases | appCurrency }}</span>
           </div>
+          <div class="metric">
+            <span class="label">Customer Credit Clearance</span>
+            <span class="value">{{ closeResult()?.customerCreditClearance | appCurrency }}</span>
+          </div>
         </div>
 
         <div class="report-section">

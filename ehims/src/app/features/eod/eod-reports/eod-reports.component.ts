@@ -21,7 +21,7 @@ interface ClosedShift {
   total_sales: number;
   total_orders: number;
   total_purchases: number;
-  supplier_payments: number;
+  customer_credit_clearance: number;
   notes?: string;
 }
 
@@ -184,6 +184,14 @@ export class EODReportsComponent implements OnInit {
         amount: item.total_price,
       })),
     );
+    rows.push({
+      shift_date: shift.shift_date,
+      order: '',
+      time: '',
+      item: 'Credit Purchase Clearance',
+      quantity: '',
+      amount: detail.summary.customer_credit_clearance || 0,
+    });
     const result = await this.reportsService.saveReportPdf(
       `EOD Report - ${shift.shift_name}`,
       [
@@ -221,6 +229,13 @@ export class EODReportsComponent implements OnInit {
         amount: item.total_price,
       })),
     );
+    rows.push({
+      shift_date: shift.shift_date,
+      order: '',
+      item: 'Credit Purchase Clearance',
+      quantity: '',
+      amount: detail.summary.customer_credit_clearance || 0,
+    });
     const result = await this.reportsService.printReport(
       `EOD Report - ${shift.shift_name}`,
       [
@@ -287,5 +302,12 @@ export class EODReportsComponent implements OnInit {
     const shifts = this.closedShifts();
     if (shifts.length === 0) return 0;
     return this.getTotalSalesForPeriod() / shifts.length;
+  }
+
+  getTotalClearanceForPeriod(): number {
+    return this.closedShifts().reduce(
+      (sum, shift) => sum + (shift.customer_credit_clearance || 0),
+      0,
+    );
   }
 }

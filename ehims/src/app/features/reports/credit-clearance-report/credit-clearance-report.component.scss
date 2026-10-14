@@ -1,0 +1,132 @@
+@use "../../../styles/variables" as *;
+
+.credit-clearance-report {
+  .page-header,
+  .header-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $space-3;
+  }
+
+  .header-actions {
+    flex-wrap: wrap;
+  }
+
+  .filter-section,
+  .metric-card {
+    background: $bg-secondary;
+    border: 1px solid $glass-border;
+    border-radius: $radius-md;
+    padding: $space-4;
+  }
+
+  .filter-section {
+    margin-bottom: $space-5;
+  }
+
+  .filter-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    align-items: end;
+    gap: $space-4;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: $space-2;
+  }
+
+  .form-group label,
+  .metric-label {
+    color: $text-secondary;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+  }
+
+  .form-input {
+    min-height: 40px;
+    padding: $space-2 $space-3;
+    border: 1px solid $glass-border;
+    border-radius: $radius-sm;
+    background: $bg-primary;
+    color: $text-primary;
+  }
+
+  .search-btn {
+    min-height: 40px;
+    padding: $space-2 $space-3;
+    border: 1px solid $primary;
+    border-radius: $radius-sm;
+    background: $primary;
+    color: #fff;
+    font-weight: $font-weight-semibold;
+    cursor: pointer;
+  }
+
+  .header-actions .search-btn:last-child {
+    background: transparent;
+    color: $primary;
+  }
+
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: $space-4;
+    margin-bottom: $space-5;
+  }
+
+  .metric-card {
+    display: grid;
+    gap: $space-2;
+  }
+
+  .metric-value {
+    color: $text-primary;
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+  }
+
+  .table-container {
+    overflow-x: auto;
+    border: 1px solid $glass-border;
+    border-radius: $radius-md;
+  }
+
+  .data-table {
+    width: 100%;
+    min-width: 760px;
+    border-collapse: collapse;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: $space-3 $space-4;
+    border-bottom: 1px solid $glass-border;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .data-table .amount {
+    text-align: right;
+  }
+
+  .loading-state,
+  .empty-message {
+    padding: $space-6;
+    color: $text-secondary;
+    text-align: center;
+  }
+
+  @media (max-width: 640px) {
+    .page-header {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .header-actions {
+      width: 100%;
+    }
+  }
+}

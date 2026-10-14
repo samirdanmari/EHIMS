@@ -12,6 +12,7 @@ const validChannels = [
     'order:',
     'pos:',
     'supplier:',
+    'expenses:',
     'eod:',
     'shift:',
     'users:',

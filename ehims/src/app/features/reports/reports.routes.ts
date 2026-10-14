@@ -37,7 +37,7 @@ export const REPORTS_ROUTES: Routes = [
             (m) => m.ExpensesComponent,
           ),
         canActivate: [roleGuard],
-        data: { roles: ['admin', 'manager'], permission: 'reports' },
+        data: { roles: ['admin'], permission: 'expenses' },
       },
       {
         path: 'inventory',
@@ -51,6 +51,13 @@ export const REPORTS_ROUTES: Routes = [
         loadComponent: () =>
           import('./purchase-report/purchase-report.component').then(
             (m) => m.PurchaseReportComponent,
+          ),
+      },
+      {
+        path: 'credit-clearance',
+        loadComponent: () =>
+          import('./credit-clearance-report/credit-clearance-report.component').then(
+            (m) => m.CreditClearanceReportComponent,
           ),
       },
       {
